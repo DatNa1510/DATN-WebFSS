@@ -57,7 +57,7 @@ export default function HomePage() {
         {/* Decorative Elements */}
         <div className="absolute top-20 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/3 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
-        
+
         <div className={containerClass}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center relative z-10">
             <motion.div
@@ -102,7 +102,7 @@ export default function HomePage() {
                 />
                 {/* Overlay Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
+
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
@@ -112,7 +112,7 @@ export default function HomePage() {
                 >
                   <ChevronRight size={24} strokeWidth={2.5} />
                 </motion.button>
-                
+
                 {/* Bottom Card */}
                 <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 bg-gradient-to-t from-black via-black/80 to-transparent backdrop-blur-sm border-t border-white/10">
                   <span className="badge badge-primary mb-3">
@@ -132,6 +132,42 @@ export default function HomePage() {
               </div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* ===== VIDEO PROMO SECTION ===== */}
+      <section className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[80vh] overflow-hidden bg-black group">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105"
+        >
+          <source src="/video-fashion.mp4" type="video/mp4" />
+          Trình duyệt của bạn không hỗ trợ thẻ video.
+        </video>
+
+        {/* Gradient overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/30 pointer-events-none" />
+
+        {/* Video Content Overlay */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="flex flex-col items-center gap-3"
+          >
+            <h2 className="text-3xl sm:text-5xl lg:text-7xl font-display font-light text-white tracking-widest uppercase drop-shadow-lg leading-tight">
+              ĐẬM CHẤT RIÊNG
+            </h2>
+
+            <p className="text-white/90 text-sm sm:text-base tracking-[0.2em] font-medium uppercase drop-shadow-md">
+              Thời trang không chỉ là cái bạn mặc, mà là cách bạn cảm nhận
+            </p>
+          </motion.div>
         </div>
       </section>
 

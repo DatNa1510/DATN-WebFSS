@@ -41,13 +41,13 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="gradient-primary-to-secondary text-white mt-64 lg:mt-80 relative overflow-hidden">
+    <footer className="gradient-primary-to-secondary text-white relative overflow-hidden">
       {/* Decorative Elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
-      <div className="layout-page pt-48 pb-24 lg:pt-80 lg:pb-40 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-10 mb-16">
+      <div className="layout-page pt-16 pb-12 lg:pt-20 lg:pb-16 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-10 mb-12">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="inline-flex items-center gap-4 mb-6 group">

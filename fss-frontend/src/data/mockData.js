@@ -24,7 +24,7 @@ export const products = [
     discount: 28,
     category: 'ao-thun',
     images: [
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
+      'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=800&q=80',
       'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=600&q=80',
     ],
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
