@@ -13,10 +13,10 @@ function ProfileField({ label, value, editing = false, onChange }) {
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-transparent text-[18px] md:text-[20px] font-semibold text-primary outline-none leading-[1.2] px-0"
+          className="w-full bg-transparent text-[16px] md:text-[17px] font-semibold text-primary outline-none leading-[1.2] px-0"
         />
       ) : (
-        <p className="text-[18px] md:text-[20px] font-semibold text-primary leading-[1.2]">{value || '—'}</p>
+        <p className="text-[16px] md:text-[17px] font-semibold text-primary leading-[1.2]">{value || '—'}</p>
       )}
     </div>
   );
@@ -119,8 +119,8 @@ export default function ProfilePage() {
                     key={item.id}
                     onClick={() => setSideTab(item.id)}
                     className={`w-full flex items-center justify-between px-8 py-4.5 text-[13px] font-bold tracking-wide transition-all duration-150 relative group ${active
-                        ? 'text-primary bg-primary/5'
-                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                      ? 'text-primary bg-primary/5'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -177,7 +177,7 @@ export default function ProfilePage() {
                         setMainTab(t.id);
                         setEditing(false);
                       }}
-                      className={`pb-4 text-[13px] font-bold tracking-wider transition-all relative ${mainTab === t.id
+                      className={`pb-4 text-[12px] font-bold tracking-wider transition-all relative ${mainTab === t.id
                           ? 'text-primary'
                           : 'text-slate-400 hover:text-slate-600'
                         }`}
@@ -186,7 +186,7 @@ export default function ProfilePage() {
                       {mainTab === t.id && (
                         <motion.div
                           layoutId="profile-tab-indicator"
-                          className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary rounded-none shadow-[0_-4px_10px_rgba(var(--primary-rgb),0.3)]"
+                          className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary rounded-none shadow-[0_-4px_10px_rgba(var(--primary-rgb),0.3)]"
                         />
                       )}
                     </button>
@@ -202,7 +202,7 @@ export default function ProfilePage() {
                   >
                     {/* Header Info */}
                     <div className="mb-10">
-                      <h2 className="text-[22px] font-bold text-primary mb-1">Thông tin cá nhân</h2>
+                      <h2 className="text-[19px] font-bold text-primary mb-1 uppercase">Thông tin cá nhân</h2>
                       <p className="text-[13px] text-slate-400">Quản lý các thông tin cá nhân và thiết lập tài khoản của bạn.</p>
                     </div>
 

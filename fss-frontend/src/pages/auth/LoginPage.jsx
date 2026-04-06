@@ -103,7 +103,7 @@ export default function LoginPage() {
             </div>
 
             {/* Email */}
-            <div className="group pt-14 first:pt-0">
+            <div className="group mt-12 first:mt-0">
               <label
                 htmlFor="fss_identity"
                 className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5"
@@ -119,12 +119,12 @@ export default function LoginPage() {
                 placeholder="Nhập email của bạn"
                 value={formData.fss_identity}
                 onChange={handleChange}
-                className="w-full border-b-2 border-slate-100 bg-transparent pt-3 pb-4 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
+                className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
               />
             </div>
 
             {/* Password */}
-            <div className="group pt-16">
+            <div className="group mt-14">
               <div className="flex items-center justify-between font-bold text-primary mb-0.5">
                 <label
                   htmlFor="fss_secret"
@@ -144,7 +144,7 @@ export default function LoginPage() {
                   placeholder="Nhập mật khẩu của bạn"
                   value={formData.fss_secret}
                   onChange={handleChange}
-                  className="w-full border-b-2 border-slate-100 bg-transparent pt-3 pb-4 pr-10 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-none"
+                  className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 pr-10 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-none"
                 />
                 <button
                   type="button"

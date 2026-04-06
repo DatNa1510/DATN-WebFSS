@@ -14,34 +14,34 @@
   --color-primary-700: #000d6b;
   --color-primary-800: #00094a;
   --color-primary-900: #000530;
-  
+
   /* === SECONDARY COLORS === */
   --color-secondary: #1e3b87;
   --color-secondary-light: #3d5ab8;
   --color-secondary-lighter: #5c6bc0;
-  
+
   /* === ACCENT COLORS === */
   --color-accent-soft: #e8eef6;
   --color-accent-soft-hover: #d0dcf0;
   --color-accent-warm: #f5f5f7;
-  
+
   /* === SURFACE COLORS === */
   --color-surface: #ffffff;
   --color-surface-secondary: #f9fafb;
   --color-surface-tertiary: #f3f4f6;
   --color-surface-overlay: #fafbfc;
-  
+
   /* === TEXT COLORS === */
   --color-foreground: #111827;
   --color-foreground-secondary: #374151;
   --color-muted: #6b7280;
   --color-muted-foreground: #9ca3af;
-  
+
   /* === BORDER & DIVIDER === */
   --color-border: #e5e7eb;
   --color-border-light: #f3f4f6;
   --color-divider: #f0f1f3;
-  
+
   /* === SEMANTIC COLORS === */
   --color-success: #10b981;
   --color-success-light: #d1fae5;
@@ -51,16 +51,16 @@
   --color-error-light: #fee2e2;
   --color-info: #3b82f6;
   --color-info-light: #dbeafe;
-  
+
   /* === ACCENT ELEMENTS === */
   --color-gold: #ffd700;
   --color-gold-dark: #ffc700;
-  
+
   /* === TYPOGRAPHY === */
   --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-ui: "Plus Jakarta Sans", system-ui, sans-serif;
-  
+
   /* === BORDER RADIUS === */
   --radius-xs: 4px;
   --radius-sm: 8px;
@@ -69,7 +69,7 @@
   --radius-xl: 24px;
   --radius-2xl: 32px;
   --radius-full: 9999px;
-  
+
   /* === SHADOWS === */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
@@ -78,13 +78,13 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
-  
+
   /* === PREMIUM SHADOWS === */
   --shadow-soft: 0 4px 12px 0 rgb(0 0 0 / 0.05);
   --shadow-soft-lg: 0 12px 32px 0 rgb(0 0 0 / 0.08);
   --shadow-elevation: 0 20px 40px 0 rgb(0 22 141 / 0.12);
   --shadow-glow: 0 0 20px 0 rgb(0 22 141 / 0.15);
-  
+
   /* === TRANSITIONS === */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -118,11 +118,13 @@ input::-ms-reveal,
 input::-ms-clear {
   display: none;
 }
+
 input::-webkit-contacts-auto-fill-button {
   visibility: hidden;
   display: none !important;
   pointer-events: none;
 }
+
 input::-webkit-credentials-auto-fill-button {
   visibility: hidden;
   display: none !important;
@@ -130,13 +132,16 @@ input::-webkit-credentials-auto-fill-button {
 }
 
 /* Base Form Styling */
-input, textarea, select, button {
+input,
+textarea,
+select,
+button {
   font-family: inherit;
 }
 
-input[type="text"], 
-input[type="email"], 
-input[type="password"], 
+input[type="text"],
+input[type="email"],
+input[type="password"],
 input[type="tel"],
 textarea {
   font-family: var(--font-ui);
@@ -246,7 +251,7 @@ textarea {
   text-transform: uppercase;
   color: var(--color-primary);
   display: block;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.2rem;
 }
 
 .text-muted-secondary {
@@ -459,8 +464,13 @@ textarea {
   }
 
   @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
   }
 
   /* Pulse animation */
@@ -469,8 +479,15 @@ textarea {
   }
 
   @keyframes pulseSoft {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.7;
+    }
   }
 
   /* Float animation */
@@ -479,8 +496,15 @@ textarea {
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-8px); }
+
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-8px);
+    }
   }
 
   /* ===== UTILITY CLASSES ===== */

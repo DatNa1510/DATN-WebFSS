@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, Phone, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, AlertCircle, CheckCircle2, Check } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 
 const strengthColors = ['', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-400', 'bg-emerald-500'];
@@ -22,8 +22,13 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
-  const { register, authError, clearError } = useAuthStore();
   const navigate = useNavigate();
+  const { register, authError, clearError } = useAuthStore();
+
+  // Đảm bảo xóa trắng form ngay khi vào trang, kể cả khi trình duyệt cố điền
+  useEffect(() => {
+    setFormData({ name: '', email: '', phone: '', password: '', confirm: '' });
+  }, []);
 
   const strength = getPasswordStrength(formData.password);
 
@@ -106,44 +111,47 @@ export default function RegisterPage() {
                 type="text"
                 name="name"
                 required
+                autoComplete="name"
                 placeholder="Nhập họ và tên của bạn"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full border-b-2 border-slate-100 bg-transparent pt-3 pb-4 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
+                className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
               />
             </div>
 
             {/* Email */}
-            <div className="group pt-14">
+            <div className="group mt-12">
               <label htmlFor="reg-email" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">EMAIL</label>
               <input
                 id="reg-email"
                 type="email"
                 name="email"
                 required
+                autoComplete="email"
                 placeholder="Nhập email của bạn"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full border-b-2 border-slate-100 bg-transparent pt-3 pb-4 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
+                className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
               />
             </div>
 
             {/* Phone */}
-            <div className="group pt-14">
+            <div className="group mt-12">
               <label htmlFor="reg-phone" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">SỐ ĐIỆN THOẠI</label>
               <input
                 id="reg-phone"
                 type="tel"
                 name="phone"
+                autoComplete="tel"
                 placeholder="Nhập sđt của bạn"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full border-b-2 border-slate-100 bg-transparent pt-3 pb-4 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
+                className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
               />
             </div>
 
             {/* Password */}
-            <div className="group pt-14">
+            <div className="group mt-12">
               <label htmlFor="reg-password" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">MẬT KHẨU</label>
               <div className="relative">
                 <input
@@ -151,10 +159,11 @@ export default function RegisterPage() {
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   required
+                  autoComplete="new-password"
                   placeholder="Nhập mật khẩu của bạn"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full border-b-2 border-slate-100 bg-transparent pt-3 pb-4 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
+                  className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
                 />
                 <button
                   type="button"
@@ -176,7 +185,7 @@ export default function RegisterPage() {
             </div>
 
             {/* Confirm password */}
-            <div className="group pt-14">
+            <div className="group mt-12">
               <label htmlFor="reg-confirm" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">XÁC NHẬN MẬT KHẨU</label>
               <div className="relative">
                 <input
@@ -184,6 +193,7 @@ export default function RegisterPage() {
                   type="password"
                   name="confirm"
                   required
+                  autoComplete="new-password"
                   placeholder="Nhập xác nhận mật khẩu của bạn"
                   value={formData.confirm}
                   onChange={handleChange}
