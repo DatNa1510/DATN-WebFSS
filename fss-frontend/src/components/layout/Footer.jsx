@@ -41,7 +41,7 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="gradient-primary-to-secondary text-white relative overflow-hidden">
+    <footer className="bg-gradient-to-br from-[#12228d] to-[#1e3b87] text-white relative overflow-hidden">
       {/* Decorative Elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
@@ -100,7 +100,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-white/10 bg-black/30 backdrop-blur-sm">
+      <div className="border-t border-white/10 bg-black/20 backdrop-blur-sm">
         <div className="layout-page pt-10 pb-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
           <p className="text-white/50 text-xs tracking-widest uppercase font-semibold">
             © 2026 FASHION SHOPPING SENSE. ALL RIGHTS RESERVED.
