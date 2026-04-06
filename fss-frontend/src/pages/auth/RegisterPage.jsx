@@ -97,10 +97,10 @@ export default function RegisterPage() {
             <p className="text-[13px] text-muted-foreground font-medium">Trở thành thành viên của gia đình FSS ngay hôm nay.</p>
           </div>
 
-          <form id="register-form" onSubmit={handleSubmit} className="space-y-10">
+          <form id="register-form" onSubmit={handleSubmit} className="relative z-10 w-full">
             {/* Full name */}
-            <div className="group">
-              <label htmlFor="reg-name" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity">HỌ VÀ TÊN</label>
+            <div className="group first:pt-0">
+              <label htmlFor="reg-name" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">HỌ VÀ TÊN</label>
               <input
                 id="reg-name"
                 type="text"
@@ -114,8 +114,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Email */}
-            <div className="group">
-              <label htmlFor="reg-email" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity">EMAIL</label>
+            <div className="group pt-14">
+              <label htmlFor="reg-email" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">EMAIL</label>
               <input
                 id="reg-email"
                 type="email"
@@ -129,8 +129,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Phone */}
-            <div className="group">
-              <label htmlFor="reg-phone" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity">SỐ ĐIỆN THOẠI</label>
+            <div className="group pt-14">
+              <label htmlFor="reg-phone" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">SỐ ĐIỆN THOẠI</label>
               <input
                 id="reg-phone"
                 type="tel"
@@ -143,8 +143,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Password */}
-            <div className="group">
-              <label htmlFor="reg-password" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity">MẬT KHẨU</label>
+            <div className="group pt-14">
+              <label htmlFor="reg-password" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">MẬT KHẨU</label>
               <div className="relative">
                 <input
                   id="reg-password"
@@ -176,8 +176,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Confirm password */}
-            <div className="group">
-              <label htmlFor="reg-confirm" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity">XÁC NHẬN MẬT KHẨU</label>
+            <div className="group pt-14">
+              <label htmlFor="reg-confirm" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">XÁC NHẬN MẬT KHẨU</label>
               <div className="relative">
                 <input
                   id="reg-confirm"
@@ -187,7 +187,7 @@ export default function RegisterPage() {
                   placeholder="Nhập xác nhận mật khẩu của bạn"
                   value={formData.confirm}
                   onChange={handleChange}
-                  className={`w-full border-b-2 bg-transparent pt-3 pb-4 text-[15px] font-medium focus:outline-none transition-all placeholder:text-slate-200 rounded-sm ${passwordMismatch ? 'border-rose-500' : 'border-slate-100 focus:border-primary'
+                  className={`w-full border-b border-secondary/10 bg-transparent pt-2 pb-3 text-[14px] font-medium focus:outline-none transition-all placeholder:text-slate-200 rounded-none ${passwordMismatch ? 'border-rose-500' : 'border-slate-100 focus:border-primary'
                     }`}
                 />
               </div>
@@ -226,7 +226,7 @@ export default function RegisterPage() {
               id="register-submit-btn"
               type="submit"
               disabled={loading || !agreed || passwordMismatch}
-              className="w-full py-4.5 bg-primary text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-sm hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-10 disabled:opacity-50 disabled:bg-slate-400 disabled:shadow-none"
+              className="w-full py-3.5 bg-primary text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-none hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-10 disabled:opacity-50 disabled:bg-slate-400 disabled:shadow-none"
             >
               {loading ? (
                 <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> ĐANG XỬ LÝ...</>

@@ -95,7 +95,7 @@ export default function LoginPage() {
             <p className="text-[13px] text-muted-foreground font-medium">Chào mừng bạn trở lại với gia đình FSS.</p>
           </div>
 
-          <form id="login-form" onSubmit={handleSubmit} className="space-y-10">
+          <form id="login-form" onSubmit={handleSubmit} className="relative z-10 w-full">
             {/* Decoy inputs to trap browser auto-fill */}
             <div style={{ position: 'absolute', opacity: 0, height: 0, overflow: 'hidden', zIndex: -1 }}>
               <input type="text" name="email" tabIndex="-1" />
@@ -103,10 +103,10 @@ export default function LoginPage() {
             </div>
 
             {/* Email */}
-            <div className="group">
+            <div className="group pt-14 first:pt-0">
               <label
-                htmlFor="login-email"
-                className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity"
+                htmlFor="fss_identity"
+                className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5"
               >
                 EMAIL
               </label>
@@ -124,15 +124,15 @@ export default function LoginPage() {
             </div>
 
             {/* Password */}
-            <div className="group">
-              <div className="flex items-center justify-between">
+            <div className="group pt-16">
+              <div className="flex items-center justify-between font-bold text-primary mb-0.5">
                 <label
-                  htmlFor="login-password"
-                  className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity"
+                  htmlFor="fss_secret"
+                  className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block"
                 >
                   MẬT KHẨU
                 </label>
-                <Link to="/forgot-password" size="sm" className="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors mb-3">QUÊN MẬT KHẨU?</Link>
+                <Link to="/forgot-password" size="sm" className="text-[10px] uppercase font-bold text-muted-foreground hover:text-primary transition-colors">QUÊN MẬT KHẨU?</Link>
               </div>
               <div className="relative">
                 <input
@@ -144,12 +144,12 @@ export default function LoginPage() {
                   placeholder="Nhập mật khẩu của bạn"
                   value={formData.fss_secret}
                   onChange={handleChange}
-                  className="w-full border-b-2 border-slate-100 bg-transparent pt-3 pb-4 pr-16 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
+                  className="w-full border-b-2 border-slate-100 bg-transparent pt-3 pb-4 pr-10 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-none"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary transition-colors z-10"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary transition-colors z-10"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -166,7 +166,7 @@ export default function LoginPage() {
                 id="login-submit-btn"
                 type="submit"
                 disabled={loading}
-                className="flex-[1.2] py-4.5 bg-primary text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-sm hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3"
+                className="flex-[1.2] py-3.5 bg-primary text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-none hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3"
               >
                 {loading ? (
                   <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> ĐANG XỬ LÝ...</>
@@ -175,7 +175,7 @@ export default function LoginPage() {
 
               <Link
                 to="/register"
-                className="flex-1 py-4.5 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-[0.2em] rounded-sm hover:border-primary transition-all flex items-center justify-center"
+                className="flex-1 py-3.5 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-[0.2em] rounded-none hover:border-primary transition-all flex items-center justify-center"
               >
                 ĐĂNG KÝ
               </Link>

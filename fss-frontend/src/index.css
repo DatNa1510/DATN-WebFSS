@@ -113,6 +113,21 @@ body {
 }
 
 /* ===== BASE UTILITIES ===== */
+/* Hide browser default password icons (Edge, Chrome, etc.) */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+input::-webkit-contacts-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+}
+input::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+}
 
 /* Base Form Styling */
 input, textarea, select, button {

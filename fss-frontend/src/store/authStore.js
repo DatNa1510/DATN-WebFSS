@@ -9,7 +9,7 @@ export const DEFAULT_AVATARS = {
 
 // Tài khoản demo (hiện tại vẫn là mock phía client)
 const DEMO_ACCOUNTS_SEED = [
-  { id: 1, name: 'Nguyễn Văn Đạt', email: 'dat@example.com', password: '123456', role: 'customer', avatar: DEFAULT_AVATARS.customer },
+  { id: 1, name: 'Nguyễn Tiến Đạt', email: 'dat@example.com', password: '123456', role: 'customer', avatar: DEFAULT_AVATARS.customer },
   { id: 2, name: 'Admin FSS', email: 'admin@fss.vn', password: 'admin123', role: 'admin', avatar: DEFAULT_AVATARS.admin },
 ];
 
@@ -86,21 +86,23 @@ const useAuthStore = create(
     }),
     {
       name: 'fss-auth',
-      version: 2, // tăng version để trigger migration, cập nhật avatar theo role
+      version: 4, 
       migrate: (persistedState) => {
-        // Cập nhật avatar đúng theo role cho tất cả tài khoản đã lưu
-        const fixAvatar = (acc) => ({
+        console.log("Migrating Auth Store version:", persistedState.version);
+        // Cập nhật tên và avatar
+        const fixAccount = (acc) => ({
           ...acc,
+          name: (acc.name === 'Nguyễn Văn Đạt' || acc.name === 'Nguyễn Tiến Đạt') ? 'Nguyễn Tiến Đạt' : acc.name,
           avatar: DEFAULT_AVATARS[acc.role] ?? DEFAULT_AVATARS.customer,
         });
 
-        const fixedAccounts = (persistedState.accounts ?? []).map(fixAvatar);
+        const fixedAccounts = (persistedState.accounts ?? []).map(fixAccount);
 
-        // Nếu user đang đăng nhập, cũng cập nhật avatar của họ
         const fixedUser = persistedState.user
-          ? fixAvatar(persistedState.user)
+          ? fixAccount(persistedState.user)
           : null;
 
+        console.log("Fixed name for user:", fixedUser?.name);
         return {
           ...persistedState,
           accounts: fixedAccounts,

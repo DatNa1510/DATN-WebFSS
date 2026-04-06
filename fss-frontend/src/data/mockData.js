@@ -233,7 +233,7 @@ export const stats = {
 export const orders = [
   {
     id: 'FSS-2026-001',
-    customer: { name: 'Nguyễn Văn Đạt', email: 'dat@example.com', phone: '0901234567' },
+    customer: { name: 'Nguyễn Tiến Đạt', email: 'dat@example.com', phone: '0901234567' },
     items: [
       { productId: 1, name: 'Áo Thun Basic Navy', size: 'M', color: 'Navy', qty: 2, price: 250000 },
       { productId: 3, name: 'Quần Jean Slim Fit', size: '30', color: 'Xanh wash', qty: 1, price: 580000 },
@@ -272,7 +272,7 @@ export const orders = [
 ];
 
 export const users = [
-  { id: 1, name: 'Nguyễn Văn Đạt', email: 'dat@example.com', role: 'customer', avatar: 'https://i.pravatar.cc/150?img=1', createdAt: '2024-01-15', status: 'active' },
+  { id: 1, name: 'Nguyễn Tiến Đạt', email: 'dat@example.com', role: 'customer', avatar: 'https://i.pravatar.cc/150?img=1', createdAt: '2024-01-15', status: 'active' },
   { id: 2, name: 'Trần Thị Mai', email: 'mai@example.com', role: 'customer', avatar: 'https://i.pravatar.cc/150?img=2', createdAt: '2024-02-20', status: 'active' },
   { id: 3, name: 'Admin FSS', email: 'admin@fss.vn', role: 'admin', avatar: 'https://i.pravatar.cc/150?img=3', createdAt: '2023-12-01', status: 'active' },
 ];
@@ -282,7 +282,7 @@ export const reviews = [
     id: 1,
     productId: 1,
     userId: 1,
-    userName: 'Nguyễn Văn Đạt',
+    userName: 'Nguyễn Tiến Đạt',
     avatar: 'https://i.pravatar.cc/150?img=1',
     rating: 5,
     comment: 'Áo rất đẹp, chất vải tốt, mặc thoải mái. Giao hàng nhanh, đóng gói cẩn thận!',

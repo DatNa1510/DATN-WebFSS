@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, SlidersHorizontal, X, Camera, ChevronDown } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Camera, ChevronDown, ArrowRight } from 'lucide-react';
 import { products, categories, formatPrice } from '../../data/mockData';
 import ProductCard from '../../components/ui/ProductCard';
 
@@ -153,7 +153,7 @@ export default function ProductListPage() {
         </div>
       </div>
 
-      <div className="layout-page py-20 lg:py-28 flex gap-12">
+      <div className="layout-page py-20 lg:py-28 flex gap-12 overflow-hidden">
         {/* Sidebar Filters */}
         <AnimatePresence>
           {showFilters && (
@@ -234,7 +234,7 @@ export default function ProductListPage() {
         </AnimatePresence>
 
         {/* Products Grid */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           {filtered.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
