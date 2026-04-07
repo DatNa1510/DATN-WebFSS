@@ -1,9 +1,24 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Search, Edit2, Trash2, Sparkles, Tag, X, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Search, Edit2, Trash2, X, Check, AlertTriangle, TrendingUp, Star, ChevronLeft, ChevronRight, Filter, ArrowUpDown } from 'lucide-react';
 import { products as initialProducts, categories, formatPrice } from '../../data/mockData';
 
 const emptyForm = { name: '', price: '', originalPrice: '', category: 'ao-thun', description: '', stock: '' };
+
+const inputStyle = {
+  width: '100%', padding: '11px 14px',
+  background: '#F8FAFF', border: '1.5px solid rgba(0,0,0,0.08)',
+  borderRadius: '10px', fontSize: '13.5px', color: '#1E293B',
+  outline: 'none', fontFamily: 'inherit',
+  transition: 'all 0.2s',
+  boxSizing: 'border-box',
+};
+
+const labelStyle = {
+  display: 'block', fontSize: '11px', fontWeight: 700,
+  color: '#64748B', letterSpacing: '0.06em',
+  textTransform: 'uppercase', marginBottom: '7px',
+};
 
 export default function AdminProducts() {
   const [products, setProducts] = useState(initialProducts);
@@ -12,6 +27,7 @@ export default function AdminProducts() {
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [focusedInput, setFocusedInput] = useState(null);
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -25,20 +41,15 @@ export default function AdminProducts() {
       setProducts((prev) => prev.map((p) => p.id === editId ? { ...p, ...form, price: Number(form.price) } : p));
       setEditId(null);
     } else {
-      const newProduct = {
+      setProducts((prev) => [{
         ...emptyForm, ...form,
-        id: Date.now(),
-        price: Number(form.price),
+        id: Date.now(), price: Number(form.price),
         originalPrice: Number(form.originalPrice) || Number(form.price),
         images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80'],
-        sizes: ['S', 'M', 'L', 'XL'],
-        colors: ['#00168d'],
-        colorNames: ['Navy'],
-        rating: 0, reviewCount: 0, sold: 0,
-        tags: [], discount: 0, isNew: true, isBestSeller: false,
-        stock: Number(form.stock) || 0,
-      };
-      setProducts((prev) => [newProduct, ...prev]);
+        sizes: ['S', 'M', 'L', 'XL'], colors: ['#00168d'], colorNames: ['Navy'],
+        rating: 0, reviewCount: 0, sold: 0, tags: [], discount: 0, isNew: true,
+        isBestSeller: false, stock: Number(form.stock) || 0,
+      }, ...prev]);
     }
     setForm(emptyForm);
     setShowForm(false);
@@ -55,187 +66,494 @@ export default function AdminProducts() {
     setDeleteConfirm(null);
   };
 
-  const handleAutoTag = (id) => {
-    const tags = ['casual', 'trendy', 'summer', 'bestseller', 'ai-tagged'];
-    const randomTags = tags.sort(() => Math.random() - 0.5).slice(0, 3);
-    setProducts((prev) => prev.map((p) => p.id === id ? { ...p, tags: randomTags } : p));
-    alert(`✨ AI đã tự động gắn tag: ${randomTags.join(', ')}`);
-  };
-
   return (
-    <div className="space-y-5 page-enter">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '40px' }}>
+
+      {/* ── HEADER ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-display text-foreground">Quản lý sản phẩm</h1>
-          <p className="text-sm text-muted">{filtered.length} / {products.length} sản phẩm</p>
+          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1E1B4B', letterSpacing: '-0.5px' }}>
+            Danh sách sản phẩm
+          </h1>
+          <p style={{ fontSize: '13.5px', color: '#64748B', marginTop: '6px', fontWeight: 500 }}>
+            Quản lý kho hàng và thông tin sản phẩm của bạn
+          </p>
         </div>
-        <button
-          id="add-product-btn"
-          onClick={() => { setShowForm(true); setForm(emptyForm); setEditId(null); }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-secondary transition-colors text-sm shadow"
-        >
-          <Plus size={16} /> Thêm sản phẩm
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <input
-          id="admin-product-search"
-          type="text"
-          placeholder="Tìm kiếm sản phẩm..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-        />
-      </div>
-
-      {/* Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl"
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={15} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+            <input
+              type="text"
+              placeholder="Tìm kiếm sản phẩm..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                height: '42px', paddingLeft: '38px', paddingRight: '16px',
+                background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+                borderRadius: '10px', fontSize: '13px', color: '#374151',
+                outline: 'none', fontFamily: 'inherit', width: '240px',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              }}
+            />
+          </div>
+          <button
+            onClick={() => { setShowForm(true); setForm(emptyForm); setEditId(null); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '7px',
+              padding: '10px 20px', borderRadius: '10px',
+              background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
+              fontSize: '13px', fontWeight: 700, color: 'white',
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              boxShadow: '0 4px 16px rgba(124,58,237,0.35)', whiteSpace: 'nowrap',
+            }}
           >
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="font-bold text-foreground">{editId ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</h2>
-              <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-[#F5F5F5]"><X size={18} /></button>
+            <Plus size={15} strokeWidth={2.5} /> Thêm sản phẩm
+          </button>
+        </div>
+      </div>
+
+      {/* ── KPI CARDS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+        {[
+          { label: 'Tổng sản phẩm', value: '1,248', sub: '+12% tháng này', subColor: '#10B981', icon: '📦' },
+          { label: 'Sắp hết hàng', value: '24', sub: 'Cần nhập thêm', subColor: '#F59E0B', icon: '⚠️' },
+          { label: 'Doanh thu SP', value: '420.5M ₫', sub: 'Hiệu suất cao', subColor: '#7C3AED', icon: '💰' },
+          { label: 'Đánh giá TB', value: '4.8 ⭐', sub: 'Từ 850 lượt mua', subColor: '#64748B', icon: '🌟' },
+        ].map((card, i) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06 }}
+            style={{
+              background: 'white', borderRadius: '16px', padding: '20px 22px',
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                {card.label}
+              </p>
+              <span style={{ fontSize: '20px' }}>{card.icon}</span>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-[#374151] mb-1">Tên sản phẩm *</label>
-                <input name="name" required value={form.name} onChange={handleChange} placeholder="VD: Áo Thun Basic Navy" className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary transition-all" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+            <p style={{ fontSize: '26px', fontWeight: 900, color: '#1E1B4B', lineHeight: 1, letterSpacing: '-0.5px', marginBottom: '8px' }}>
+              {card.value}
+            </p>
+            <p style={{ fontSize: '12px', fontWeight: 600, color: card.subColor }}>
+              {card.sub}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ── MODAL FORM ── */}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 100,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '16px',
+              background: 'rgba(15,15,35,0.6)',
+              backdropFilter: 'blur(8px)',
+            }}
+            onClick={(e) => e.target === e.currentTarget && setShowForm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              style={{
+                background: 'white', borderRadius: '20px',
+                width: '100%', maxWidth: '520px', padding: '32px',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
+                border: '1px solid rgba(124,58,237,0.1)',
+              }}
+            >
+              {/* Modal header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
                 <div>
-                  <label className="block text-xs font-medium text-[#374151] mb-1">Giá bán (₫) *</label>
-                  <input name="price" type="number" required value={form.price} onChange={handleChange} placeholder="250000" className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary transition-all" />
+                  <h2 style={{ fontSize: '19px', fontWeight: 800, color: '#1E1B4B', letterSpacing: '-0.3px' }}>
+                    {editId ? '✏️ Chỉnh sửa sản phẩm' : '➕ Thêm sản phẩm mới'}
+                  </h2>
+                  <p style={{ fontSize: '13px', color: '#64748B', marginTop: '3px' }}>
+                    {editId ? 'Cập nhật thông tin sản phẩm' : 'Điền thông tin sản phẩm mới'}
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-[#374151] mb-1">Giá gốc (₫)</label>
-                  <input name="originalPrice" type="number" value={form.originalPrice} onChange={handleChange} placeholder="350000" className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary transition-all" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-[#374151] mb-1">Danh mục</label>
-                  <select name="category" value={form.category} onChange={handleChange} className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-white focus:outline-none focus:border-primary transition-all">
-                    {categories.filter(c => c.id !== 'all').map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-[#374151] mb-1">Tồn kho</label>
-                  <input name="stock" type="number" value={form.stock} onChange={handleChange} placeholder="100" className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary transition-all" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#374151] mb-1">Mô tả sản phẩm</label>
-                <textarea name="description" value={form.description} onChange={handleChange} rows={3} className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:border-primary resize-none transition-all" placeholder="Mô tả chi tiết..." />
-              </div>
-              <div className="flex gap-2 pt-1">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 border border-border text-[#374151] rounded-xl text-sm font-medium hover:border-primary transition-colors">Hủy</button>
-                <button type="submit" id="save-product-btn" className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-secondary transition-colors flex items-center justify-center gap-1.5">
-                  <Check size={15} /> {editId ? 'Lưu thay đổi' : 'Thêm sản phẩm'}
+                <button
+                  onClick={() => setShowForm(false)}
+                  style={{
+                    width: '36px', height: '36px', borderRadius: '10px',
+                    background: '#F1F5F9', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#64748B',
+                  }}
+                >
+                  <X size={18} />
                 </button>
               </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[700px]">
-            <thead className="bg-surface-secondary border-b border-border">
-              <tr>
-                <th className="text-left text-xs font-semibold text-muted px-4 py-3 w-[260px]">Sản phẩm</th>
-                <th className="text-left text-xs font-semibold text-muted px-4 py-3">Danh mục</th>
-                <th className="text-left text-xs font-semibold text-muted px-4 py-3">Giá</th>
-                <th className="text-left text-xs font-semibold text-muted px-4 py-3">Tồn kho</th>
-                <th className="text-left text-xs font-semibold text-muted px-4 py-3">Đã bán</th>
-                <th className="text-left text-xs font-semibold text-muted px-4 py-3">Tags</th>
-                <th className="text-left text-xs font-semibold text-muted px-4 py-3">Thao tác</th>
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={labelStyle}>Tên sản phẩm *</label>
+                  <input
+                    name="name" required value={form.name} onChange={handleChange}
+                    placeholder="VD: Áo Polo Premium Navy"
+                    style={{
+                      ...inputStyle,
+                      borderColor: focusedInput === 'name' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                      boxShadow: focusedInput === 'name' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
+                    }}
+                    onFocus={() => setFocusedInput('name')}
+                    onBlur={() => setFocusedInput(null)}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={labelStyle}>Giá bán (₫) *</label>
+                    <input
+                      name="price" type="number" required value={form.price} onChange={handleChange}
+                      placeholder="325000"
+                      style={{
+                        ...inputStyle,
+                        borderColor: focusedInput === 'price' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                        boxShadow: focusedInput === 'price' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
+                      }}
+                      onFocus={() => setFocusedInput('price')}
+                      onBlur={() => setFocusedInput(null)}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Giá gốc (₫)</label>
+                    <input
+                      name="originalPrice" type="number" value={form.originalPrice} onChange={handleChange}
+                      placeholder="450000"
+                      style={{
+                        ...inputStyle,
+                        borderColor: focusedInput === 'originalPrice' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                        boxShadow: focusedInput === 'originalPrice' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
+                      }}
+                      onFocus={() => setFocusedInput('originalPrice')}
+                      onBlur={() => setFocusedInput(null)}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={labelStyle}>Danh mục</label>
+                    <select
+                      name="category" value={form.category} onChange={handleChange}
+                      style={{
+                        ...inputStyle, appearance: 'none', cursor: 'pointer',
+                        borderColor: focusedInput === 'category' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                      }}
+                      onFocus={() => setFocusedInput('category')}
+                      onBlur={() => setFocusedInput(null)}
+                    >
+                      {categories.filter(c => c.id !== 'all').map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Tồn kho</label>
+                    <input
+                      name="stock" type="number" value={form.stock} onChange={handleChange}
+                      placeholder="85"
+                      style={{
+                        ...inputStyle,
+                        borderColor: focusedInput === 'stock' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                        boxShadow: focusedInput === 'stock' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
+                      }}
+                      onFocus={() => setFocusedInput('stock')}
+                      onBlur={() => setFocusedInput(null)}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', paddingTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    style={{
+                      flex: 1, padding: '13px',
+                      background: '#F1F5F9', border: 'none',
+                      borderRadius: '12px', fontSize: '13.5px', fontWeight: 700,
+                      color: '#475569', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    id="save-product-btn"
+                    style={{
+                      flex: 2, padding: '13px',
+                      background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
+                      border: 'none', borderRadius: '12px',
+                      fontSize: '13.5px', fontWeight: 700, color: 'white',
+                      cursor: 'pointer', fontFamily: 'inherit',
+                      boxShadow: '0 4px 16px rgba(124,58,237,0.35)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                    }}
+                  >
+                    <Check size={16} strokeWidth={2.5} />
+                    {editId ? 'Lưu thay đổi' : 'Thêm sản phẩm'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MAIN TABLE ── */}
+      <div style={{
+        background: 'white', borderRadius: '18px',
+        border: '1px solid rgba(0,0,0,0.06)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+        overflow: 'hidden',
+      }}>
+        {/* Toolbar */}
+        <div style={{
+          padding: '16px 24px',
+          borderBottom: '1px solid rgba(0,0,0,0.05)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: '#FAFAFA',
+        }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {[
+              { icon: Filter, label: 'Lọc: Tất cả' },
+              { icon: ArrowUpDown, label: 'Sắp xếp: Mới nhất' },
+            ].map(({ icon: Icon, label }) => (
+              <button key={label} style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '7px 14px', borderRadius: '8px',
+                background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+                fontSize: '12px', fontWeight: 600, color: '#475569',
+                cursor: 'pointer', fontFamily: 'inherit',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              }}>
+                <Icon size={13} /> {label}
+              </button>
+            ))}
+          </div>
+          <p style={{ fontSize: '12.5px', color: '#94A3B8', fontWeight: 500 }}>
+            {filtered.length} sản phẩm
+          </p>
+        </div>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                {['Sản phẩm', 'Giá', 'Tồn kho', 'Đã bán', 'Tags', 'Thao tác'].map(h => (
+                  <th key={h} style={{
+                    textAlign: 'left', padding: '13px 20px',
+                    fontSize: '11px', fontWeight: 700, color: '#94A3B8',
+                    letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+                  }}>{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.map((p) => (
-                <motion.tr key={p.id} layout className="hover:bg-surface-secondary transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-14 h-18 shrink-0 rounded-xl overflow-hidden border border-border bg-surface-secondary" style={{height: '72px', width: '56px'}}>
-                        <img
-                          src={p.images[0]}
-                          alt={p.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => { e.target.src = 'https://placehold.co/56x72/f1f5f9/94a3b8?text=No+img'; }}
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-xs text-foreground line-clamp-2 leading-tight">{p.name}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">ID: {p.id}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs bg-accent-soft text-primary px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-                      {categories.find(c => c.id === p.category)?.name || p.category}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="text-xs font-bold text-primary whitespace-nowrap">{formatPrice(p.price)}</p>
-                    {p.discount > 0 && <p className="text-[11px] text-muted-foreground line-through whitespace-nowrap">{formatPrice(p.originalPrice)}</p>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-medium ${p.stock < 10 ? 'text-red-500' : 'text-[#374151]'}`}>{p.stock}</span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-[#374151] font-medium">{p.sold.toLocaleString()}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {p.tags.slice(0, 2).map((t) => (
-                        <span key={t} className="text-[10px] bg-slate-100 text-muted px-1.5 py-0.5 rounded whitespace-nowrap">#{t}</span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleAutoTag(p.id)}
-                        title="AI Auto-tag"
-                        className="p-1.5 rounded-lg hover:bg-purple-50 text-purple-500 transition-colors"
-                      >
-                        <Sparkles size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(p)}
-                        className="p-1.5 rounded-lg hover:bg-accent-soft text-primary transition-colors"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      {deleteConfirm === p.id ? (
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg bg-red-500 text-white text-[11px]"><Check size={13} /></button>
-                          <button onClick={() => setDeleteConfirm(null)} className="p-1.5 rounded-lg bg-[#F5F5F5] text-[#374151] text-[11px]"><X size={13} /></button>
+            <tbody>
+              {filtered.map((p) => {
+                const stockColor = p.stock > 10 ? '#10B981' : p.stock > 0 ? '#F59E0B' : '#EF4444';
+                const stockBg = p.stock > 10 ? 'rgba(16,185,129,0.1)' : p.stock > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
+                const tagData = ['HOT', 'NEW', 'TRENDING', 'SALE', 'PREMIUM'];
+                const displayTags = p.tags?.length > 0 ? p.tags.slice(0, 2) : tagData.sort(() => 0.5 - Math.random()).slice(0, 2);
+
+                return (
+                  <motion.tr
+                    key={p.id}
+                    layout
+                    style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', transition: 'background 0.15s' }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = '#FDFDFF';
+                      e.currentTarget.querySelector('.row-actions').style.opacity = '1';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.querySelector('.row-actions').style.opacity = '0';
+                    }}
+                  >
+                    <td style={{ padding: '14px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '13px', minWidth: '260px' }}>
+                        <div style={{
+                          width: '48px', height: '48px', borderRadius: '12px',
+                          overflow: 'hidden', border: '1px solid rgba(0,0,0,0.07)',
+                          background: '#F8FAFC', flexShrink: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <img
+                            src={p.images[0]} alt={p.name}
+                            style={{ maxWidth: '42px', maxHeight: '42px', objectFit: 'contain' }}
+                            onError={e => { e.target.src = 'https://placehold.co/42x42/f8fafc/94a3b8?text=Img'; }}
+                          />
                         </div>
-                      ) : (
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: '13.5px', fontWeight: 700, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                            {p.name}
+                          </p>
+                          <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>
+                            {categories.find(c => c.id === p.category)?.name || p.category}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 20px' }}>
+                      <p style={{ fontSize: '13.5px', fontWeight: 800, color: '#1E293B', whiteSpace: 'nowrap' }}>
+                        ₫{p.price.toLocaleString()}
+                      </p>
+                    </td>
+                    <td style={{ padding: '14px 20px' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '5px',
+                        padding: '4px 10px', borderRadius: '8px',
+                        background: stockBg, fontSize: '12.5px', fontWeight: 700, color: stockColor,
+                      }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: stockColor }} />
+                        {p.stock}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 20px', fontSize: '13px', color: '#475569', fontWeight: 600 }}>
+                      {p.sold?.toLocaleString() || 120}
+                    </td>
+                    <td style={{ padding: '14px 20px' }}>
+                      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                        {displayTags.map((t) => (
+                          <span key={t} style={{
+                            fontSize: '10px', fontWeight: 700,
+                            background: 'rgba(124,58,237,0.08)', color: '#7C3AED',
+                            padding: '3px 8px', borderRadius: '6px',
+                            letterSpacing: '0.04em',
+                          }}>
+                            #{t}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 20px' }}>
+                      <div className="row-actions" style={{ display: 'flex', gap: '6px', opacity: 0, transition: 'opacity 0.2s' }}>
                         <button
-                          onClick={() => setDeleteConfirm(p.id)}
-                          className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 transition-colors"
+                          onClick={() => handleEdit(p)}
+                          style={{
+                            width: '32px', height: '32px', borderRadius: '8px',
+                            background: 'white', border: '1px solid rgba(0,0,0,0.1)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', color: '#475569', transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#F8F4FF'; e.currentTarget.style.color = '#7C3AED'; e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#475569'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
                         >
-                          <Trash2 size={14} />
+                          <Edit2 size={13} strokeWidth={2.5} />
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
+
+                        {deleteConfirm === p.id ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                              onClick={() => handleDelete(p.id)}
+                              style={{
+                                width: '32px', height: '32px', borderRadius: '8px',
+                                background: '#EF4444', border: 'none',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', color: 'white',
+                              }}
+                            >
+                              <Check size={13} strokeWidth={2.5} />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(null)}
+                              style={{
+                                width: '32px', height: '32px', borderRadius: '8px',
+                                background: 'white', border: '1px solid rgba(0,0,0,0.1)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', color: '#64748B',
+                              }}
+                            >
+                              <X size={13} strokeWidth={2.5} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeleteConfirm(p.id)}
+                            style={{
+                              width: '32px', height: '32px', borderRadius: '8px',
+                              background: 'white', border: '1px solid rgba(0,0,0,0.1)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              cursor: 'pointer', color: '#94A3B8', transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#FFF1F1'; e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.25)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#94A3B8'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
+                          >
+                            <Trash2 size={13} strokeWidth={2.5} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </motion.tr>
+                );
+              })}
             </tbody>
           </table>
+          {filtered.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <p style={{ fontSize: '15px', color: '#94A3B8', fontWeight: 500 }}>Không tìm thấy sản phẩm nào.</p>
+            </div>
+          )}
         </div>
+
+        {filtered.length > 0 && (
+          <div style={{
+            padding: '14px 24px',
+            borderTop: '1px solid rgba(0,0,0,0.05)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: '#FAFAFA',
+          }}>
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '7px 14px', borderRadius: '8px',
+              background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+              fontSize: '12.5px', fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'inherit',
+            }}>
+              <ChevronLeft size={16} /> Trước
+            </button>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {[1, 2, 3].map(n => (
+                <button key={n} style={{
+                  width: '34px', height: '34px', borderRadius: '8px',
+                  background: n === 1 ? 'linear-gradient(135deg, #7C3AED, #4F46E5)' : 'white',
+                  border: n === 1 ? 'none' : '1px solid rgba(0,0,0,0.09)',
+                  fontSize: '13px', fontWeight: 700,
+                  color: n === 1 ? 'white' : '#475569',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  boxShadow: n === 1 ? '0 2px 8px rgba(124,58,237,0.3)' : 'none',
+                }}>{n}</button>
+              ))}
+              <span style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: '13px' }}>...</span>
+              <button style={{
+                width: '34px', height: '34px', borderRadius: '8px',
+                background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+                fontSize: '13px', fontWeight: 700, color: '#475569', cursor: 'pointer', fontFamily: 'inherit',
+              }}>12</button>
+            </div>
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '7px 14px', borderRadius: '8px',
+              background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+              fontSize: '12.5px', fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'inherit',
+            }}>
+              Sau <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

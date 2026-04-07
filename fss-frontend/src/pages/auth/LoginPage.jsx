@@ -44,7 +44,7 @@ export default function LoginPage() {
       {/* Back to Home Button - Minimalist */}
       <Link
         to="/"
-        className="absolute top-10 left-10 z-50 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary hover:opacity-100 transition-all group lg:text-white"
+        className="absolute top-10 left-10 z-50 flex items-center gap-3 text-[12px] font-black uppercase tracking-[0.3em] text-primary hover:opacity-100 transition-all group lg:text-white"
       >
         <div className="w-8 h-8 rounded-full border border-slate-100 lg:border-white/20 flex items-center justify-center group-hover:bg-slate-50 lg:group-hover:bg-white/10 transition-colors">
           <span className="text-lg">←</span>
@@ -92,7 +92,7 @@ export default function LoginPage() {
         >
           <div className="mb-12">
             <h2 className="text-[24px] text-headline leading-tight mb-2 uppercase">ĐĂNG NHẬP</h2>
-            <p className="text-[13px] text-muted-foreground font-medium">Chào mừng bạn trở lại với gia đình FSS.</p>
+            <p className="text-[15px] text-muted-foreground font-medium">Chào mừng bạn trở lại với gia đình FSS.</p>
           </div>
 
           <form id="login-form" onSubmit={handleSubmit} className="relative z-10 w-full">
@@ -132,7 +132,7 @@ export default function LoginPage() {
                 >
                   MẬT KHẨU
                 </label>
-                <Link to="/forgot-password" size="sm" className="text-[10px] uppercase font-bold text-muted-foreground hover:text-primary transition-colors">QUÊN MẬT KHẨU?</Link>
+                <Link to="/forgot-password" size="sm" className="text-[12px] uppercase font-bold text-muted-foreground hover:text-primary transition-colors">QUÊN MẬT KHẨU?</Link>
               </div>
               <div className="relative">
                 <input
@@ -157,7 +157,7 @@ export default function LoginPage() {
             </div>
 
             {authError && (
-              <p className="text-[11px] font-bold text-rose-500 bg-rose-50 p-3 rounded-sm border-l-2 border-rose-500">{authError}</p>
+              <p className="text-[13px] font-bold text-rose-500 bg-rose-50 p-3 rounded-sm border-l-2 border-rose-500">{authError}</p>
             )}
 
             <div className="flex gap-4 mt-10">
@@ -166,7 +166,7 @@ export default function LoginPage() {
                 id="login-submit-btn"
                 type="submit"
                 disabled={loading}
-                className="flex-[1.2] py-3.5 bg-primary text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-none hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3"
+                className="flex-[1.2] py-3.5 bg-primary text-white text-[13px] font-black uppercase tracking-[0.2em] rounded-none hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3"
               >
                 {loading ? (
                   <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> ĐANG XỬ LÝ...</>
@@ -175,7 +175,7 @@ export default function LoginPage() {
 
               <Link
                 to="/register"
-                className="flex-1 py-3.5 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-[0.2em] rounded-none hover:border-primary transition-all flex items-center justify-center"
+                className="flex-1 py-3.5 border border-primary/20 text-primary text-[13px] font-black uppercase tracking-[0.2em] rounded-none hover:border-primary transition-all flex items-center justify-center"
               >
                 ĐĂNG KÝ
               </Link>

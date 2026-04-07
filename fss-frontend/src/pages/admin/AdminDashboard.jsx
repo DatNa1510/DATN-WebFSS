@@ -1,76 +1,215 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, ShoppingBag, Users, Package, ArrowUpRight, BarChart3, Star } from 'lucide-react';
+import { ShoppingBag, Users, Package, Banknote, ArrowUpRight, ArrowDownRight, Download, BarChart3, Star, Clock } from 'lucide-react';
 import { stats, orders, products, revenueData, formatPrice, orderStatusMap } from '../../data/mockData';
+import { Link } from 'react-router-dom';
 
 const statCards = [
-  { label: 'Tổng doanh thu', value: formatPrice(stats.totalRevenue), icon: TrendingUp, change: '+18%', color: 'from-primary to-secondary' },
-  { label: 'Tổng đơn hàng', value: stats.totalOrders.toLocaleString(), icon: ShoppingBag, change: '+12%', color: 'from-[#0D47A1] to-[#1565C0]' },
-  { label: 'Khách hàng', value: stats.totalCustomers.toLocaleString(), icon: Users, change: '+8%', color: 'from-[#1B5E20] to-[#2E7D32]' },
-  { label: 'Sản phẩm', value: stats.totalProducts.toLocaleString(), icon: Package, change: '+45', color: 'from-[#4A148C] to-[#6A1B9A]' },
+  {
+    label: 'Tổng đơn hàng',
+    value: stats.totalOrders.toLocaleString(),
+    icon: ShoppingBag,
+    change: '+12.5%',
+    up: true,
+    gradient: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+    glow: 'rgba(124,58,237,0.35)',
+    lightBg: 'rgba(124,58,237,0.08)',
+    textColor: '#7C3AED',
+  },
+  {
+    label: 'Khách hàng',
+    value: stats.totalCustomers.toLocaleString(),
+    icon: Users,
+    change: '+8.2%',
+    up: true,
+    gradient: 'linear-gradient(135deg, #0EA5E9, #0284C7)',
+    glow: 'rgba(14,165,233,0.35)',
+    lightBg: 'rgba(14,165,233,0.08)',
+    textColor: '#0EA5E9',
+  },
+  {
+    label: 'Sản phẩm',
+    value: stats.totalProducts.toLocaleString(),
+    icon: Package,
+    change: '-2.4%',
+    up: false,
+    gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
+    glow: 'rgba(245,158,11,0.35)',
+    lightBg: 'rgba(245,158,11,0.08)',
+    textColor: '#D97706',
+  },
+  {
+    label: 'Doanh thu',
+    value: '428.5M',
+    icon: Banknote,
+    change: '+15.4%',
+    up: true,
+    gradient: 'linear-gradient(135deg, #10B981, #059669)',
+    glow: 'rgba(16,185,129,0.35)',
+    lightBg: 'rgba(16,185,129,0.08)',
+    textColor: '#10B981',
+  },
 ];
 
 const maxRevenue = Math.max(...revenueData.map((r) => r.revenue));
 
+const statusStyle = {
+  delivered: { bg: 'rgba(16,185,129,0.1)', color: '#059669', dot: '#10B981' },
+  shipping:  { bg: 'rgba(14,165,233,0.1)', color: '#0284C7', dot: '#0EA5E9' },
+  confirmed: { bg: 'rgba(124,58,237,0.1)', color: '#6D28D9', dot: '#7C3AED' },
+  processing:{ bg: 'rgba(245,158,11,0.1)', color: '#B45309', dot: '#F59E0B' },
+  packing:   { bg: 'rgba(245,158,11,0.1)', color: '#B45309', dot: '#F59E0B' },
+  pending:   { bg: 'rgba(100,116,139,0.1)', color: '#475569', dot: '#94A3B8' },
+  cancelled: { bg: 'rgba(239,68,68,0.1)', color: '#DC2626', dot: '#EF4444' },
+};
+
 export default function AdminDashboard() {
   return (
-    <div className="space-y-6 page-enter">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold font-display text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted mt-0.5">Tổng quan hệ thống Fashion Shopping Sense</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', paddingBottom: '40px' }}>
+
+      {/* ── HEADER ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1E1B4B', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
+            Tổng quan quản trị
+          </h1>
+          <p style={{ fontSize: '13.5px', color: '#64748B', marginTop: '6px', fontWeight: 500 }}>
+            Chào mừng trở lại! Đây là hiệu suất kinh doanh hôm nay.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: '7px',
+            padding: '9px 18px', borderRadius: '10px',
+            background: 'white', border: '1px solid rgba(0,0,0,0.1)',
+            fontSize: '13px', fontWeight: 600, color: '#374151',
+            cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            fontFamily: 'inherit', transition: 'all 0.2s',
+          }}>
+            <Download size={15} /> Xuất báo cáo
+          </button>
+        </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map(({ label, value, icon: Icon, change, color }, i) => (
+      {/* ── KPI CARDS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+        {statCards.map(({ label, value, icon: Icon, change, up, gradient, glow, lightBg, textColor }, i) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            className={`bg-gradient-to-br ${color} text-white rounded-2xl p-5`}
+            transition={{ delay: i * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              background: 'white',
+              borderRadius: '18px',
+              padding: '24px',
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+              transition: 'all 0.25s ease',
+              cursor: 'default',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+            whileHover={{ y: -3, boxShadow: `0 12px 32px ${glow}` }}
           >
-            <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Icon size={20} />
+            {/* Subtle bg tint */}
+            <div style={{ position: 'absolute', top: 0, right: 0, width: '80px', height: '80px', background: lightBg, borderRadius: '0 18px 0 80px', pointerEvents: 'none' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+              <div style={{
+                width: '46px', height: '46px', borderRadius: '13px',
+                background: gradient,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: `0 4px 14px ${glow}`,
+              }}>
+                <Icon size={22} color="white" strokeWidth={2.5} />
               </div>
-              <span className="text-xs font-semibold flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full">
-                <ArrowUpRight size={11} /> {change}
-              </span>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '3px',
+                padding: '4px 8px', borderRadius: '8px',
+                background: up ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                fontSize: '12px', fontWeight: 700,
+                color: up ? '#059669' : '#DC2626',
+              }}>
+                {up ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+                {change}
+              </div>
             </div>
-            <p className="text-2xl font-black leading-none mb-1">{value}</p>
-            <p className="text-white/80 text-sm">{label}</p>
+
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>
+              {label}
+            </p>
+            <p style={{ fontSize: '30px', fontWeight: 900, color: '#1E1B4B', lineHeight: 1, letterSpacing: '-1px' }}>
+              {value}
+            </p>
           </motion.div>
         ))}
       </div>
 
-      {/* Revenue Chart + Recent Orders */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        {/* Chart */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-border p-5">
-          <div className="flex items-center justify-between mb-5">
+      {/* ── CHARTS + TOP PRODUCTS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
+
+        {/* Revenue Chart */}
+        <div style={{
+          background: 'white', borderRadius: '18px', padding: '28px',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px' }}>
             <div>
-              <h2 className="font-semibold text-foreground flex items-center gap-2"><BarChart3 size={16} className="text-primary" /> Doanh thu 2026</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Theo tháng (triệu đồng)</p>
+              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#1E1B4B', marginBottom: '4px' }}>
+                Doanh thu 2026
+              </h2>
+              <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 500 }}>
+                Phân tích tăng trưởng theo tháng
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'linear-gradient(135deg, #7C3AED, #4F46E5)' }} />
+                <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Tháng hiện tại</span>
+              </div>
+              <div style={{
+                padding: '5px 12px', borderRadius: '8px',
+                background: '#F8F4FF', border: '1px solid rgba(124,58,237,0.15)',
+                fontSize: '12px', fontWeight: 600, color: '#7C3AED', cursor: 'pointer',
+              }}>
+                T5 - T12 ▾
+              </div>
             </div>
           </div>
-          {/* Bar chart */}
-          <div className="flex items-end gap-2 h-40">
-            {revenueData.map((d) => {
+
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', height: '200px' }}>
+            {revenueData.slice(-8).map((d, index, array) => {
               const heightPct = (d.revenue / maxRevenue) * 100;
+              const isCurrent = index === array.length - 3;
               return (
-                <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${heightPct}%` }}
-                    transition={{ delay: 0.2, duration: 0.8, ease: 'easeOut' }}
-                    className="w-full bg-gradient-to-t from-primary to-primary-lighter rounded-t-lg min-h-[4px] relative group"
-                    title={formatPrice(d.revenue)}
-                  >
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-primary text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      {(d.revenue / 1e6).toFixed(0)}M
-                    </div>
-                  </motion.div>
-                  <span className="text-[10px] text-muted-foreground">{d.month}</span>
+                <div key={d.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', height: '100%', justifyContent: 'flex-end' }}>
+                  <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${heightPct * 1.9}px` }}
+                      transition={{ delay: 0.2 + index * 0.05, duration: 0.7, ease: 'easeOut' }}
+                      style={{
+                        width: '100%', maxWidth: '44px',
+                        background: isCurrent
+                          ? 'linear-gradient(180deg, #7C3AED, #4F46E5)'
+                          : 'linear-gradient(180deg, #DDD6FE, #C4B5FD)',
+                        borderRadius: '8px 8px 4px 4px',
+                        boxShadow: isCurrent ? '0 4px 16px rgba(124,58,237,0.4)' : 'none',
+                        cursor: 'pointer',
+                        transition: 'filter 0.2s',
+                        position: 'relative',
+                      }}
+                      whileHover={{ filter: 'brightness(1.1)' }}
+                      title={`${d.month}: ${(d.revenue / 1e6).toFixed(1)}M ₫`}
+                    />
+                  </div>
+                  <span style={{
+                    fontSize: '11.5px', fontWeight: 700,
+                    color: isCurrent ? '#7C3AED' : '#94A3B8',
+                  }}>
+                    {d.month}
+                  </span>
                 </div>
               );
             })}
@@ -78,69 +217,164 @@ export default function AdminDashboard() {
         </div>
 
         {/* Top Products */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-border p-5">
-          <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Star size={15} className="text-amber-400 fill-amber-400" /> Sản phẩm bán chạy
-          </h2>
-          <div className="space-y-3">
-            {products
-              .sort((a, b) => b.sold - a.sold)
-              .slice(0, 5)
-              .map((p, i) => (
-                <div key={p.id} className="flex items-center gap-2.5">
-                  <span className="text-xs font-bold text-muted-foreground w-4">{i + 1}</span>
-                  <img src={p.images[0]} alt={p.name} className="w-9 h-10 object-cover rounded-lg" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{p.sold} đã bán</p>
-                  </div>
-                  <span className="text-xs font-bold text-primary">{formatPrice(p.price)}</span>
-                </div>
-              ))}
+        <div style={{
+          background: 'white', borderRadius: '18px', padding: '24px',
+          border: '1px solid rgba(0,0,0,0.06)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#1E1B4B' }}>
+              🔥 Bán chạy nhất
+            </h2>
+            <Star size={16} style={{ color: '#F59E0B' }} fill="#F59E0B" />
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {products.sort((a, b) => b.sold - a.sold).slice(0, 4).map((p, i) => (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <img
+                    src={p.images[0]} alt={p.name}
+                    style={{ width: '46px', height: '46px', borderRadius: '12px', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.07)' }}
+                  />
+                  {i === 0 && (
+                    <div style={{
+                      position: 'absolute', top: '-6px', right: '-6px',
+                      width: '18px', height: '18px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '9px', fontWeight: 800, color: 'white',
+                      border: '2px solid white',
+                    }}>1</div>
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {p.name}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>
+                    {formatPrice(p.price)} · <span style={{ color: '#7C3AED', fontWeight: 600 }}>{p.sold} đã bán</span>
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button style={{
+            width: '100%', marginTop: '20px', padding: '10px',
+            borderRadius: '12px', border: '1px solid rgba(124,58,237,0.2)',
+            background: 'rgba(124,58,237,0.05)',
+            fontSize: '13px', fontWeight: 700, color: '#7C3AED',
+            cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
+          }}>
+            Xem tất cả →
+          </button>
         </div>
       </div>
 
-      {/* Recent Orders */}
-      <div className="bg-white rounded-2xl border border-border p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-foreground">Đơn hàng gần đây</h2>
-          <a href="/admin/orders" className="text-xs text-primary hover:underline font-medium">Xem tất cả →</a>
+      {/* ── RECENT ORDERS TABLE ── */}
+      <div style={{
+        background: 'white', borderRadius: '18px',
+        border: '1px solid rgba(0,0,0,0.06)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          padding: '22px 28px',
+          borderBottom: '1px solid rgba(0,0,0,0.05)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <div>
+            <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#1E1B4B' }}>Đơn hàng gần đây</h2>
+            <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px', fontWeight: 500 }}>5 đơn hàng mới nhất</p>
+          </div>
+          <Link to="/admin/orders" style={{
+            fontSize: '13px', fontWeight: 700, color: '#7C3AED', textDecoration: 'none',
+            padding: '7px 14px', borderRadius: '8px', background: 'rgba(124,58,237,0.08)',
+            transition: 'all 0.2s',
+          }}>
+            Xem tất cả →
+          </Link>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr className="border-b border-border">
-                {['Mã đơn', 'Khách hàng', 'Sản phẩm', 'Tổng tiền', 'Trạng thái', ''].map((h) => (
-                  <th key={h} className="text-left text-xs font-semibold text-muted pb-3 pr-4">{h}</th>
+              <tr style={{ background: '#FAFAFA' }}>
+                {['Khách hàng', 'Sản phẩm', 'Tổng tiền', 'Trạng thái', 'Hành động'].map(h => (
+                  <th key={h} style={{
+                    textAlign: 'left', padding: '13px 20px',
+                    fontSize: '11px', fontWeight: 700, color: '#94A3B8',
+                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                    borderBottom: '1px solid rgba(0,0,0,0.05)',
+                  }}>{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {orders.map((order) => {
-                const status = orderStatusMap[order.status];
+            <tbody>
+              {orders.slice(0, 5).map((order, idx) => {
+                const s = statusStyle[order.status] || statusStyle.pending;
+                const statusInfo = orderStatusMap[order.status];
                 return (
-                  <tr key={order.id} className="hover:bg-surface-secondary transition-colors">
-                    <td className="py-3 pr-4 font-mono text-xs text-primary font-semibold">{order.id}</td>
-                    <td className="py-3 pr-4">
-                      <p className="font-medium text-foreground text-xs">{order.customer.name}</p>
-                      <p className="text-muted-foreground text-[11px]">{order.customer.phone}</p>
+                  <motion.tr
+                    key={order.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: idx * 0.06 }}
+                    style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#FAFAFF'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <td style={{ padding: '14px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '36px', height: '36px', borderRadius: '10px',
+                          background: 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(79,70,229,0.1))',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '12px', fontWeight: 800, color: '#7C3AED',
+                          flexShrink: 0,
+                        }}>
+                          {order.customer.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '13.5px', fontWeight: 700, color: '#1E293B' }}>{order.customer.name}</p>
+                          <p style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '1px' }}>{order.id}</p>
+                        </div>
+                      </div>
                     </td>
-                    <td className="py-3 pr-4 text-xs text-[#374151]">{order.items.length} sản phẩm</td>
-                    <td className="py-3 pr-4 font-bold text-xs text-primary">{formatPrice(order.total)}</td>
-                    <td className="py-3 pr-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${status.color}`}>{status.label}</span>
+                    <td style={{ padding: '14px 20px', fontSize: '13px', color: '#475569', fontWeight: 600 }}>
+                      {order.items.length < 10 ? `0${order.items.length}` : order.items.length} sản phẩm
                     </td>
-                    <td className="py-3">
-                      <button className="text-xs text-primary hover:underline">Chi tiết</button>
+                    <td style={{ padding: '14px 20px' }}>
+                      <p style={{ fontSize: '14px', fontWeight: 800, color: '#1E293B' }}>{formatPrice(order.total)}</p>
                     </td>
-                  </tr>
+                    <td style={{ padding: '14px 20px' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '5px',
+                        padding: '4px 10px', borderRadius: '8px',
+                        background: s.bg, fontSize: '11.5px', fontWeight: 700, color: s.color,
+                      }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.dot, flexShrink: 0 }} />
+                        {statusInfo?.label || order.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 20px' }}>
+                      <button style={{
+                        fontSize: '12px', fontWeight: 700, color: '#7C3AED',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        fontFamily: 'inherit', transition: 'opacity 0.2s',
+                      }}>
+                        Chi tiết
+                      </button>
+                    </td>
+                  </motion.tr>
                 );
               })}
             </tbody>
           </table>
         </div>
       </div>
+
     </div>
   );
 }

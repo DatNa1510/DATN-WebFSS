@@ -57,7 +57,7 @@ export default function RegisterPage() {
       {/* Back to Home Button - Minimalist */}
       <Link
         to="/"
-        className="absolute top-10 left-10 z-50 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-primary hover:opacity-100 transition-all group lg:text-white"
+        className="absolute top-10 left-10 z-50 flex items-center gap-3 text-[12px] font-black uppercase tracking-[0.3em] text-primary hover:opacity-100 transition-all group lg:text-white"
       >
         <div className="w-8 h-8 rounded-full border border-slate-100 lg:border-white/20 flex items-center justify-center group-hover:bg-slate-50 lg:group-hover:bg-white/10 transition-colors">
           <span className="text-lg">←</span>
@@ -99,7 +99,7 @@ export default function RegisterPage() {
         >
           <div className="mb-12">
             <h2 className="text-[24px] text-headline leading-tight mb-2 uppercase">TẠO TÀI KHOẢN</h2>
-            <p className="text-[13px] text-muted-foreground font-medium">Trở thành thành viên của gia đình FSS ngay hôm nay.</p>
+            <p className="text-[15px] text-muted-foreground font-medium">Trở thành thành viên của gia đình FSS ngay hôm nay.</p>
           </div>
 
           <form id="register-form" onSubmit={handleSubmit} className="relative z-10 w-full">
@@ -197,12 +197,12 @@ export default function RegisterPage() {
                   placeholder="Nhập xác nhận mật khẩu của bạn"
                   value={formData.confirm}
                   onChange={handleChange}
-                  className={`w-full border-b border-secondary/10 bg-transparent pt-2 pb-3 text-[14px] font-medium focus:outline-none transition-all placeholder:text-slate-200 rounded-none ${passwordMismatch ? 'border-rose-500' : 'border-slate-100 focus:border-primary'
+                  className={`w-full border-b border-secondary/10 bg-transparent pt-2 pb-3 text-[15px] font-medium focus:outline-none transition-all placeholder:text-slate-200 rounded-none ${passwordMismatch ? 'border-rose-500' : 'border-slate-100 focus:border-primary'
                     }`}
                 />
               </div>
               {passwordMismatch && (
-                <p className="text-[11px] font-bold text-rose-500 mt-2 uppercase">MẬT KHẨU KHÔNG KHỚP</p>
+                <p className="text-[13px] font-bold text-rose-500 mt-2 uppercase">MẬT KHẨU KHÔNG KHỚP</p>
               )}
             </div>
 
@@ -218,7 +218,7 @@ export default function RegisterPage() {
                 />
                 {agreed && <Check size={12} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white pointer-events-none" />}
               </div>
-              <span className="text-[12px] text-muted-foreground leading-relaxed font-medium">
+              <span className="text-[14px] text-muted-foreground leading-relaxed font-medium">
                 Tôi đồng ý với{' '}
                 <Link to="/terms" className="text-primary font-black hover:underline underline-offset-4 decoration-1">Điều khoản sử dụng</Link>
                 {' '}và{' '}
@@ -228,7 +228,7 @@ export default function RegisterPage() {
             </label>
 
             {authError && (
-              <p className="text-[11px] font-bold text-rose-500 bg-rose-50 p-3 rounded-sm border-l-2 border-rose-500">{authError}</p>
+              <p className="text-[13px] font-bold text-rose-500 bg-rose-50 p-3 rounded-sm border-l-2 border-rose-500">{authError}</p>
             )}
 
             <motion.button
@@ -236,7 +236,7 @@ export default function RegisterPage() {
               id="register-submit-btn"
               type="submit"
               disabled={loading || !agreed || passwordMismatch}
-              className="w-full py-3.5 bg-primary text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-none hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-10 disabled:opacity-50 disabled:bg-slate-400 disabled:shadow-none"
+              className="w-full py-3.5 bg-primary text-white text-[13px] font-black uppercase tracking-[0.2em] rounded-none hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-10 disabled:opacity-50 disabled:bg-slate-400 disabled:shadow-none"
             >
               {loading ? (
                 <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> ĐANG XỬ LÝ...</>
@@ -244,7 +244,7 @@ export default function RegisterPage() {
             </motion.button>
           </form>
 
-          <p className="mt-12 text-center text-[12px] font-medium text-muted-foreground tracking-tight pb-10">
+          <p className="mt-12 text-center text-[14px] font-medium text-muted-foreground tracking-tight pb-10">
             Đã có tài khoản?{' '}
             <Link to="/login" className="text-primary font-black hover:underline underline-offset-4 decoration-1">Đăng nhập ngay</Link>
           </p>

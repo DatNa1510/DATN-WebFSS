@@ -4,9 +4,9 @@ import { LogOut, ChevronRight, Package, MapPin, Heart, User, ArrowUpRight, Camer
 import useAuthStore from '../../store/authStore';
 import { orders, formatPrice, orderStatusMap } from '../../data/mockData';
 
-function ProfileField({ label, value, editing = false, onChange, icon }) {
+function ProfileField({ label, value, editing = false, onChange, icon, className = "" }) {
   return (
-    <div className="relative group">
+    <div className={`relative group ${className}`}>
       <div className="absolute inset-0 bg-gradient-to-r from-primary/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none" />
       <div className="relative pt-5 pb-4 px-4 border border-slate-100 rounded-xl bg-white/60 hover:border-primary/20 hover:shadow-sm transition-all duration-300 group-focus-within:border-primary/40 group-focus-within:shadow-md group-focus-within:shadow-primary/5">
         <p className="m-0 text-[9px] font-black tracking-[0.25em] text-primary/50 uppercase group-focus-within:text-primary transition-colors leading-[1.1] mb-2">{label}</p>
@@ -40,14 +40,19 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     name: user?.name || '',
+    email: user?.email || '',
     phone: '0901234567',
     address: '123 Lê Lợi, Q1, TP.HCM',
     dob: '12 / 05 / 1995',
+    gender: 'Nam',
+    bio: 'Đam mê thời trang và trải nghiệm những phong cách mới. Luôn tìm kiếm những bộ trang phục phù hợp với cá tính.',
   });
 
   useEffect(() => {
-    if (user?.name) setForm(f => ({ ...f, name: user.name }));
-  }, [user?.name]);
+    if (user?.name || user?.email) {
+      setForm(f => ({ ...f, name: user?.name || f.name, email: user?.email || f.email }));
+    }
+  }, [user?.name, user?.email]);
 
   const fileInputRef = useRef(null);
 
@@ -144,8 +149,8 @@ export default function ProfilePage() {
                     key={item.id}
                     onClick={() => setSideTab(item.id)}
                     className={`w-full flex items-center justify-between px-6 py-3.5 text-[13px] font-bold tracking-wide transition-all duration-200 relative group ${active
-                        ? 'text-primary'
-                        : 'text-slate-500 hover:text-slate-800'
+                      ? 'text-primary'
+                      : 'text-slate-500 hover:text-slate-800'
                       }`}
                   >
                     {/* Active background */}
@@ -251,8 +256,8 @@ export default function ProfilePage() {
                     {/* Header */}
                     <div className="mb-8 flex items-start justify-between">
                       <div>
-                        <h2 className="text-[20px] font-black text-primary mb-1.5 uppercase tracking-tight">Thông tin cá nhân</h2>
-                        <p className="text-[13px] text-slate-400 leading-relaxed">Quản lý các thông tin cá nhân và thiết lập tài khoản của bạn.</p>
+                        <h2 className="text-[20px] font-black text-primary mb-0 uppercase tracking-tight">Thông tin cá nhân</h2>
+                        <p className="text-[13px] text-slate-400 leading-tight">Quản lý các thông tin cá nhân và thiết lập tài khoản của bạn.</p>
                       </div>
                       {/* Decorative accent */}
                       <div className="hidden md:flex items-center gap-1 opacity-20">
@@ -272,7 +277,9 @@ export default function ProfilePage() {
                       />
                       <ProfileField
                         label="ĐỊA CHỈ EMAIL"
-                        value={user?.email}
+                        value={form.email}
+                        editing={editing}
+                        onChange={(v) => setForm((f) => ({ ...f, email: v }))}
                       />
                       <ProfileField
                         label="SỐ ĐIỆN THOẠI"
@@ -285,6 +292,19 @@ export default function ProfilePage() {
                         value={form.dob}
                         editing={editing}
                         onChange={(v) => setForm((f) => ({ ...f, dob: v }))}
+                      />
+                      <ProfileField
+                        label="GIỚI TÍNH"
+                        value={form.gender}
+                        editing={editing}
+                        onChange={(v) => setForm((f) => ({ ...f, gender: v }))}
+                      />
+                      <ProfileField
+                        label="TIỂU SỬ"
+                        value={form.bio}
+                        editing={editing}
+                        onChange={(v) => setForm((f) => ({ ...f, bio: v }))}
+                        className="md:col-span-2"
                       />
                     </div>
 
@@ -361,8 +381,8 @@ export default function ProfilePage() {
                                 {/* Timeline dot */}
                                 <div className="relative z-10 mt-1 shrink-0">
                                   <div className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-300 ${idx === 0
-                                      ? 'bg-primary border-primary/30 shadow-sm shadow-primary/30'
-                                      : 'bg-white border-slate-300 group-hover:border-primary/50'
+                                    ? 'bg-primary border-primary/30 shadow-sm shadow-primary/30'
+                                    : 'bg-white border-slate-300 group-hover:border-primary/50'
                                     }`} />
                                 </div>
                                 {/* Content */}
@@ -439,8 +459,8 @@ export default function ProfilePage() {
                           </div>
                           <div className="text-right">
                             <p className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full ${order.status === 'delivered' || order.status === 'ĐÃ GIAO'
-                                ? 'bg-green-50 text-green-600 border border-green-100'
-                                : 'bg-orange-50 text-orange-600 border border-orange-100'
+                              ? 'bg-green-50 text-green-600 border border-green-100'
+                              : 'bg-orange-50 text-orange-600 border border-orange-100'
                               }`}>
                               {orderStatusMap[order.status]?.label || order.status}
                             </p>
@@ -547,8 +567,37 @@ export default function ProfilePage() {
                 </button>
               </motion.div>
             )}
-          </main>
+            {/* Smart Fit sticky footer for the profile info tab */}
+            {sideTab === 'profile' && mainTab === 'info' && (
+              <div className="mt-auto w-full rounded-[5px] border-t border-slate-100 px-10 py-8 md:px-12 md:py-10 relative overflow-hidden group"
+                style={{ background: 'linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(240,244,248,1) 100%)' }}
+              >
+                {/* Bright Neon Orbs */}
+                <div className="absolute -top-24 -right-24 w-64 h-64 bg-pink-400/20 rounded-full blur-[70px] pointer-events-none group-hover:bg-blue-400/20 transition-colors duration-700" />
+                <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-400/20 rounded-full blur-[70px] pointer-events-none group-hover:bg-pink-400/20 transition-colors duration-700" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-full bg-violet-400/5 rounded-full blur-[100px] pointer-events-none" />
 
+                <div className="flex items-center gap-2 mb-6 relative z-10">
+                  <div className="w-2 h-2 rounded-full bg-violet-600 shadow-[0_0_8px_1px_rgba(139,92,246,0.5)] animate-pulse" />
+                  <span className="text-[10px] font-black tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-500 uppercase">
+                    SMART FIT RECOMMENDATION
+                  </span>
+                </div>
+
+                <h3 className="text-[26px] md:text-[30px] font-bold text-slate-800 leading-[1.2] tracking-tight mb-4 max-w-2xl relative z-10">
+                  Dựa trên đơn hàng trước, size <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-pink-500 font-black" style={{ filter: 'drop-shadow(0 4px 12px rgba(139,92,246,0.25))' }}>XL</span> sẽ vừa vặn nhất với bạn.
+                </h3>
+
+                <p className="text-[14px] text-slate-500 mb-8 max-w-xl leading-relaxed relative z-10 font-medium">
+                  AI của chúng tôi đã phân tích lịch sử mua sắm và các số đo của bạn để tối ưu hóa trải nghiệm.
+                </p>
+
+                <button className="relative z-10 text-[11px] font-black tracking-[0.2em] text-violet-600 uppercase border-b-2 border-violet-600/30 pb-1 hover:text-pink-600 hover:border-pink-500 hover:shadow-[0_4px_12px_rgba(236,72,153,0.2)] transition-all duration-300">
+                  XEM CHI TIẾT SỐ ĐO
+                </button>
+              </div>
+            )}
+          </main>
         </div>
       </div>
     </div>
@@ -689,8 +738,8 @@ function PasswordSection() {
                 <div key={idx} className="flex items-start gap-4 py-3.5 group cursor-default">
                   <div className="relative z-10 mt-1 shrink-0">
                     <div className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-300 ${idx === 0
-                        ? 'bg-primary border-primary/30 shadow-sm shadow-primary/30'
-                        : 'bg-white border-slate-300 group-hover:border-primary/50'
+                      ? 'bg-primary border-primary/30 shadow-sm shadow-primary/30'
+                      : 'bg-white border-slate-300 group-hover:border-primary/50'
                       }`} />
                   </div>
                   <div className="flex-1 flex items-center justify-between -mt-0.5">
