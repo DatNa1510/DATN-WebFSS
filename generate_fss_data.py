@@ -15,7 +15,7 @@ import sys
 sys.stdout.reconfigure(encoding='utf-8', errors='replace', line_buffering=True)
 
 # ─── CONFIG ───────────────────────────────────────
-BASE_DIR    = r"d:\archive\fashion-dataset"
+BASE_DIR    = r"d:\DATN\archive\fashion-dataset"
 STYLES_CSV  = os.path.join(BASE_DIR, "styles.csv")
 IMAGES_DIR  = os.path.join(BASE_DIR, "images")
 
