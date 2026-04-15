@@ -24,7 +24,12 @@ const useAuthStore = create(
       authError: null,
 
       login: (email, password) => {
-        const { accounts } = get();
+        let { accounts } = get();
+        // Fallback: ensure demo accounts are always available
+        if (!accounts || accounts.length === 0) {
+          accounts = DEMO_ACCOUNTS_SEED;
+          set({ accounts });
+        }
         const found = accounts.find((u) => u.email === email && u.password === password);
         if (found) {
           const { password: _, ...safeUser } = found;
@@ -86,7 +91,7 @@ const useAuthStore = create(
     }),
     {
       name: 'fss-auth',
-      version: 4, 
+      version: 5, 
       migrate: (persistedState) => {
         console.log("Migrating Auth Store version:", persistedState.version);
         // Cập nhật tên và avatar
@@ -96,7 +101,11 @@ const useAuthStore = create(
           avatar: DEFAULT_AVATARS[acc.role] ?? DEFAULT_AVATARS.customer,
         });
 
-        const fixedAccounts = (persistedState.accounts ?? []).map(fixAccount);
+        // Ensure demo accounts are always present
+        const persistedAccounts = persistedState.accounts ?? [];
+        const fixedAccounts = persistedAccounts.length === 0 
+          ? DEMO_ACCOUNTS_SEED 
+          : persistedAccounts.map(fixAccount);
 
         const fixedUser = persistedState.user
           ? fixAccount(persistedState.user)
