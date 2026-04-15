@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Star, Heart } from 'lucide-react';
+import { ShoppingBag, Star, Heart, Camera } from 'lucide-react';
 import { useState } from 'react';
 import { formatPrice } from '../../data/mockData';
 import useCartStore from '../../store/cartStore';
@@ -25,7 +25,7 @@ export default function ProductCard({ product }) {
 
   return (
     <motion.div
-      className="group h-full bg-white rounded-md shadow-soft hover:shadow-elevation transition-all duration-300"
+      className="group h-full bg-white rounded-sm shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_40px_rgba(0,22,141,0.08)] border-2 border-transparent hover:border-[#00168d]/10 transition-all duration-500 overflow-hidden"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -6 }}
@@ -69,64 +69,75 @@ export default function ProductCard({ product }) {
           )}
         </div>
 
-          {/* Quick Action Buttons - Enhanced */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2 z-20 translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-y-0">
+        <div className="absolute top-4 right-4 flex flex-col gap-2 z-20 translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
           <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.preventDefault();
-              setLiked(!liked);
-            }}
-            className="w-11 h-11 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-primary hover:text-white transition-all duration-200 border border-white/30"
-            title={liked ? 'Bỏ yêu thích' : 'Yêu thích'}
+            whileTap={{ scale: 0.95 }}
+            className="w-14 h-14 bg-[#00168d] text-white rounded-sm flex items-center justify-center shadow-xl hover:bg-[#00168d] hover:scale-105 active:scale-95 transition-all duration-300"
+            style={{ width: '56px', height: '56px' }}
+            title="Tìm sản phẩm tương tự"
           >
-            <Heart size={18} className={`transition-all ${liked ? 'fill-current' : ''}`} />
+            <Camera size={26} strokeWidth={2.5} />
           </motion.button>
-          {!isAdmin && (
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={handleQuickAdd}
-            className="w-11 h-11 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-elevation transition-all duration-200"
-            title="Thêm vào giỏ"
-          >
-            <ShoppingBag size={18} strokeWidth={2} />
-          </motion.button>
-          )}
+
+          <div className="flex flex-col gap-2 pt-1 border-t border-white/10">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.preventDefault();
+                setLiked(!liked);
+              }}
+              className="w-10 h-10 bg-white/95 backdrop-blur-md rounded-sm flex items-center justify-center shadow-md hover:bg-[#e11d48] hover:text-white transition-all duration-300 border border-white/50"
+              title={liked ? 'Bỏ yêu thích' : 'Yêu thích'}
+            >
+              <Heart size={18} className={`transition-all ${liked ? 'fill-current' : ''}`} />
+            </motion.button>
+            
+            {!isAdmin && (
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={handleQuickAdd}
+                className="w-10 h-10 bg-white/95 backdrop-blur-md rounded-sm flex items-center justify-center shadow-md hover:bg-[#00168d] hover:text-white transition-all duration-300 border border-white/50"
+                title="Thêm vào giỏ"
+              >
+                <ShoppingBag size={18} />
+              </motion.button>
+            )}
+          </div>
         </div>
       </Link>
 
       {/* Info Section - Premium Styling */}
       <div className="p-2 lg:p-3 flex flex-col h-auto justify-between min-h-[150px]">
         {/* Category & Rating */}
-        <div className="flex items-start justify-between gap-2 mb-0.5">
-          <span className="text-xs font-bold text-primary-600 uppercase tracking-wide opacity-70">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
             {product.category}
           </span>
-          <div className="flex items-center gap-1 bg-primary-50 px-2 py-1 rounded-full">
-            <Star size={11} className="fill-primary text-primary" />
-            <span className="text-xs font-bold text-primary">{product.rating}</span>
+          <div className="flex items-center gap-1 bg-[#00168d]/5 px-2 py-1 rounded-sm border border-[#00168d]/10">
+            <Star size={10} className="fill-[#00168d] text-[#00168d]" />
+            <span className="text-[10px] font-black text-[#00168d]">{product.rating}</span>
           </div>
         </div>
 
         {/* Product Name */}
-        <Link to={`/products/${product.id}`} className="block">
-          <h3 className="font-bold text-xs text-foreground leading-tight font-display hover:text-primary transition-colors line-clamp-2 uppercase tracking-tight">
+        <Link to={`/products/${product.id}`} className="block mb-1.5">
+          <h3 className="font-black text-[13px] text-slate-800 leading-tight hover:text-[#00168d] transition-colors line-clamp-2 uppercase tracking-wide">
             {product.name}
           </h3>
         </Link>
 
         {/* Description */}
-        <p className="text-xs text-muted-foreground leading-tight line-clamp-2 my-0.5">
-          Chất lượng cao cấp, thiết kế tối giản
+        <p className="text-[11px] font-medium text-slate-400 line-clamp-1 mb-4">
+          Thiết kế tôn dáng, trải nghiệm cao cấp
         </p>
 
         {/* Price */}
-        <div className="flex items-baseline gap-2 mt-auto">
-          <span className="font-black text-lg text-primary tracking-tight">
+        <div className="flex items-baseline gap-2 mt-auto border-t border-slate-100 pt-3">
+          <span className="font-black text-[15px] bg-gradient-to-r from-[#00168d] to-[#7c3aed] bg-clip-text text-transparent tracking-tight">
             {formatPrice(product.price)}
           </span>
           {product.originalPrice > product.price && (
-            <span className="text-xs text-muted-foreground line-through font-semibold">
+            <span className="text-[11px] text-slate-400 line-through font-bold">
               {formatPrice(product.originalPrice)}
             </span>
           )}

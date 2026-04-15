@@ -70,7 +70,7 @@ export default function BlogPage() {
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute top-6 left-6">
-                  <span className="px-4 py-2 bg-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg">
+                  <span className="px-7 py-3 bg-[#00168d] text-white text-[12px] font-black uppercase tracking-[0.2em] rounded-[2px] shadow-xl">
                     {featuredPost.category}
                   </span>
                 </div>
@@ -110,9 +110,9 @@ export default function BlogPage() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-6 py-3 rounded-sm text-[12px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeCategory === cat
-                      ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105'
-                      : 'bg-slate-50 text-muted-foreground hover:bg-slate-100'
+                  className={`px-8 py-4 rounded-[2px] text-[13px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${activeCategory === cat
+                      ? 'bg-[#00168d] text-white border-[#00168d] shadow-lg shadow-[#00168d]/20'
+                      : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                 >
                   {cat}
@@ -153,7 +153,7 @@ export default function BlogPage() {
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md text-headline text-[9px] font-black uppercase tracking-widest rounded-sm shadow-sm">
+                      <span className="px-6 py-2.5 bg-white/95 backdrop-blur-md text-[#00168d] text-[12px] font-black uppercase tracking-[0.15em] rounded-[2px] shadow-md border border-[#00168d]/10">
                         {post.category}
                       </span>
                     </div>

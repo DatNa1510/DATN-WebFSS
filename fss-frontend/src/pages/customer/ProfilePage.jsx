@@ -287,7 +287,6 @@ export default function ProfilePage() {
                     border: '2px solid rgba(0,22,141,0.12)',
                   }}
                 >
-                  <Star size={9} className="text-amber-500 fill-amber-400" />
                   <span className="text-[9px] font-black tracking-[0.18em] uppercase text-primary">
                     Thành viên từ 2026
                   </span>
@@ -296,9 +295,9 @@ export default function ProfilePage() {
                 {/* Mini stats */}
                 <div className="grid grid-cols-2 gap-2 w-full mt-3">
                   {[
-                    { label: 'Đơn hàng', value: orders.length, icon: ShoppingBag },
-                    { label: 'Điểm tích', value: '240', icon: Star },
-                  ].map(({ label, value, icon: Icon }) => (
+                    { label: 'Đơn hàng', value: orders.length, icon: ShoppingBag, color: 'text-primary' },
+                    { label: 'Điểm tích', value: '240', icon: Star, color: 'text-amber-500 fill-amber-400' },
+                  ].map(({ label, value, icon: Icon, color }) => (
                     <div
                       key={label}
                       className="flex flex-col items-center py-3 px-2 rounded-sm"
@@ -307,7 +306,7 @@ export default function ProfilePage() {
                         border: '2px solid rgba(226,232,240,0.6)',
                       }}
                     >
-                      <Icon size={13} className="text-primary mb-1 opacity-60" />
+                      <Icon size={13} className={`${color} mb-1 ${label === 'Điểm tích' ? 'opacity-100' : 'opacity-60'}`} />
                       <span className="text-[15px] font-black text-slate-800">{value}</span>
                       <span className="text-[9px] text-slate-400 font-semibold tracking-wide">{label}</span>
                     </div>

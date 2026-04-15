@@ -76,158 +76,180 @@ export default function ProductListPage() {
   }, [activeCategory, search, sortBy, priceRange, selectedSizes]);
 
   return (
-    <div className="min-h-screen bg-white page-enter">
+    <div className="min-h-screen bg-[#F8FAFC] page-enter font-sans relative z-0">
+      {/* Background ambient light */}
+      <div className="absolute top-0 left-0 right-0 h-[500px] overflow-hidden -z-10 bg-white pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-[#00168d]/5 blur-[120px]" />
+        <div className="absolute top-20 -left-20 w-[500px] h-[500px] rounded-full bg-[#7c3aed]/5 blur-[100px]" />
+      </div>
+
       {/* Header */}
-      <div className="border-b border-border bg-gradient-to-b from-primary-50 to-white">
-        <div className="layout-page py-16 lg:py-20">
-          <div className="mb-10">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-display text-foreground mb-3">
-              Khám phá sản phẩm
-            </h1>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              {filtered.length} sản phẩm tìm thấy
-              {activeCategory !== 'all' && ` trong danh mục "${categories.find(c => c.slug === activeCategory)?.name || activeCategory}"`}
-            </p>
+      <div className="relative pt-12 pb-6 lg:pt-16 lg:pb-8 border-b border-slate-200/60 bg-white shadow-[0_4px_40px_rgba(0,0,0,0.02)] transition-all">
+        <div className="layout-page">
+          <div className="flex flex-col md:flex-row justify-between md:items-end gap-6 mb-8">
+            <style>
+              {`@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Great+Vibes&display=swap');`}
+            </style>
+            <div>
+              <motion.h1
+                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                className="text-5xl lg:text-6xl mb-2 pt-2"
+                style={{
+                  fontFamily: "'Great Vibes', cursive",
+                  color: '#1e293b',
+                  lineHeight: '1.2',
+                  paddingRight: '10px'
+                }}
+              >
+                Khám phá sản phẩm
+              </motion.h1>
+            </div>
           </div>
 
-          {/* Search & Controls */}
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6 mb-12">
-            {/* Search Input - Full Width on Mobile */}
-            <div className="relative flex-1 lg:flex-none lg:w-80">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                id="product-search"
-                type="text"
-                placeholder="Nhập tên sản phẩm..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="input-premium w-full !pl-14 pr-4 py-3 text-sm rounded-sm"
-              />
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+            {/* Search */}
+            <div className="relative flex-1 lg:max-w-md group">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#00168d] to-[#7c3aed] rounded-sm blur-md opacity-0 group-focus-within:opacity-20 transition-opacity duration-300" />
+              <div className="relative flex items-center bg-white border-2 border-slate-200 rounded-sm focus-within:border-[#00168d] transition-all duration-300 shadow-sm overflow-hidden">
+                <div className="pl-4 pr-3 flex items-center justify-center shrink-0">
+                  <Search size={18} className="text-slate-400 group-focus-within:text-[#00168d] transition-colors" />
+                </div>
+                <input
+                  id="product-search"
+                  type="text"
+                  placeholder="Tìm kiếm sản phẩm..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-transparent pr-4 py-4 text-[15px] font-bold text-slate-700 outline-none placeholder:font-semibold placeholder:text-slate-400"
+                />
+              </div>
             </div>
 
-            {/* Right Controls Wrapper */}
-            <div className="flex items-stretch gap-3 w-full lg:w-auto">
-              {/* Sort Dropdown */}
-              <div className="relative flex-1 lg:flex-none lg:min-w-max">
-                <select
-                  id="sort-select"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="input-premium pl-4 pr-10 py-3 text-sm appearance-none cursor-pointer rounded-sm bg-white w-full"
-                >
-                  {sortOptions.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            {/* Controls */}
+            <div className="flex flex-wrap lg:flex-nowrap items-center gap-4 w-full lg:w-auto">
+              {/* Info Text moved here */}
+              <motion.p 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="text-[15px] font-black text-slate-500 whitespace-nowrap hidden xl:block"
+              >
+                Hiển thị {filtered.length} sản phẩm <span className="mx-1.5 opacity-30">|</span> {activeCategory !== 'all' ? categories.find(c => c.slug === activeCategory)?.name : 'Tất cả'}
+              </motion.p>
+
+              {/* Sort */}
+              <div className="relative flex-1 lg:flex-none lg:min-w-[180px] group">
+                <div className="absolute inset-0 bg-slate-200 blur opacity-0 group-hover:opacity-50 transition-opacity" />
+                <div className="relative flex items-center bg-white border-2 border-slate-200 rounded-sm hover:border-slate-300 transition-colors shadow-sm">
+                  <select
+                    id="sort-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full bg-transparent pl-5 pr-12 py-4 text-[15px] font-black text-slate-700 appearance-none cursor-pointer outline-none"
+                  >
+                    {sortOptions.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3.5 text-slate-400 pointer-events-none" />
+                </div>
               </div>
 
-              {/* Filter Button */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                id="filter-btn"
+              <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center justify-center gap-2 px-5 py-3 rounded-sm font-semibold text-sm transition-all whitespace-nowrap ${
-                  showFilters
-                    ? 'bg-primary text-white shadow-soft'
-                    : 'bg-surface-secondary text-foreground border border-border hover:border-primary'
-                }`}
+                className={`flex-1 lg:flex-none flex items-center justify-center gap-2.5 px-6 py-4 rounded-sm font-black text-[13px] uppercase tracking-widest transition-all duration-300 border-2 ${showFilters
+                    ? 'bg-slate-800 text-white border-slate-800 shadow-md transform hover:-translate-y-0.5'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-800 hover:-translate-y-0.5 shadow-sm'
+                  }`}
               >
-                <SlidersHorizontal size={16} strokeWidth={2} />
+                <SlidersHorizontal size={16} />
                 <span className="hidden sm:inline">Bộ lọc</span>
-              </motion.button>
+              </button>
 
-              {/* Visual Search */}
               <Link
                 to="/visual-search"
-                className="flex items-center justify-center gap-2 px-5 py-3 bg-primary-50 text-primary rounded-sm text-sm font-semibold hover:bg-primary-100 transition-colors border border-primary-200 whitespace-nowrap"
+                className="flex-1 lg:flex-none flex items-center justify-center gap-2.5 px-6 py-4 rounded-sm font-black text-[13px] uppercase tracking-widest transition-all duration-300 border-2 border-[#00168d] bg-transparent text-[#00168d] hover:bg-[#00168d] hover:text-white hover:-translate-y-0.5 shadow-sm"
               >
-                <Camera size={16} strokeWidth={2} />
+                <Camera size={16} />
                 <span className="hidden sm:inline">Tìm ảnh</span>
               </Link>
             </div>
           </div>
-
-
         </div>
       </div>
 
-      <div className="layout-page py-20 lg:py-28 flex gap-12 overflow-hidden">
+      <div className="layout-page py-10 lg:py-16 flex gap-10 items-start">
         {/* Sidebar Filters */}
         <AnimatePresence>
           {showFilters && (
             <motion.aside
-              initial={{ opacity: 0, x: -30, width: 0 }}
-              animate={{ opacity: 1, x: 0, width: 'auto' }}
-              exit={{ opacity: 0, x: -30, width: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="hidden lg:block w-64 shrink-0"
+              initial={{ opacity: 0, x: -20, width: 0 }}
+              animate={{ opacity: 1, x: 0, width: '260px' }}
+              exit={{ opacity: 0, x: -20, width: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="hidden lg:block shrink-0 overflow-hidden"
             >
-              <div className="card-elevated p-6 sticky top-24 space-y-7">
-                <div>
-                  <h3 className="font-bold text-lg text-foreground mb-1">Bộ lọc</h3>
-                  <p className="text-xs text-muted-foreground">Tinh chỉnh kết quả tìm kiếm</p>
+              <div className="w-[260px] bg-white border-2 border-slate-100/60 rounded-sm p-6 sticky top-48 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+                <div className="mb-8">
+                  <h3 className="font-black text-[15px] uppercase tracking-wider text-slate-800 mb-1.5 flex items-center gap-2">
+                    <SlidersHorizontal size={16} className="text-[#00168d]" />
+                    Bộ lọc
+                  </h3>
+                  <div className="h-[2px] w-12 bg-gradient-to-r from-[#00168d] to-[#7c3aed] rounded-full" />
                 </div>
 
                 {/* Price Ranges */}
-                <div className="pb-6 border-b border-border">
-                  <p className="text-xs font-bold text-muted uppercase tracking-wider mb-4">Khoảng giá</p>
-                  <div className="space-y-2">
+                <div className="mb-8 pb-8 border-b border-slate-100">
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] mb-4">Khoảng giá</p>
+                  <div className="space-y-3.5">
                     {priceRanges.map((range, i) => (
-                      <label key={i} className="flex items-center gap-3 py-2 cursor-pointer hover:text-primary transition-colors">
-                        <input
-                          type="radio"
-                          name="price"
-                          checked={priceRange === i}
-                          onChange={() => setPriceRange(i)}
-                          className="w-4 h-4 accent-primary cursor-pointer"
-                        />
-                        <span className="text-sm text-foreground">{range.label}</span>
+                      <label key={i} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-4 h-4 flex items-center justify-center border-[2px] rounded-sm transition-all ${priceRange === i ? 'border-[#00168d] bg-[#00168d]' : 'border-slate-300 group-hover:border-[#00168d]'}`}>
+                          {priceRange === i && <motion.div layoutId="checkPrice" className="w-1.5 h-1.5 bg-white rounded-[1px]" />}
+                        </div>
+                        <span className={`text-[13px] font-bold transition-colors ${priceRange === i ? 'text-[#00168d]' : 'text-slate-600 group-hover:text-slate-800'}`}>{range.label}</span>
                       </label>
                     ))}
                   </div>
                 </div>
 
                 {/* Sizes */}
-                <div className="pb-6 border-b border-border">
+                <div className="mb-8 pb-8 border-b border-slate-100">
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-xs font-bold text-muted uppercase tracking-wider">Size</p>
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">Kích cỡ</p>
                     {selectedSizes.length > 0 && (
                       <button
                         onClick={() => setSelectedSizes([])}
-                        className="text-xs font-semibold text-primary hover:text-primary-700 transition-colors"
+                        className="text-[10px] font-bold text-red-500 hover:text-red-700 hover:underline"
                       >
-                        Xóa
+                        XÓA
                       </button>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {sizesAll.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => toggleSize(s)}
-                        className={`px-3 py-2 text-xs font-semibold rounded-sm border transition-all ${
-                          selectedSizes.includes(s)
-                            ? 'bg-primary text-white border-primary shadow-soft'
-                            : 'border-border text-foreground hover:border-primary hover:text-primary'
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
+                    {sizesAll.map((s) => {
+                      const isActive = selectedSizes.includes(s);
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => toggleSize(s)}
+                          className={`min-w-[42px] px-2 py-2 text-[12px] font-black uppercase rounded-sm border-2 transition-all ${isActive
+                              ? 'bg-gradient-to-br from-[#00168d] to-[#7c3aed] border-transparent text-white shadow-md'
+                              : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-800'
+                            }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Clear All */}
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
                   onClick={() => { setPriceRange(0); setSelectedSizes([]); setSearch(''); }}
-                  className="w-full py-3 text-sm font-semibold text-error bg-error-light border-2 border-error-light rounded-sm hover:bg-error/10 transition-all"
+                  className="w-full py-3.5 bg-slate-50 text-slate-500 text-[11px] font-black uppercase tracking-wider rounded-sm border-2 border-slate-200 hover:bg-slate-100 hover:text-slate-700 transition-colors"
                 >
-                  ✕ Xóa tất cả bộ lọc
-                </motion.button>
+                  Xóa bộ lọc
+                </button>
               </div>
             </motion.aside>
           )}
@@ -237,60 +259,29 @@ export default function ProductListPage() {
         <div className="flex-1 min-w-0">
           {filtered.length === 0 ? (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-32 lg:py-48 flex flex-col items-center justify-center"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white border-2 border-dashed border-slate-200 rounded-sm py-28 flex flex-col items-center justify-center text-center shadow-sm"
             >
-              <motion.div
-                animate={{ y: [0, -12, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="mb-8"
-              >
-                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" className="mx-auto">
-                  {/* Search circle */}
-                  <motion.circle
-                    cx="45" cy="45" r="40"
-                    stroke="url(#gradient)" strokeWidth="3" fill="none"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                  {/* Search handle */}
-                  <motion.line
-                    x1="72" y1="72" x2="100" y2="100"
-                    stroke="url(#gradient)" strokeWidth="4" strokeLinecap="round"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 0.2 }}
-                  />
-                  {/* Question mark inside */}
-                  <text x="45" y="55" fontSize="32" fontWeight="bold" textAnchor="middle" fill="url(#gradient)" fontFamily="Arial">?</text>
-                  
-                  <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#00168D" />
-                      <stop offset="100%" stopColor="#1E3B87" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </motion.div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">Không tìm thấy sản phẩm</h3>
-              <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-md mx-auto">
-                Thử lại với từ khóa khác hoặc điều chỉnh bộ lọc của bạn
+              <div className="w-20 h-20 bg-slate-50 border-2 border-slate-100 rounded-sm flex items-center justify-center mb-6 shadow-sm">
+                <Search size={32} className="text-slate-300" />
+              </div>
+              <h3 className="text-[20px] font-black text-slate-800 mb-2">Không tìm thấy sản phẩm</h3>
+              <p className="text-[13px] font-medium text-slate-500 mb-8 max-w-sm">
+                Rất tiếc, chúng tôi không tìm thấy lựa chọn nào phù hợp. Vui lòng thử lại với tiêu chí tìm kiếm khác.
               </p>
-              <Link
-              to="/products"
-              className="inline-flex items-center gap-4 px-14 py-6 bg-primary text-white font-bold text-sm uppercase tracking-wider rounded-none hover:bg-primary-700 hover:shadow-elevation transition-all group shadow-soft"
-            >
-              Xem tất cả sản phẩm
-              <ArrowRight size={20} strokeWidth={2.5} className="group-hover:translate-x-2 transition-transform" />
-            </Link>
+              <button
+                onClick={() => { setPriceRange(0); setSelectedSizes([]); setSearch(''); }}
+                className="px-8 py-3.5 bg-slate-800 text-white text-[12px] font-black uppercase tracking-[0.1em] rounded-sm hover:-translate-y-0.5 transition-all outline-none"
+              >
+                Hiển thị tất cả
+              </button>
             </motion.div>
           ) : (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
             >
               {filtered.map((p, i) => (
                 <motion.div
