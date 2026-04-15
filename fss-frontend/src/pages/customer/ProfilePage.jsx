@@ -19,7 +19,7 @@ function FloatingField({ label, value, editing = false, onChange, icon: Icon, ty
   return (
     <div className={`relative group ${className}`}>
       <div
-        className="relative overflow-hidden rounded-none transition-all duration-300"
+        className="relative overflow-hidden rounded-sm transition-all duration-300"
         style={{
           background: focused
             ? 'rgba(255,255,255,0.95)'
@@ -35,7 +35,7 @@ function FloatingField({ label, value, editing = false, onChange, icon: Icon, ty
       >
         {/* Top accent line */}
         <div
-          className="absolute top-0 left-0 right-0 h-[2px] rounded-none transition-all duration-300"
+          className="absolute top-0 left-0 right-0 h-[2px] rounded-full transition-all duration-300"
           style={{
             background: focused
               ? 'linear-gradient(90deg, #00168d, #7c3aed)'
@@ -83,7 +83,7 @@ const sideMenuIcons = {
 
 const sideMenuColors = {
   profile: { from: '#00168d', to: '#3b82f6' },
-  orders:  { from: '#7c3aed', to: '#a78bfa' },
+  orders: { from: '#7c3aed', to: '#a78bfa' },
   address: { from: '#059669', to: '#34d399' },
   wishlist: { from: '#e11d48', to: '#fb7185' },
 };
@@ -93,20 +93,21 @@ const sideMenuColors = {
 ───────────────────────────────────────── */
 const statusConfig = {
   delivered: { label: 'Đã giao', bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
-  ĐÃ_GIAO:   { label: 'Đã giao', bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
+  ĐÃ_GIAO: { label: 'Đã giao', bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
   processing: { label: 'Đang xử lý', bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
-  shipping:   { label: 'Đang giao', bg: '#dbeafe', color: '#1e40af', dot: '#3b82f6' },
-  cancelled:  { label: 'Đã huỷ', bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
+  pending: { label: 'Chờ xử lý', bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' },
+  shipping: { label: 'Đang giao', bg: '#dbeafe', color: '#1e40af', dot: '#3b82f6' },
+  cancelled: { label: 'Đã huỷ', bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
 };
 
 function StatusChip({ status }) {
   const cfg = statusConfig[status] || { label: status, bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' };
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-[11px] font-bold"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-[11px] font-bold"
       style={{ background: cfg.bg, color: cfg.color, border: `2px solid ${cfg.dot}40` }}
     >
-      <span className="w-1.5 h-1.5 rounded-none" style={{ background: cfg.dot }} />
+      <span className="w-1.5 h-1.5 rounded-sm" style={{ background: cfg.dot }} />
       {cfg.label || orderStatusMap[status]?.label || status}
     </span>
   );
@@ -157,9 +158,9 @@ export default function ProfilePage() {
 
   const sideMenuItems = [
     { id: 'profile', label: 'Hồ sơ của tôi', sub: 'Thông tin & bảo mật' },
-    { id: 'orders',  label: 'Đơn hàng',       sub: `${orders.length} đơn hàng` },
-    { id: 'address', label: 'Sổ địa chỉ',      sub: '1 địa chỉ đã lưu' },
-    { id: 'wishlist',label: 'Yêu thích',        sub: 'Sản phẩm đã thích' },
+    { id: 'orders', label: 'Đơn hàng', sub: `${orders.length} đơn hàng` },
+    { id: 'address', label: 'Sổ địa chỉ', sub: '1 địa chỉ đã lưu' },
+    { id: 'wishlist', label: 'Yêu thích', sub: 'Sản phẩm đã thích' },
   ];
 
   /* Stagger container variants */
@@ -189,20 +190,20 @@ export default function ProfilePage() {
           style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)' }} />
       </div>
 
-      <div className="layout-page py-10 relative z-10">
+      <div className="layout-page pt-2 pb-10 relative z-10">
         <div className="flex flex-col lg:flex-row gap-6 items-start">
 
           {/* ══════════════════════════════
               SIDEBAR
           ══════════════════════════════ */}
-          <aside className="w-full lg:w-72 shrink-0 sticky top-24 flex flex-col gap-4">
+          <aside className="w-full lg:w-72 shrink-0 sticky top-6 flex flex-col gap-4">
 
             {/* ── Avatar Card ── */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="relative overflow-hidden rounded-none"
+              className="relative overflow-hidden rounded-sm"
               style={{
                 background: 'rgba(255,255,255,0.75)',
                 backdropFilter: 'blur(24px)',
@@ -236,7 +237,7 @@ export default function ProfilePage() {
                 <div className="relative mb-4 group z-10">
                   {/* Animated gradient ring */}
                   <div
-                    className="absolute -inset-1 rounded-none animate-spin"
+                    className="absolute -inset-1 rounded-sm animate-spin"
                     style={{
                       background: 'linear-gradient(90deg, #00168d, #7c3aed, #e11d48, #00168d)',
                       backgroundSize: '200%',
@@ -245,12 +246,12 @@ export default function ProfilePage() {
                     }}
                   />
                   <div
-                    className="absolute -inset-1 rounded-none"
+                    className="absolute -inset-1 rounded-sm"
                     style={{
                       background: 'linear-gradient(135deg, #00168d40, #7c3aed40)',
                     }}
                   />
-                  <div className="relative w-[88px] h-[88px] rounded-none overflow-hidden border-2 border-white shadow-2xl z-10">
+                  <div className="relative w-[88px] h-[88px] rounded-sm overflow-hidden border-2 border-white shadow-2xl z-10">
                     <img
                       src={user?.avatar}
                       alt={user?.name}
@@ -264,7 +265,7 @@ export default function ProfilePage() {
                   </div>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 -right-2 z-20 w-8 h-8 rounded-none flex items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-110"
+                    className="absolute bottom-0 -right-2 z-20 w-8 h-8 rounded-sm flex items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-110"
                     style={{ background: 'linear-gradient(135deg, #00168d, #7c3aed)', border: '2px solid white' }}
                     title="Đổi ảnh đại diện"
                   >
@@ -300,7 +301,7 @@ export default function ProfilePage() {
                   ].map(({ label, value, icon: Icon }) => (
                     <div
                       key={label}
-                      className="flex flex-col items-center py-3 px-2 rounded-none"
+                      className="flex flex-col items-center py-3 px-2 rounded-sm"
                       style={{
                         background: 'rgba(248,250,255,0.8)',
                         border: '2px solid rgba(226,232,240,0.6)',
@@ -320,7 +321,7 @@ export default function ProfilePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.08 }}
-              className="overflow-hidden rounded-none"
+              className="overflow-hidden rounded-sm"
               style={{
                 background: 'rgba(255,255,255,0.75)',
                 backdropFilter: 'blur(24px)',
@@ -341,7 +342,7 @@ export default function ProfilePage() {
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: idx * 0.05 + 0.12 }}
-                      className="w-full flex items-center gap-3 px-3 py-3 rounded-none mb-1 last:mb-0 transition-all duration-200 group text-left relative"
+                      className="w-full flex items-center gap-3 px-3 py-3 rounded-sm mb-1 last:mb-0 transition-all duration-200 group text-left relative"
                       style={{
                         background: active
                           ? `linear-gradient(135deg, ${col.from}12, ${col.to}08)`
@@ -353,7 +354,7 @@ export default function ProfilePage() {
                     >
                       {/* Icon */}
                       <div
-                        className="w-9 h-9 rounded-none flex items-center justify-center shrink-0 transition-all duration-200"
+                        className="w-9 h-9 rounded-sm flex items-center justify-center shrink-0 transition-all duration-200"
                         style={{
                           background: active
                             ? `linear-gradient(135deg, ${col.from}, ${col.to})`
@@ -392,7 +393,7 @@ export default function ProfilePage() {
                       {active && (
                         <motion.div
                           layoutId="sidebar-bar"
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-none"
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-sm"
                           style={{ background: `linear-gradient(180deg, ${col.from}, ${col.to})` }}
                         />
                       )}
@@ -405,7 +406,7 @@ export default function ProfilePage() {
               <div className="px-3 pb-3">
                 <button
                   onClick={logout}
-                  className="w-full flex items-center justify-center gap-2.5 py-3 rounded-none text-[11px] font-black tracking-[0.15em] uppercase transition-all duration-200 group"
+                  className="w-full flex items-center justify-center gap-2.5 py-3 rounded-sm text-[11px] font-black tracking-[0.15em] uppercase transition-all duration-200 group"
                   style={{
                     background: 'rgba(254,242,242,0.6)',
                     border: '2px solid rgba(254,202,202,0.5)',
@@ -441,7 +442,7 @@ export default function ProfilePage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.3 }}
-                  className="overflow-hidden rounded-none"
+                  className="overflow-hidden rounded-sm"
                   style={{
                     background: 'rgba(255,255,255,0.8)',
                     backdropFilter: 'blur(24px)',
@@ -467,7 +468,7 @@ export default function ProfilePage() {
                         {mainTab === t.id && (
                           <motion.div
                             layoutId="main-tab-bar"
-                            className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-none"
+                            className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-sm"
                             style={{ background: 'linear-gradient(90deg, #00168d, #7c3aed)' }}
                           />
                         )}
@@ -486,7 +487,7 @@ export default function ProfilePage() {
                       <div className="flex items-start justify-between mb-7">
                         <div className="flex items-start gap-4">
                           <div
-                            className="w-1.5 h-10 rounded-none shrink-0 mt-0.5"
+                            className="w-1.5 h-10 rounded-sm shrink-0 mt-0.5"
                             style={{ background: 'linear-gradient(180deg, #00168d, #7c3aed)' }}
                           />
                           <div>
@@ -530,7 +531,7 @@ export default function ProfilePage() {
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.9 }}
                               onClick={() => setEditing(true)}
-                              className="flex items-center gap-2 px-5 py-2.5 rounded-none text-[11px] font-black text-white transition-all hover:-translate-y-0.5"
+                              className="flex items-center gap-2 px-5 py-2.5 rounded-sm text-[11px] font-black text-white transition-all hover:-translate-y-0.5"
                               style={{
                                 background: 'linear-gradient(135deg, #00168d, #1e3b87)',
                                 boxShadow: '0 4px 16px rgba(0,22,141,0.20)',
@@ -578,7 +579,7 @@ export default function ProfilePage() {
 
                       {/* Edit History Timeline */}
                       <div
-                        className="rounded-none overflow-hidden"
+                        className="rounded-sm overflow-hidden"
                         style={{
                           background: 'linear-gradient(135deg, rgba(248,250,252,0.9), rgba(255,255,255,0.7))',
                           border: '2px solid rgba(226,232,240,0.6)',
@@ -590,7 +591,7 @@ export default function ProfilePage() {
                           style={{ background: 'linear-gradient(90deg, rgba(0,22,141,0.04), transparent)' }}
                         >
                           <div
-                            className="w-7 h-7 rounded-none flex items-center justify-center"
+                            className="w-7 h-7 rounded-sm flex items-center justify-center"
                             style={{ background: 'linear-gradient(135deg, rgba(0,22,141,0.12), rgba(124,58,237,0.08))' }}
                           >
                             <Clock size={13} className="text-primary" />
@@ -659,7 +660,7 @@ export default function ProfilePage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.3 }}
-                  className="overflow-hidden rounded-none"
+                  className="overflow-hidden rounded-sm"
                   style={{
                     background: 'rgba(255,255,255,0.8)',
                     backdropFilter: 'blur(24px)',
@@ -688,7 +689,7 @@ export default function ProfilePage() {
                         <motion.div
                           key={idx}
                           variants={fadeUp}
-                          className="relative overflow-hidden rounded-none group transition-all duration-300 hover:-translate-y-0.5"
+                          className="relative overflow-hidden rounded-sm group transition-all duration-300 hover:-translate-y-0.5"
                           style={{
                             background: 'rgba(255,255,255,0.9)',
                             border: '2px solid rgba(226,232,240,0.7)',
@@ -737,7 +738,7 @@ export default function ProfilePage() {
                                 <div key={i} className="flex items-center justify-between">
                                   <div className="flex items-center gap-3">
                                     <div
-                                      className="w-14 h-16 rounded-none shrink-0"
+                                      className="w-14 h-16 rounded-sm shrink-0"
                                       style={{
                                         background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
                                         border: '2px solid rgba(226,232,240,0.8)',
@@ -770,7 +771,7 @@ export default function ProfilePage() {
                                 </p>
                               </div>
                               <button
-                                className="flex items-center gap-2 px-5 py-2.5 rounded-none text-[11px] font-black text-slate-600 transition-all hover:-translate-y-0.5"
+                                className="flex items-center gap-2 px-5 py-2.5 rounded-sm text-[11px] font-black text-slate-600 transition-all hover:-translate-y-0.5"
                                 style={{
                                   background: 'rgba(248,250,252,0.8)',
                                   border: '2px solid rgba(226,232,240,0.8)',
@@ -806,7 +807,7 @@ export default function ProfilePage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.3 }}
-                  className="overflow-hidden rounded-none"
+                  className="overflow-hidden rounded-sm"
                   style={{
                     background: 'rgba(255,255,255,0.8)',
                     backdropFilter: 'blur(24px)',
@@ -832,7 +833,7 @@ export default function ProfilePage() {
                     >
                       {/* Default address card */}
                       <div
-                        className="relative overflow-hidden rounded-none p-6 group transition-all duration-300 hover:-translate-y-0.5"
+                        className="relative overflow-hidden rounded-sm p-6 group transition-all duration-300 hover:-translate-y-0.5"
                         style={{
                           background: 'linear-gradient(135deg, rgba(5,150,105,0.04), rgba(255,255,255,0.95))',
                           border: '2px solid rgba(5,150,105,0.2)',
@@ -845,7 +846,7 @@ export default function ProfilePage() {
 
                         <div className="flex items-start gap-4 relative z-10">
                           <div
-                            className="w-11 h-11 rounded-none flex items-center justify-center shrink-0"
+                            className="w-11 h-11 rounded-sm flex items-center justify-center shrink-0 self-center"
                             style={{ background: 'linear-gradient(135deg, #059669, #34d399)', boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}
                           >
                             <MapPin size={18} className="text-white" strokeWidth={2.5} />
@@ -882,7 +883,7 @@ export default function ProfilePage() {
 
                       {/* Add new address – dashed card */}
                       <button
-                        className="w-full flex flex-col items-center justify-center gap-3 py-10 rounded-none transition-all duration-300 group hover:-translate-y-0.5"
+                        className="w-full flex flex-col items-center justify-center gap-3 py-10 rounded-sm transition-all duration-300 group hover:-translate-y-0.5"
                         style={{
                           border: '2px dashed rgba(226,232,240,0.9)',
                           background: 'rgba(248,250,252,0.5)',
@@ -919,7 +920,7 @@ export default function ProfilePage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.3 }}
-                  className="overflow-hidden rounded-none"
+                  className="overflow-hidden rounded-sm"
                   style={{
                     background: 'rgba(255,255,255,0.8)',
                     backdropFilter: 'blur(24px)',
@@ -946,7 +947,7 @@ export default function ProfilePage() {
                       Chưa có sản phẩm nào trong danh sách yêu thích của bạn.
                     </p>
                     <button
-                      className="flex items-center gap-2.5 px-8 py-3.5 rounded-none text-[12px] font-black text-white transition-all hover:-translate-y-0.5"
+                      className="flex items-center gap-2.5 px-8 py-3.5 rounded-sm text-[12px] font-black text-white transition-all hover:-translate-y-0.5"
                       style={{
                         background: 'linear-gradient(135deg, #e11d48, #fb7185)',
                         boxShadow: '0 8px 24px rgba(225,29,72,0.25)',
@@ -966,7 +967,7 @@ export default function ProfilePage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="relative overflow-hidden rounded-none p-8 md:p-10"
+                className="relative overflow-hidden rounded-sm p-8 md:p-10"
                 style={{
                   background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
                   boxShadow: '0 20px 60px rgba(15,12,41,0.3)',
@@ -1015,7 +1016,7 @@ export default function ProfilePage() {
                         sẽ vừa vặn nhất với bạn.
                       </h3>
                       <p className="text-[13px] text-white/50 leading-relaxed max-w-md">
-                        AI đã phân tích lịch sử mua sắm và số đo của bạn để tối ưu trải nghiệm.
+                        Đã phân tích lịch sử mua sắm và số đo của bạn để tối ưu trải nghiệm.
                       </p>
                     </div>
 
@@ -1025,7 +1026,7 @@ export default function ProfilePage() {
                         {['S', 'M', 'L', 'XL', 'XXL'].map((s) => (
                           <div
                             key={s}
-                            className="w-9 h-9 rounded-none flex items-center justify-center text-[11px] font-black transition-all"
+                            className="w-9 h-9 rounded-sm flex items-center justify-center text-[11px] font-black transition-all"
                             style={s === 'XL'
                               ? {
                                 background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
@@ -1046,7 +1047,7 @@ export default function ProfilePage() {
                       </div>
 
                       <button
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-none text-[11px] font-black uppercase tracking-wider transition-all hover:-translate-y-0.5"
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-sm text-[11px] font-black uppercase tracking-wider transition-all hover:-translate-y-0.5"
                         style={{
                           background: 'rgba(255,255,255,0.1)',
                           border: '2px solid rgba(255,255,255,0.15)',
@@ -1132,117 +1133,119 @@ function PasswordSection() {
         <div className="absolute top-0 right-0 w-40 h-40 rounded-full -mr-20 -mt-20 blur-3xl opacity-40"
           style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.3), transparent)' }} />
 
-        {/* Lock icon */}
-        <div className="flex justify-center mb-7">
-          <div className="relative">
-            <div className="absolute inset-0 rounded-none blur-xl opacity-30"
-              style={{ background: 'linear-gradient(135deg, #00168d, #7c3aed)' }} />
-            <div
-              className="relative w-14 h-14 rounded-none flex items-center justify-center"
+        <div className="flex flex-col items-center relative z-10">
+          {/* Lock icon */}
+          <div className="flex justify-center mb-7">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-sm blur-xl opacity-30"
+                style={{ background: 'linear-gradient(135deg, #00168d, #7c3aed)' }} />
+              <div
+                className="relative w-14 h-14 rounded-sm flex items-center justify-center"
+                style={{
+                  background: 'linear-gradient(135deg, #00168d, #7c3aed)',
+                  boxShadow: '0 8px 24px rgba(0,22,141,0.25)',
+                }}
+              >
+                <Lock size={22} className="text-white" strokeWidth={2.5} />
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handle} className="w-full max-w-sm space-y-4">
+            {fields.map(({ id, label }) => (
+              <div key={id} className="relative group">
+                <p className="text-[9px] font-black tracking-[0.28em] text-slate-400 uppercase mb-2">
+                  {label}
+                </p>
+                <div
+                  className="relative flex items-center rounded-sm overflow-hidden transition-all duration-200 focus-within:shadow-md"
+                  style={{ border: '2px solid rgba(226,232,240,0.8)', background: 'rgba(255,255,255,0.8)' }}
+                >
+                  <input
+                    required
+                    type={showPwd[id] ? 'text' : 'password'}
+                    value={vals[id]}
+                    onChange={(e) => {
+                      setVals(v => ({ ...v, [id]: e.target.value }));
+                      setError('');
+                      if (id === 'new') setStrength(calcStrength(e.target.value));
+                    }}
+                    className="h-12 w-full bg-transparent pl-4 pr-12 text-[14px] text-slate-800 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd(p => ({ ...p, [id]: !p[id] }))}
+                    className="absolute right-3.5 text-slate-300 hover:text-primary transition-colors"
+                  >
+                    {showPwd[id] ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+
+                {/* Strength bar for new password */}
+                {id === 'new' && vals.new && (
+                  <div className="mt-2">
+                    <div className="flex gap-1 mb-1">
+                      {[...Array(4)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="h-1 flex-1 rounded-full transition-all duration-300"
+                          style={{ background: i < strength ? strengthColors[strength - 1] : '#e2e8f0' }}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[10px] font-bold" style={{ color: strengthColors[strength - 1] || '#94a3b8' }}>
+                      {strength > 0 ? `Độ mạnh: ${strengthLabels[strength - 1]}` : ''}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="rounded-sm p-4 flex items-center gap-3"
+                  style={{ background: 'rgba(254,226,226,0.8)', border: '2px solid rgba(252,165,165,0.5)' }}
+                >
+                  <X size={14} className="text-red-500 shrink-0" />
+                  <p className="text-[12px] font-bold text-red-600">{error}</p>
+                </motion.div>
+              )}
+              {done && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="rounded-sm p-4 flex items-center gap-3"
+                  style={{ background: 'rgba(209,250,229,0.8)', border: '2px solid rgba(110,231,183,0.5)' }}
+                >
+                  <Check size={14} className="text-emerald-500 shrink-0" />
+                  <p className="text-[12px] font-bold text-emerald-700">Mật khẩu đã được cập nhật thành công!</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <button
+              type="submit"
+              className="w-full h-12 flex items-center justify-center gap-2 rounded-sm text-[12px] font-black tracking-[0.15em] uppercase text-white transition-all hover:-translate-y-0.5"
               style={{
                 background: 'linear-gradient(135deg, #00168d, #7c3aed)',
                 boxShadow: '0 8px 24px rgba(0,22,141,0.25)',
               }}
             >
-              <Lock size={22} className="text-white" strokeWidth={2.5} />
-            </div>
-          </div>
+              <Shield size={14} />
+              Cập nhật mật khẩu
+            </button>
+          </form>
         </div>
-
-        <form onSubmit={handle} className="max-w-sm mx-auto space-y-4 relative z-10">
-          {fields.map(({ id, label }) => (
-            <div key={id} className="relative group">
-              <p className="text-[9px] font-black tracking-[0.28em] text-slate-400 uppercase mb-2">
-                {label}
-              </p>
-              <div
-                className="relative flex items-center rounded-none overflow-hidden transition-all duration-200 focus-within:shadow-md"
-                style={{ border: '2px solid rgba(226,232,240,0.8)', background: 'rgba(255,255,255,0.8)' }}
-              >
-                <input
-                  required
-                  type={showPwd[id] ? 'text' : 'password'}
-                  value={vals[id]}
-                  onChange={(e) => {
-                    setVals(v => ({ ...v, [id]: e.target.value }));
-                    setError('');
-                    if (id === 'new') setStrength(calcStrength(e.target.value));
-                  }}
-                  className="h-12 w-full bg-transparent pl-4 pr-12 text-[14px] text-slate-800 outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPwd(p => ({ ...p, [id]: !p[id] }))}
-                  className="absolute right-3.5 text-slate-300 hover:text-primary transition-colors"
-                >
-                  {showPwd[id] ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-
-              {/* Strength bar for new password */}
-              {id === 'new' && vals.new && (
-                <div className="mt-2">
-                  <div className="flex gap-1 mb-1">
-                    {[...Array(4)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="h-1 flex-1 rounded-full transition-all duration-300"
-                        style={{ background: i < strength ? strengthColors[strength - 1] : '#e2e8f0' }}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-[10px] font-bold" style={{ color: strengthColors[strength - 1] || '#94a3b8' }}>
-                    {strength > 0 ? `Độ mạnh: ${strengthLabels[strength - 1]}` : ''}
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
-
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -8, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="rounded-none p-4 flex items-center gap-3"
-                style={{ background: 'rgba(254,226,226,0.8)', border: '2px solid rgba(252,165,165,0.5)' }}
-              >
-                <X size={14} className="text-red-500 shrink-0" />
-                <p className="text-[12px] font-bold text-red-600">{error}</p>
-              </motion.div>
-            )}
-            {done && (
-              <motion.div
-                initial={{ opacity: 0, y: -8, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="rounded-none p-4 flex items-center gap-3"
-                style={{ background: 'rgba(209,250,229,0.8)', border: '2px solid rgba(110,231,183,0.5)' }}
-              >
-                <Check size={14} className="text-emerald-500 shrink-0" />
-                <p className="text-[12px] font-bold text-emerald-700">Mật khẩu đã được cập nhật thành công!</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <button
-            type="submit"
-            className="w-full h-12 flex items-center justify-center gap-2 rounded-none text-[12px] font-black tracking-[0.15em] uppercase text-white transition-all hover:-translate-y-0.5"
-            style={{
-              background: 'linear-gradient(135deg, #00168d, #7c3aed)',
-              boxShadow: '0 8px 24px rgba(0,22,141,0.25)',
-            }}
-          >
-            <Shield size={14} />
-            Cập nhật mật khẩu
-          </button>
-        </form>
       </div>
 
       {/* Security log */}
       <div
-        className="rounded-none overflow-hidden"
+        className="rounded-sm overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, rgba(248,250,252,0.9), rgba(255,255,255,0.7))',
           border: '2px solid rgba(226,232,240,0.6)',
@@ -1253,7 +1256,7 @@ function PasswordSection() {
           style={{ background: 'linear-gradient(90deg, rgba(0,22,141,0.04), transparent)' }}
         >
           <div
-            className="w-7 h-7 rounded-none flex items-center justify-center"
+            className="w-7 h-7 rounded-sm flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, rgba(0,22,141,0.12), rgba(124,58,237,0.08))' }}
           >
             <Shield size={13} className="text-primary" />
