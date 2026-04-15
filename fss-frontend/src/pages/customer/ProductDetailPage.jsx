@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, ShoppingBag, Heart, Shield, Truck, RefreshCw, Sparkles, Check, ArrowRight } from 'lucide-react';
-import { products, reviews as mockReviews, formatPrice } from '../../data/mockData';
+import { Star, ShoppingBag, Heart, Shield, Truck, RefreshCw, Sparkles, Check, ArrowRight, Info } from 'lucide-react';
+import axios from 'axios';
+import { getProductById, getSimilarProducts, formatPrice } from '../../data/fashionData';
+import { reviews as mockReviews } from '../../data/mockData';
 import ProductCard from '../../components/ui/ProductCard';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
@@ -10,9 +12,10 @@ import useAuthStore from '../../store/authStore';
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const product = products.find((p) => p.id === parseInt(id)) || products[0];
-  const similar = products.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4);
-  const productReviews = mockReviews.filter((r) => r.productId === product.id);
+  
+  const [product, setProduct] = useState(null);
+  const [similar, setSimilar] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [imgIdx, setImgIdx] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
@@ -25,21 +28,69 @@ export default function ProductDetailPage() {
   const isAdmin = user?.role === 'admin';
 
   const handleAddToCart = () => {
-    if (!selectedSize) {
-      alert('Vui lòng chọn size!');
+    if (!selectedSize && product.sizes && product.sizes.length > 0) {
+      alert('Vui lòng chọn kích cỡ/size!');
       return;
     }
-    addItem(product, selectedSize, product.colorNames[selectedColor], qty);
+    const colorToSave = product.colorNames?.[selectedColor] || product.colour;
+    addItem(product, selectedSize || 'Freesize', colorToSave, qty);
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2000);
     openCart();
   };
 
   const handleBuyNow = () => {
-    if (!selectedSize) { alert('Vui lòng chọn size!'); return; }
-    addItem(product, selectedSize, product.colorNames[selectedColor], qty);
+    if (!selectedSize && product.sizes && product.sizes.length > 0) { 
+      alert('Vui lòng chọn kích cỡ/size!'); 
+      return; 
+    }
+    const colorToSave = product.colorNames?.[selectedColor] || product.colour;
+    addItem(product, selectedSize || 'Freesize', colorToSave, qty);
     navigate('/cart');
   };
+
+  useEffect(() => {
+    // Reset state khi đổi sản phẩm
+    setLoading(true);
+    setImgIdx(0);
+    setSelectedSize('');
+    setSelectedColor(0);
+    setQty(1);
+    
+    // Fetch dữ liệu
+    const loadData = async () => {
+      try {
+        // Thử gọi API Backend
+        const res = await axios.get(`http://localhost:8080/api/products/${id}`);
+        setProduct(res.data);
+        
+        // Cần truyền category hiện tại để lấy similar (tạm thời fallback local data)
+        setSimilar(getSimilarProducts(res.data.category || res.data.masterCategory, res.data.id || id));
+      } catch (err) {
+        console.warn('API lỗi, fallback local JSON...', err.message);
+        const fallbackProduct = getProductById(id);
+        setProduct(fallbackProduct);
+        setSimilar(getSimilarProducts(fallbackProduct.category, fallbackProduct.id));
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return <div className="min-h-screen flex text-center mt-20 justify-center">Sản phẩm không tồn tại!</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white pb-32 page-enter">
@@ -147,15 +198,19 @@ export default function ProductDetailPage() {
                       <Star
                         key={s}
                         size={16}
-                        className={s <= Math.round(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-border'}
+                        className={s <= Math.round(product.rating || 5) ? 'fill-amber-400 text-amber-400' : 'text-border'}
                       />
                     ))}
                   </div>
-                  <span className="text-sm font-bold text-foreground">{product.rating}/5</span>
+                  <span className="text-sm font-bold text-foreground">{product.rating || 5.0}/5</span>
                 </div>
                 <div className="h-4 w-px bg-border" />
                 <div className="text-sm font-semibold text-muted-foreground">
-                  {product.sold.toLocaleString()} lượt mua
+                  {(product.sold || 0).toLocaleString()} lượt mua
+                </div>
+                <div className="h-4 w-px bg-border" />
+                <div className="text-sm font-semibold text-muted-foreground">
+                  Tồn kho: {product.stock || 0}
                 </div>
               </div>
 
@@ -164,7 +219,7 @@ export default function ProductDetailPage() {
                 <span className="text-3xl sm:text-4xl font-bold text-primary">
                   {formatPrice(product.price)}
                 </span>
-                {product.originalPrice > product.price && (
+                {product.originalPrice != null && product.originalPrice > product.price && (
                   <span className="text-lg font-semibold text-muted-foreground line-through">
                     {formatPrice(product.originalPrice)}
                   </span>
@@ -172,32 +227,51 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* Color Selection - Ẩn với admin */}
-            {product.colors && product.colors.length > 0 && !isAdmin && (
-              <div className="card !rounded-sm p-6 space-y-4 shadow-none border-slate-100">
-                <label className="text-sm font-bold text-foreground uppercase tracking-wide">
-                  Chọn màu
-                </label>
-                <div className="flex gap-3 flex-wrap">
-                  {product.colors.map((color, i) => (
-                    <motion.button
-                      key={i}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setSelectedColor(i)}
-                      className={`w-12 h-12 rounded-sm border-3 transition-all shadow-sm ${
-                        selectedColor === i ? 'border-primary shadow-soft' : 'border-border hover:border-primary/50'
-                      }`}
-                      style={{ backgroundColor: color }}
-                      title={product.colorNames?.[i] || `Color ${i + 1}`}
-                    />
-                  ))}
+            {/* Thông số kỹ thuật chi tiết */}
+            <div className="card !rounded-sm p-6 space-y-4 shadow-none border-slate-100 bg-slate-50/50">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wide flex items-center gap-2 mb-2">
+                <Info size={16} className="text-primary"/> Thông số sản phẩm
+              </h3>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <div className="flex justify-between border-b pb-1 border-slate-200">
+                  <span className="text-muted-foreground font-medium">Mã SP:</span>
+                  <span className="font-bold">{product.id}</span>
+                </div>
+                <div className="flex justify-between border-b pb-1 border-slate-200">
+                  <span className="text-muted-foreground font-medium">Đối tượng:</span>
+                  <span className="font-bold">{product.gender || 'Chung'}</span>
+                </div>
+                <div className="flex justify-between border-b pb-1 border-slate-200">
+                  <span className="text-muted-foreground font-medium">Nhóm:</span>
+                  <span className="font-bold">{product.category || product.masterCategory}</span>
+                </div>
+                <div className="flex justify-between border-b pb-1 border-slate-200">
+                  <span className="text-muted-foreground font-medium">Phân loại:</span>
+                  <span className="font-bold">{product.subCat || product.subCategory}</span>
+                </div>
+                <div className="flex justify-between border-b pb-1 border-slate-200">
+                  <span className="text-muted-foreground font-medium">Chi tiết:</span>
+                  <span className="font-bold">{product.articleType}</span>
+                </div>
+                <div className="flex justify-between border-b pb-1 border-slate-200">
+                  <span className="text-muted-foreground font-medium">Màu sắc:</span>
+                  <span className="font-bold">{product.colour || product.baseColour}</span>
+                </div>
+                <div className="flex justify-between border-b pb-1 border-slate-200">
+                  <span className="text-muted-foreground font-medium">Hoàn cảnh:</span>
+                  <span className="font-bold">{product.usage || 'Đa dụng'}</span>
+                </div>
+                <div className="flex justify-between border-b pb-1 border-slate-200">
+                  <span className="text-muted-foreground font-medium">Bộ sưu tập:</span>
+                  <span className="font-bold">{product.season ? `${product.season} ${product.year || ''}` : 'Mới'}</span>
                 </div>
               </div>
-            )}
+            </div>
+
+
 
             {/* Size Selection - Ẩn với admin */}
-            {!isAdmin && (
+            {!isAdmin && product.sizes && product.sizes.length > 0 && (
             <div className="card !rounded-sm p-6 space-y-4 shadow-none border-slate-100">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-bold text-foreground uppercase tracking-wide">

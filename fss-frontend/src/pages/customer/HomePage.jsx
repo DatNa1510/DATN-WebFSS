@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Zap, Shield, Truck, ChevronRight } from 'lucide-react';
-import { products, categories, formatPrice } from '../../data/mockData';
+import { getProducts, getProductById, formatPrice } from '../../data/fashionData';
 import ProductCard from '../../components/ui/ProductCard';
 
 /* Khung chung với header/footer — luôn có lề hai bên */
@@ -30,11 +30,12 @@ const features = [
 
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
-  const heroProduct = products[0];
 
-  const filteredProducts = activeCategory === 'all'
-    ? products.slice(0, 8)
-    : products.filter((p) => p.category === activeCategory).slice(0, 8);
+  // Lấy chính xác sản phẩm "REVV NAM STEEL RING" theo ID để tránh lỗi tìm kiếm
+  const heroProduct = getProductById(48946);
+
+  const productsData = getProducts({ limit: 8, category: activeCategory, sort: 'best-seller' });
+  const filteredProducts = productsData.items;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -96,7 +97,7 @@ export default function HomePage() {
             >
               <div className="group relative w-full rounded-[2rem] overflow-hidden shadow-elevation ring-1 ring-black/5">
                 <img
-                  src={heroProduct.images[0]}
+                  src={heroProduct.images?.[0] || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=60'}
                   alt={heroProduct.name}
                   className="w-full h-[min(400px,50vh)] sm:h-[480px] lg:h-[520px] object-cover object-top"
                 />
@@ -115,12 +116,13 @@ export default function HomePage() {
 
                 {/* Bottom Card */}
                 <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 bg-gradient-to-t from-black via-black/80 to-transparent backdrop-blur-sm border-t border-white/10">
-                  <span className="badge badge-primary mb-3">
-                    ⭐ Best Seller
+                  <span className="badge badge-primary mb-3 uppercase tracking-widest text-[10px]">
+                    🔥 Best Seller
                   </span>
                   <h3 className="font-display font-bold text-white text-lg sm:text-xl leading-snug">
                     {heroProduct.name}
                   </h3>
+                  <p className="text-white/70 text-sm mt-1 mb-2">Thiết kế tôn dáng, trải nghiệm cao cấp</p>
                   <p className="text-white/90 font-bold text-lg mt-2">{formatPrice(heroProduct.price)}</p>
                   <Link
                     to={`/products/${heroProduct.id}`}

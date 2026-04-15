@@ -1,10 +1,17 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Star, Heart, Camera } from 'lucide-react';
+import { ShoppingBag, Star, Heart } from 'lucide-react';
 import { useState } from 'react';
-import { formatPrice } from '../../data/mockData';
+import { formatPrice as formatPriceFashion } from '../../data/fashionData';
+import { formatPrice as formatPriceMock } from '../../data/mockData';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
+
+// Dùng formatPrice từ fashionData (ưu tiên) hoặc mockData
+const formatPrice = formatPriceFashion || formatPriceMock;
+
+// Fallback image khi ảnh local bị lỗi
+const FALLBACK = 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=60';
 
 export default function ProductCard({ product }) {
   const [liked, setLiked] = useState(false);
@@ -36,11 +43,13 @@ export default function ProductCard({ product }) {
         className="block relative overflow-hidden rounded-sm aspect-[3/4] bg-surface-secondary"
       >
         <img
-          src={product.images[imgIdx]}
+          src={product.images?.[imgIdx] || FALLBACK}
           alt={product.name}
           className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
-          onMouseEnter={() => product.images[1] && setImgIdx(1)}
+          onError={(e) => { e.target.src = FALLBACK; }}
+          onMouseEnter={() => product.images?.[1] && setImgIdx(1)}
           onMouseLeave={() => setImgIdx(0)}
+          loading="lazy"
         />
 
         {/* Overlay Gradient on Hover */}
@@ -69,17 +78,7 @@ export default function ProductCard({ product }) {
           )}
         </div>
 
-        <div className="absolute top-4 right-4 flex flex-col gap-2 z-20 translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="w-14 h-14 bg-[#00168d] text-white rounded-sm flex items-center justify-center shadow-xl hover:bg-[#00168d] hover:scale-105 active:scale-95 transition-all duration-300"
-            style={{ width: '56px', height: '56px' }}
-            title="Tìm sản phẩm tương tự"
-          >
-            <Camera size={26} strokeWidth={2.5} />
-          </motion.button>
-
-          <div className="flex flex-col gap-2 pt-1 border-t border-white/10">
+        <div className="absolute top-4 right-4 flex flex-col gap-2 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300">
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={(e) => {
@@ -102,7 +101,6 @@ export default function ProductCard({ product }) {
                 <ShoppingBag size={18} />
               </motion.button>
             )}
-          </div>
         </div>
       </Link>
 
@@ -110,12 +108,19 @@ export default function ProductCard({ product }) {
       <div className="p-2 lg:p-3 flex flex-col h-auto justify-between min-h-[150px]">
         {/* Category & Rating */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            {product.category}
-          </span>
-          <div className="flex items-center gap-1 bg-[#00168d]/5 px-2 py-1 rounded-sm border border-[#00168d]/10">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {product.articleType || product.category}
+            </span>
+            {product.gender && (
+              <span className="text-[9px] font-bold text-[#7c3aed]/70 uppercase tracking-wide">
+                {product.gender === 'Men' ? 'Nam' : product.gender === 'Women' ? 'Nữ' : product.gender === 'Boys' ? 'Bé trai' : product.gender === 'Girls' ? 'Bé gái' : 'Unisex'}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 bg-[#00168d]/5 px-2 py-1 rounded-sm border border-[#00168d]/10 shrink-0">
             <Star size={10} className="fill-[#00168d] text-[#00168d]" />
-            <span className="text-[10px] font-black text-[#00168d]">{product.rating}</span>
+            <span className="text-[10px] font-black text-[#00168d]">{product.rating || '4.5'}</span>
           </div>
         </div>
 

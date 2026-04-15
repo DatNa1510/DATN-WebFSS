@@ -968,9 +968,9 @@ export default function ProfilePage() {
                 transition={{ delay: 0.2 }}
                 className="relative overflow-hidden rounded-sm p-8 md:p-10"
                 style={{
-                  background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
-                  boxShadow: '0 20px 60px rgba(15,12,41,0.3)',
-                  border: '2px solid rgba(255,255,255,0.07)',
+                  background: 'linear-gradient(135deg, #ffffff 0%, #f5f3ff 50%, #fdf2f8 100%)',
+                  boxShadow: '0 20px 60px rgba(0,22,141,0.05)',
+                  border: '2px solid rgba(0,22,141,0.08)',
                 }}
               >
                 {/* Animated orbs */}
@@ -1004,17 +1004,17 @@ export default function ProfilePage() {
 
                   <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
                     <div>
-                      <h3 className="text-[24px] md:text-[28px] font-black text-white leading-[1.2] tracking-tight mb-3 max-w-lg">
+                      <h3 className="text-[24px] md:text-[28px] font-black text-slate-800 leading-[1.2] tracking-tight mb-3 max-w-lg">
                         Dựa trên đơn hàng trước,{' '}
                         <span
                           className="relative"
-                          style={{ background: 'linear-gradient(90deg, #a78bfa, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                          style={{ background: 'linear-gradient(90deg, #00168d, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
                         >
                           size XL
                         </span>{' '}
                         sẽ vừa vặn nhất với bạn.
                       </h3>
-                      <p className="text-[13px] text-white/50 leading-relaxed max-w-md">
+                      <p className="text-[14px] text-slate-500 font-medium leading-relaxed max-w-md">
                         Đã phân tích lịch sử mua sắm và số đo của bạn để tối ưu trải nghiệm.
                       </p>
                     </div>
@@ -1034,9 +1034,9 @@ export default function ProfilePage() {
                                 transform: 'scale(1.15)',
                               }
                               : {
-                                background: 'rgba(255,255,255,0.08)',
-                                color: 'rgba(255,255,255,0.35)',
-                                border: '2px solid rgba(255,255,255,0.08)',
+                                background: 'rgba(0,0,0,0.03)',
+                                color: '#94a3b8',
+                                border: '2px solid rgba(0,0,0,0.05)',
                               }
                             }
                           >
@@ -1048,10 +1048,9 @@ export default function ProfilePage() {
                       <button
                         className="flex items-center gap-2 px-5 py-2.5 rounded-sm text-[11px] font-black uppercase tracking-wider transition-all hover:-translate-y-0.5"
                         style={{
-                          background: 'rgba(255,255,255,0.1)',
-                          border: '2px solid rgba(255,255,255,0.15)',
-                          color: 'rgba(255,255,255,0.85)',
-                          backdropFilter: 'blur(8px)',
+                          background: 'rgba(0,22,141,0.05)',
+                          border: '2px solid rgba(0,22,141,0.1)',
+                          color: '#00168d',
                         }}
                       >
                         <Ruler size={12} />
