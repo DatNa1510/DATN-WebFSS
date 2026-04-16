@@ -28,9 +28,8 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Giả lập delay API call
-    await new Promise((r) => setTimeout(r, 800));
-    const result = login(formData.fss_identity, formData.fss_secret);
+    // Gọi API thực tế thông qua Zustand store
+    const result = await login(formData.fss_identity, formData.fss_secret);
     setLoading(false);
     if (result.success) {
       navigate(result.role === 'admin' ? '/admin' : '/');

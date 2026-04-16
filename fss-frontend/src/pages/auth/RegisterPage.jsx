@@ -22,6 +22,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [registerSuccess, setRegisterSuccess] = useState(false);
   const navigate = useNavigate();
   const { register, authError, clearError } = useAuthStore();
 
@@ -44,10 +45,12 @@ export default function RegisterPage() {
     }
     if (!agreed) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 900));
-    const result = register(formData.name, formData.email, formData.password);
+    // Gọi API thực tế
+    const result = await register(formData.name, formData.email, formData.password, formData.phone);
     setLoading(false);
-    if (result.success) navigate('/');
+    if (result.success) {
+      setRegisterSuccess(true);
+    }
   };
 
   const passwordMismatch = formData.confirm && formData.password !== formData.confirm;
@@ -89,7 +92,7 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* Right panel — form */}
+      {/* Right panel — form or success message */}
       <div className="flex-1 flex items-center justify-center p-8 bg-white overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -97,157 +100,177 @@ export default function RegisterPage() {
           transition={{ duration: 0.6 }}
           className="w-full max-w-sm"
         >
-          <div className="mb-12">
-            <h2 className="text-[24px] text-headline leading-tight mb-2 uppercase">TẠO TÀI KHOẢN</h2>
-            <p className="text-[15px] text-muted-foreground font-medium">Trở thành thành viên của gia đình FSS ngay hôm nay.</p>
-          </div>
-
-          <form id="register-form" onSubmit={handleSubmit} className="relative z-10 w-full">
-            {/* Full name */}
-            <div className="group first:pt-0">
-              <label htmlFor="reg-name" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">HỌ VÀ TÊN</label>
-              <input
-                id="reg-name"
-                type="text"
-                name="name"
-                required
-                autoComplete="name"
-                placeholder="Nhập họ và tên của bạn"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
-              />
-            </div>
-
-            {/* Email */}
-            <div className="group mt-12">
-              <label htmlFor="reg-email" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">EMAIL</label>
-              <input
-                id="reg-email"
-                type="email"
-                name="email"
-                required
-                autoComplete="email"
-                placeholder="Nhập email của bạn"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
-              />
-            </div>
-
-            {/* Phone */}
-            <div className="group mt-12">
-              <label htmlFor="reg-phone" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">SỐ ĐIỆN THOẠI</label>
-              <input
-                id="reg-phone"
-                type="tel"
-                name="phone"
-                autoComplete="tel"
-                placeholder="Nhập sđt của bạn"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
-              />
-            </div>
-
-            {/* Password */}
-            <div className="group mt-12">
-              <label htmlFor="reg-password" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">MẬT KHẨU</label>
-              <div className="relative">
-                <input
-                  id="reg-password"
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  required
-                  autoComplete="new-password"
-                  placeholder="Nhập mật khẩu của bạn"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary transition-colors"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+          {registerSuccess ? (
+             <div className="text-center py-10 flex flex-col items-center">
+               <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                 <Mail size={40} />
+               </div>
+               <h2 className="text-[24px] text-headline leading-tight mb-4 uppercase">KIỂM TRA HỘP THƯ</h2>
+               <p className="text-[15px] text-muted-foreground font-medium mb-8 leading-relaxed">
+                 Chúng tôi đã gửi một email xác nhận đến địa chỉ <strong>{formData.email}</strong>. Vui lòng kiểm tra hộp thư đến (và mục Spam) để kích hoạt tài khoản của bạn trước khi đăng nhập.
+               </p>
+               <Link
+                 to="/login"
+                 className="inline-block px-8 py-3.5 bg-primary text-white text-[13px] font-black uppercase tracking-[0.2em] rounded-none hover:bg-secondary transition-all shadow-xl shadow-primary/20"
+               >
+                 ĐI ĐẾN TRANG ĐĂNG NHẬP
+               </Link>
+             </div>
+          ) : (
+            <>
+              <div className="mb-12">
+                <h2 className="text-[24px] text-headline leading-tight mb-2 uppercase">TẠO TÀI KHOẢN</h2>
+                <p className="text-[15px] text-muted-foreground font-medium">Trở thành thành viên của gia đình FSS ngay hôm nay.</p>
               </div>
-              {formData.password && (
-                <div className="mt-4 space-y-1">
-                  <div className="flex gap-1.5">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <div key={s} className={`h-0.5 flex-1 rounded-full transition-all ${s <= strength ? strengthColors[strength] : 'bg-slate-100'}`} />
-                    ))}
-                  </div>
+
+              <form id="register-form" onSubmit={handleSubmit} className="relative z-10 w-full">
+                {/* Full name */}
+                <div className="group first:pt-0">
+                  <label htmlFor="reg-name" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">HỌ VÀ TÊN</label>
+                  <input
+                    id="reg-name"
+                    type="text"
+                    name="name"
+                    required
+                    autoComplete="name"
+                    placeholder="Nhập họ và tên của bạn"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
+                  />
                 </div>
-              )}
-            </div>
 
-            {/* Confirm password */}
-            <div className="group mt-12">
-              <label htmlFor="reg-confirm" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">XÁC NHẬN MẬT KHẨU</label>
-              <div className="relative">
-                <input
-                  id="reg-confirm"
-                  type="password"
-                  name="confirm"
-                  required
-                  autoComplete="new-password"
-                  placeholder="Nhập xác nhận mật khẩu của bạn"
-                  value={formData.confirm}
-                  onChange={handleChange}
-                  className={`w-full border-b border-secondary/10 bg-transparent pt-2 pb-3 text-[15px] font-medium focus:outline-none transition-all placeholder:text-slate-200 rounded-none ${passwordMismatch ? 'border-rose-500' : 'border-slate-100 focus:border-primary'
-                    }`}
-                />
-              </div>
-              {passwordMismatch && (
-                <p className="text-[13px] font-bold text-rose-500 mt-2 uppercase">MẬT KHẨU KHÔNG KHỚP</p>
-              )}
-            </div>
+                {/* Email */}
+                <div className="group mt-12">
+                  <label htmlFor="reg-email" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">EMAIL</label>
+                  <input
+                    id="reg-email"
+                    type="email"
+                    name="email"
+                    required
+                    autoComplete="email"
+                    placeholder="Nhập email của bạn"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
+                  />
+                </div>
 
-            {/* Terms */}
-            <label className="flex items-start gap-4 cursor-pointer group">
-              <div className="relative mt-0.5">
-                <input
-                  id="reg-terms"
-                  type="checkbox"
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
-                  className="w-4 h-4 rounded-sm border-2 border-slate-200 appearance-none checked:bg-primary checked:border-primary transition-all cursor-pointer"
-                />
-                {agreed && <Check size={12} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white pointer-events-none" />}
-              </div>
-              <span className="text-[14px] text-muted-foreground leading-relaxed font-medium">
-                Tôi đồng ý với{' '}
-                <Link to="/terms" className="text-primary font-black hover:underline underline-offset-4 decoration-1">Điều khoản sử dụng</Link>
-                {' '}và{' '}
-                <Link to="/privacy" className="text-primary font-black hover:underline underline-offset-4 decoration-1">Chính sách bảo mật</Link>
-                {' '}của FSS.
-              </span>
-            </label>
+                {/* Phone */}
+                <div className="group mt-12">
+                  <label htmlFor="reg-phone" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">SỐ ĐIỆN THOẠI</label>
+                  <input
+                    id="reg-phone"
+                    type="tel"
+                    name="phone"
+                    autoComplete="tel"
+                    placeholder="Nhập sđt của bạn"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
+                  />
+                </div>
 
-            {authError && (
-              <p className="text-[13px] font-bold text-rose-500 bg-rose-50 p-3 rounded-sm border-l-2 border-rose-500">{authError}</p>
-            )}
+                {/* Password */}
+                <div className="group mt-12">
+                  <label htmlFor="reg-password" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">MẬT KHẨU</label>
+                  <div className="relative">
+                    <input
+                      id="reg-password"
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      required
+                      autoComplete="new-password"
+                      placeholder="Nhập mật khẩu của bạn"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="w-full border-b-2 border-slate-100 bg-transparent pt-1 pb-3 text-[15px] font-medium focus:outline-none focus:border-primary transition-all placeholder:text-slate-200 rounded-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {formData.password && (
+                    <div className="mt-4 space-y-1">
+                      <div className="flex gap-1.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <div key={s} className={`h-0.5 flex-1 rounded-full transition-all ${s <= strength ? strengthColors[strength] : 'bg-slate-100'}`} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-            <motion.button
-              whileTap={{ scale: 0.98 }}
-              id="register-submit-btn"
-              type="submit"
-              disabled={loading || !agreed || passwordMismatch}
-              className="w-full py-3.5 bg-primary text-white text-[13px] font-black uppercase tracking-[0.2em] rounded-none hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-10 disabled:opacity-50 disabled:bg-slate-400 disabled:shadow-none"
-            >
-              {loading ? (
-                <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> ĐANG XỬ LÝ...</>
-              ) : 'ĐĂNG KÝ'}
-            </motion.button>
-          </form>
+                {/* Confirm password */}
+                <div className="group mt-12">
+                  <label htmlFor="reg-confirm" className="text-label opacity-60 group-focus-within:opacity-100 transition-opacity block mb-0.5">XÁC NHẬN MẬT KHẨU</label>
+                  <div className="relative">
+                    <input
+                      id="reg-confirm"
+                      type="password"
+                      name="confirm"
+                      required
+                      autoComplete="new-password"
+                      placeholder="Nhập xác nhận mật khẩu của bạn"
+                      value={formData.confirm}
+                      onChange={handleChange}
+                      className={`w-full border-b border-secondary/10 bg-transparent pt-2 pb-3 text-[15px] font-medium focus:outline-none transition-all placeholder:text-slate-200 rounded-none ${passwordMismatch ? 'border-rose-500' : 'border-slate-100 focus:border-primary'
+                        }`}
+                    />
+                  </div>
+                  {passwordMismatch && (
+                    <p className="text-[13px] font-bold text-rose-500 mt-2 uppercase">MẬT KHẨU KHÔNG KHỚP</p>
+                  )}
+                </div>
 
-          <p className="mt-12 text-center text-[14px] font-medium text-muted-foreground tracking-tight pb-10">
-            Đã có tài khoản?{' '}
-            <Link to="/login" className="text-primary font-black hover:underline underline-offset-4 decoration-1">Đăng nhập ngay</Link>
-          </p>
+                {/* Terms */}
+                <label className="flex items-start gap-4 cursor-pointer group mt-8">
+                  <div className="relative mt-0.5">
+                    <input
+                      id="reg-terms"
+                      type="checkbox"
+                      checked={agreed}
+                      onChange={(e) => setAgreed(e.target.checked)}
+                      className="w-4 h-4 rounded-sm border-2 border-slate-200 appearance-none checked:bg-primary checked:border-primary transition-all cursor-pointer"
+                    />
+                    {agreed && <Check size={12} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white pointer-events-none" />}
+                  </div>
+                  <span className="text-[14px] text-muted-foreground leading-relaxed font-medium">
+                    Tôi đồng ý với{' '}
+                    <Link to="/terms" className="text-primary font-black hover:underline underline-offset-4 decoration-1">Điều khoản sử dụng</Link>
+                    {' '}và{' '}
+                    <Link to="/privacy" className="text-primary font-black hover:underline underline-offset-4 decoration-1">Chính sách bảo mật</Link>
+                    {' '}của FSS.
+                  </span>
+                </label>
+
+                {authError && (
+                  <p className="text-[13px] font-bold text-rose-500 bg-rose-50 p-3 mt-8 rounded-sm border-l-2 border-rose-500">{authError}</p>
+                )}
+
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  id="register-submit-btn"
+                  type="submit"
+                  disabled={loading || !agreed || passwordMismatch}
+                  className="w-full py-3.5 bg-primary text-white text-[13px] font-black uppercase tracking-[0.2em] rounded-none hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 mt-10 disabled:opacity-50 disabled:bg-slate-400 disabled:shadow-none"
+                >
+                  {loading ? (
+                    <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> ĐANG XỬ LÝ...</>
+                  ) : 'ĐĂNG KÝ'}
+                </motion.button>
+              </form>
+
+              <p className="mt-12 text-center text-[14px] font-medium text-muted-foreground tracking-tight pb-10">
+                Đã có tài khoản?{' '}
+                <Link to="/login" className="text-primary font-black hover:underline underline-offset-4 decoration-1">Đăng nhập ngay</Link>
+              </p>
+            </>
+          )}
         </motion.div>
       </div>
     </div>

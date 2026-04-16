@@ -33,3 +33,25 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Backend - Java/Maven
+fss-backend/target/
+fss-backend/jdk-17.0.2/
+fss-backend/*.zip
+fss-backend/*.jar
+fss-backend/.mvn/
+fss-backend/apache-maven-*/
+
+# Frontend - Node
+fss-frontend/node_modules/
+fss-frontend/dist/
+fss-frontend/.env*
+
+# General project ignores
+node_modules/
+dist/
+build/
+.vscode/
+.idea/
+fashion-dataset/
+.env*

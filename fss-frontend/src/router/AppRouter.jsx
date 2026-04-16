@@ -11,6 +11,9 @@ import ScrollToTop from '../components/layout/ScrollToTop';
 // Auth
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
+import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 
 // Customer
 import HomePage from '../pages/customer/HomePage';
@@ -21,6 +24,7 @@ import CheckoutPage from '../pages/customer/CheckoutPage';
 import ProfilePage from '../pages/customer/ProfilePage';
 import VisualSearchPage from '../pages/customer/VisualSearchPage';
 import BlogPage from '../pages/customer/BlogPage';
+import BlogDetailPage from '../pages/customer/BlogDetailPage';
 import ContactPage from '../pages/customer/ContactPage';
 
 // Admin
@@ -67,6 +71,9 @@ export default function AppRouter() {
         {/* Auth routes (no header/footer) */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Admin routes */}
         <Route element={<AdminRoute />}>
@@ -86,7 +93,7 @@ export default function AppRouter() {
           <Route path="/visual-search" element={<VisualSearchPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/blog" element={<BlogPage />} />
-          <Route path="/blog/:id" element={<BlogPage />} />
+          <Route path="/blog/:id" element={<BlogDetailPage />} />
           <Route path="/contact" element={<ContactPage />} />
 
           {/* Protected customer routes */}

@@ -7,7 +7,7 @@ import {
   TrendingUp, ShoppingBag, CreditCard
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
-import { orders, formatPrice, orderStatusMap } from '../../data/mockData';
+import { formatPrice, orderStatusMap } from '../../data/mockData';
 
 /* ─────────────────────────────────────────
    FLOATING LABEL FIELD
@@ -125,19 +125,20 @@ export default function ProfilePage() {
   const [form, setForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: '0901234567',
-    address: '123 Lê Lợi, Q1, TP.HCM',
-    dob: '12/05/1995',
-    gender: 'Nam',
-    bio: 'Đam mê thời trang và trải nghiệm những phong cách mới.',
+    phone: user?.phone || '',
+    address: '',
+    dob: '',
+    gender: '',
+    bio: '',
   });
 
   useEffect(() => {
     if (user?.name || user?.email) {
       setForm(f => ({ ...f, name: user?.name || f.name, email: user?.email || f.email }));
     }
-  }, [user?.name, user?.email]);
+  }, [user?.name, user?.email, user?.phone]);
 
+  const orders = user?.orders || [];
   const fileInputRef = useRef(null);
 
   const handleSave = () => {
@@ -159,7 +160,7 @@ export default function ProfilePage() {
   const sideMenuItems = [
     { id: 'profile', label: 'Hồ sơ của tôi', sub: 'Thông tin & bảo mật' },
     { id: 'orders', label: 'Đơn hàng', sub: `${orders.length} đơn hàng` },
-    { id: 'address', label: 'Sổ địa chỉ', sub: '1 địa chỉ đã lưu' },
+    { id: 'address', label: 'Sổ địa chỉ', sub: 'Chưa có địa chỉ' },
     { id: 'wishlist', label: 'Yêu thích', sub: 'Sản phẩm đã thích' },
   ];
 
@@ -190,13 +191,10 @@ export default function ProfilePage() {
           style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)' }} />
       </div>
 
-      <div className="layout-page pt-2 pb-10 relative z-10">
+      <div className="layout-page pt-0 pb-10 relative z-10">
         <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-          {/* ══════════════════════════════
-              SIDEBAR
-          ══════════════════════════════ */}
-          <aside className="w-full lg:w-72 shrink-0 sticky top-6 flex flex-col gap-4">
+          <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-4">
 
             {/* ── Avatar Card ── */}
             <motion.div
@@ -296,7 +294,7 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-2 gap-2 w-full mt-3">
                   {[
                     { label: 'Đơn hàng', value: orders.length, icon: ShoppingBag, color: 'text-primary' },
-                    { label: 'Điểm tích', value: '240', icon: Star, color: 'text-amber-500 fill-amber-400' },
+                    { label: 'Điểm tích', value: '0', icon: Star, color: 'text-amber-500 fill-amber-400' },
                   ].map(({ label, value, icon: Icon, color }) => (
                     <div
                       key={label}
@@ -606,8 +604,7 @@ export default function ProfilePage() {
                             <div className="absolute left-[7px] top-3 bottom-3 w-px"
                               style={{ background: 'linear-gradient(180deg, #00168d50, #e2e8f0, transparent)' }} />
                             {[
-                              { title: 'Cập nhật số điện thoại', detail: 'Hệ thống đã ghi nhận thay đổi', date: '10/02/2026' },
-                              { title: 'Khởi tạo hồ sơ khách hàng', detail: 'Tài khoản được tạo thành công', date: '01/01/2026' },
+                              { title: 'Khởi tạo hồ sơ khách hàng', detail: 'Tài khoản đang chờ chuẩn hóa thông tin', date: new Date().toLocaleDateString('vi-VN') },
                             ].map((log, idx) => (
                               <div key={idx} className="flex items-start gap-4 py-3.5 group cursor-default">
                                 <div className="relative z-10 mt-1.5 shrink-0">
@@ -831,54 +828,56 @@ export default function ProfilePage() {
                       className="grid gap-4 mb-5"
                     >
                       {/* Default address card */}
-                      <div
-                        className="relative overflow-hidden rounded-sm p-6 group transition-all duration-300 hover:-translate-y-0.5"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(5,150,105,0.04), rgba(255,255,255,0.95))',
-                          border: '2px solid rgba(5,150,105,0.2)',
-                          boxShadow: '0 4px 20px rgba(5,150,105,0.08)',
-                        }}
-                      >
-                        {/* Accent glow */}
-                        <div className="absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 rounded-full opacity-20"
-                          style={{ background: 'radial-gradient(circle, #059669, transparent)' }} />
+                      {form.address && (
+                        <div
+                          className="relative overflow-hidden rounded-sm p-6 group transition-all duration-300 hover:-translate-y-0.5"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(5,150,105,0.04), rgba(255,255,255,0.95))',
+                            border: '2px solid rgba(5,150,105,0.2)',
+                            boxShadow: '0 4px 20px rgba(5,150,105,0.08)',
+                          }}
+                        >
+                          {/* Accent glow */}
+                          <div className="absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 rounded-full opacity-20"
+                            style={{ background: 'radial-gradient(circle, #059669, transparent)' }} />
 
-                        <div className="flex items-start gap-4 relative z-10">
-                          <div
-                            className="w-11 h-11 rounded-sm flex items-center justify-center shrink-0 self-center"
-                            style={{ background: 'linear-gradient(135deg, #059669, #34d399)', boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}
-                          >
-                            <MapPin size={18} className="text-white" strokeWidth={2.5} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2.5 mb-2">
-                              <h4 className="text-[14px] font-black text-slate-800">Địa chỉ mặc định</h4>
-                              <span
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
-                                style={{ background: 'rgba(5,150,105,0.1)', color: '#059669', border: '2px solid rgba(5,150,105,0.15)' }}
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                Mặc định
-                              </span>
+                          <div className="flex items-start gap-4 relative z-10">
+                            <div
+                              className="w-11 h-11 rounded-sm flex items-center justify-center shrink-0 self-center"
+                              style={{ background: 'linear-gradient(135deg, #059669, #34d399)', boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}
+                            >
+                              <MapPin size={18} className="text-white" strokeWidth={2.5} />
                             </div>
-                            <p className="text-[13.5px] text-slate-600 font-medium leading-relaxed">{form.address}</p>
-                            <div className="flex items-center gap-4 mt-4">
-                              <button
-                                className="text-[11px] font-black uppercase tracking-wider transition-all"
-                                style={{ color: '#059669', borderBottom: '2px solid rgba(5,150,105,0.3)', paddingBottom: '1px' }}
-                              >
-                                Chỉnh sửa
-                              </button>
-                              <button
-                                className="text-[11px] font-black uppercase tracking-wider transition-all text-red-400"
-                                style={{ borderBottom: '2px solid rgba(239,68,68,0.25)', paddingBottom: '1px' }}
-                              >
-                                Xoá
-                              </button>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2.5 mb-2">
+                                <h4 className="text-[14px] font-black text-slate-800">Địa chỉ mặc định</h4>
+                                <span
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
+                                  style={{ background: 'rgba(5,150,105,0.1)', color: '#059669', border: '2px solid rgba(5,150,105,0.15)' }}
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  Mặc định
+                                </span>
+                              </div>
+                              <p className="text-[13.5px] text-slate-600 font-medium leading-relaxed">{form.address}</p>
+                              <div className="flex items-center gap-4 mt-4">
+                                <button
+                                  className="text-[11px] font-black uppercase tracking-wider transition-all"
+                                  style={{ color: '#059669', borderBottom: '2px solid rgba(5,150,105,0.3)', paddingBottom: '1px' }}
+                                >
+                                  Chỉnh sửa
+                                </button>
+                                <button
+                                  className="text-[11px] font-black uppercase tracking-wider transition-all text-red-400"
+                                  style={{ borderBottom: '2px solid rgba(239,68,68,0.25)', paddingBottom: '1px' }}
+                                >
+                                  Xoá
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* Add new address – dashed card */}
                       <button
@@ -1005,17 +1004,10 @@ export default function ProfilePage() {
                   <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
                     <div>
                       <h3 className="text-[24px] md:text-[28px] font-black text-slate-800 leading-[1.2] tracking-tight mb-3 max-w-lg">
-                        Dựa trên đơn hàng trước,{' '}
-                        <span
-                          className="relative"
-                          style={{ background: 'linear-gradient(90deg, #00168d, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-                        >
-                          size XL
-                        </span>{' '}
-                        sẽ vừa vặn nhất với bạn.
+                        Hãy cập nhật số đo để AI gợi ý size chuẩn nhất với bạn.
                       </h3>
                       <p className="text-[14px] text-slate-500 font-medium leading-relaxed max-w-md">
-                        Đã phân tích lịch sử mua sắm và số đo của bạn để tối ưu trải nghiệm.
+                        Phân tích lịch sử mua sắm và hình thể của bạn để đưa ra tư vấn độc quyền.
                       </p>
                     </div>
 
@@ -1026,7 +1018,7 @@ export default function ProfilePage() {
                           <div
                             key={s}
                             className="w-9 h-9 rounded-sm flex items-center justify-center text-[11px] font-black transition-all"
-                            style={s === 'XL'
+                            style={s === ''
                               ? {
                                 background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
                                 color: 'white',
@@ -1268,8 +1260,7 @@ function PasswordSection() {
             <div className="absolute left-[7px] top-3 bottom-3 w-px"
               style={{ background: 'linear-gradient(180deg, #00168d50, #e2e8f0, transparent)' }} />
             {[
-              { title: 'Đăng nhập từ thiết bị mới', detail: 'Hà Nội, Việt Nam • Chrome', date: '14/03/2026' },
-              { title: 'Đổi mật khẩu thành công', detail: 'Thực hiện trên hệ thống FSS', date: '01/01/2026' },
+              { title: 'Tài khoản được bảo vệ', detail: 'Hệ thống đã mã hóa mật khẩu cấp cao', date: new Date().toLocaleDateString('vi-VN') },
             ].map((log, idx) => (
               <div key={idx} className="flex items-start gap-4 py-3.5 group cursor-default">
                 <div className="relative z-10 mt-1.5 shrink-0">

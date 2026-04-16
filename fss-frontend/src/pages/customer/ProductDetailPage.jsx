@@ -12,7 +12,7 @@ import useAuthStore from '../../store/authStore';
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [product, setProduct] = useState(null);
   const [similar, setSimilar] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,9 +40,9 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
-    if (!selectedSize && product.sizes && product.sizes.length > 0) { 
-      alert('Vui lòng chọn kích cỡ/size!'); 
-      return; 
+    if (!selectedSize && product.sizes && product.sizes.length > 0) {
+      alert('Vui lòng chọn kích cỡ/size!');
+      return;
     }
     const colorToSave = product.colorNames?.[selectedColor] || product.colour;
     addItem(product, selectedSize || 'Freesize', colorToSave, qty);
@@ -56,14 +56,14 @@ export default function ProductDetailPage() {
     setSelectedSize('');
     setSelectedColor(0);
     setQty(1);
-    
+
     // Fetch dữ liệu
     const loadData = async () => {
       try {
         // Thử gọi API Backend
         const res = await axios.get(`http://localhost:8080/api/products/${id}`);
         setProduct(res.data);
-        
+
         // Cần truyền category hiện tại để lấy similar (tạm thời fallback local data)
         setSimilar(getSimilarProducts(res.data.category || res.data.masterCategory, res.data.id || id));
       } catch (err) {
@@ -75,7 +75,7 @@ export default function ProductDetailPage() {
         setLoading(false);
       }
     };
-    
+
     loadData();
     window.scrollTo(0, 0);
   }, [id]);
@@ -95,7 +95,7 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen bg-white pb-32 page-enter">
       <div className="layout-page py-12 lg:py-16">
-        
+
         {/* Breadcrumb */}
         <motion.nav
           initial={{ opacity: 0, y: -10 }}
@@ -111,7 +111,7 @@ export default function ProductDetailPage() {
 
         {/* Main Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-          
+
           {/* Left: Gallery */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -133,7 +133,7 @@ export default function ProductDetailPage() {
                     className="w-full h-full object-cover"
                   />
                 </AnimatePresence>
-                
+
                 {product.isBestSeller && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -155,7 +155,7 @@ export default function ProductDetailPage() {
                 </motion.button>
               </div>
             </div>
-            
+
             {/* Thumbnails */}
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {product.images.map((img, i) => (
@@ -163,9 +163,8 @@ export default function ProductDetailPage() {
                   key={i}
                   whileHover={{ scale: 1.05 }}
                   onClick={() => setImgIdx(i)}
-                  className={`shrink-0 w-24 h-24 rounded-sm overflow-hidden border-2 transition-all ${
-                    i === imgIdx ? 'border-primary shadow-soft' : 'border-border hover:border-primary/50'
-                  }`}
+                  className={`shrink-0 w-24 h-24 rounded-sm overflow-hidden border-2 transition-all ${i === imgIdx ? 'border-primary shadow-soft' : 'border-border hover:border-primary/50'
+                    }`}
                 >
                   <img src={img} alt="" className="w-full h-full object-cover" />
                 </motion.button>
@@ -179,13 +178,13 @@ export default function ProductDetailPage() {
             animate={{ opacity: 1, x: 0 }}
             className="space-y-8"
           >
-            
+
             {/* Header */}
             <div className="space-y-6">
               <span className="text-xs font-bold text-primary-600 uppercase tracking-widest bg-primary-50 px-3 py-1 rounded-full inline-block">
                 Bộ sưu tập 2026
               </span>
-              
+
               <h1 className="text-4xl sm:text-5xl lg:text-[2.8rem] font-bold font-display text-foreground leading-tight">
                 {product.name}
               </h1>
@@ -230,7 +229,7 @@ export default function ProductDetailPage() {
             {/* Thông số kỹ thuật chi tiết */}
             <div className="card !rounded-sm p-6 space-y-4 shadow-none border-slate-100 bg-slate-50/50">
               <h3 className="text-sm font-bold text-foreground uppercase tracking-wide flex items-center gap-2 mb-2">
-                <Info size={16} className="text-primary"/> Thông số sản phẩm
+                <Info size={16} className="text-primary" /> Thông số sản phẩm
               </h3>
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <div className="flex justify-between border-b pb-1 border-slate-200">
@@ -272,92 +271,90 @@ export default function ProductDetailPage() {
 
             {/* Size Selection - Ẩn với admin */}
             {!isAdmin && product.sizes && product.sizes.length > 0 && (
-            <div className="card !rounded-sm p-6 space-y-4 shadow-none border-slate-100">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-foreground uppercase tracking-wide">
-                  Chọn kích cỡ
-                </label>
-                <button className="text-xs font-semibold text-primary hover:text-primary-700 transition-colors">
-                  Hướng dẫn chọn size →
-                </button>
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {product.sizes.map((s) => (
-                  <motion.button
-                    key={s}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setSelectedSize(s)}
-                    className={`py-3 px-2 !rounded-sm font-bold text-sm transition-all border-2 leading-none ${
-                      selectedSize === s
+              <div className="card !rounded-sm p-6 space-y-4 shadow-none border-slate-100">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-foreground uppercase tracking-wide">
+                    Chọn kích cỡ
+                  </label>
+                  <button className="text-xs font-semibold text-primary hover:text-primary-700 transition-colors">
+                    Hướng dẫn chọn size →
+                  </button>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {product.sizes.map((s) => (
+                    <motion.button
+                      key={s}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedSize(s)}
+                      className={`py-3 px-2 !rounded-sm font-bold text-sm transition-all border-2 leading-none ${selectedSize === s
                         ? 'bg-primary text-white border-primary shadow-soft'
                         : 'bg-surface-secondary text-foreground border-border hover:border-primary'
-                    }`}
-                  >
-                    {s}
-                  </motion.button>
-                ))}
+                        }`}
+                    >
+                      {s}
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-            </div>
             )}
 
             {/* Quantity - Ẩn với admin */}
             {!isAdmin && (
-            <div className="card !rounded-sm p-6 space-y-4 shadow-none border-slate-100">
-              <label className="text-sm font-bold text-foreground uppercase tracking-wide">
-                Số lượng
-              </label>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="w-10 h-10 !rounded-sm border border-border hover:border-primary flex items-center justify-center transition-colors leading-none"
-                >
-                  −
-                </button>
-                <span className="text-lg font-bold text-foreground w-8 text-center leading-none">{qty}</span>
-                <button
-                  onClick={() => setQty(qty + 1)}
-                  className="w-10 h-10 !rounded-sm border border-border hover:border-primary flex items-center justify-center transition-colors leading-none"
-                >
-                  +
-                </button>
+              <div className="card !rounded-sm p-6 space-y-4 shadow-none border-slate-100">
+                <label className="text-sm font-bold text-foreground uppercase tracking-wide">
+                  Số lượng
+                </label>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setQty(Math.max(1, qty - 1))}
+                    className="w-10 h-10 !rounded-sm border border-border hover:border-primary flex items-center justify-center transition-colors leading-none"
+                  >
+                    −
+                  </button>
+                  <span className="text-lg font-bold text-foreground w-8 text-center leading-none">{qty}</span>
+                  <button
+                    onClick={() => setQty(qty + 1)}
+                    className="w-10 h-10 !rounded-sm border border-border hover:border-primary flex items-center justify-center transition-colors leading-none"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-            </div>
             )}
 
             {/* Action Buttons - Ẩn với admin */}
             {!isAdmin && (
-            <div className="space-y-3 pt-4">
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={handleAddToCart}
-                className={`w-full py-4 !rounded-sm font-bold text-base flex items-center justify-center gap-2 transition-all shadow-soft hover:shadow-lg ${
-                  addedFeedback
+              <div className="space-y-3 pt-4">
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleAddToCart}
+                  className={`w-full py-4 !rounded-sm font-bold text-base flex items-center justify-center gap-2 transition-all shadow-soft hover:shadow-lg ${addedFeedback
                     ? 'bg-success text-white'
                     : 'bg-primary text-white hover:bg-primary-700 active:scale-95'
-                }`}
-              >
-                {addedFeedback ? (
-                  <>
-                    <Check size={20} />
-                    Đã thêm vào giỏ hàng
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBag size={20} />
-                    Thêm vào giỏ hàng
-                  </>
-                )}
-              </motion.button>
+                    }`}
+                >
+                  {addedFeedback ? (
+                    <>
+                      <Check size={20} />
+                      Đã thêm vào giỏ hàng
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag size={20} />
+                      Thêm vào giỏ hàng
+                    </>
+                  )}
+                </motion.button>
 
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={handleBuyNow}
-                className="w-full py-4 !rounded-sm font-bold text-base border-2 border-primary text-primary hover:bg-primary-50 transition-all"
-              >
-                Mua ngay
-              </motion.button>
-            </div>
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleBuyNow}
+                  className="w-full py-4 !rounded-sm font-bold text-base border-2 border-primary text-primary hover:bg-primary-50 transition-all"
+                >
+                  Mua ngay
+                </motion.button>
+              </div>
             )}
 
             {/* Benefits */}

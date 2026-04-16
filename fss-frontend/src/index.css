@@ -57,9 +57,9 @@
   --color-gold-dark: #ffc700;
 
   /* === TYPOGRAPHY === */
-  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-ui: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
+  --font-display: "Montserrat", system-ui, sans-serif;
+  --font-ui: "Be Vietnam Pro", system-ui, sans-serif;
 
   /* === BORDER RADIUS === */
   --radius-xs: 4px;
