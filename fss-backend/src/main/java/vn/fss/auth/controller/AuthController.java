@@ -22,95 +22,94 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        try {
-            authService.register(request);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Đã gửi email xác thực");
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody RegisterRequest request) {
+        authService.register(request);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Đã gửi email xác thực");
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/verify")
-    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
-        try {
-            String message = authService.verifyEmail(token);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", message);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestParam String token) {
+        String message = authService.verifyEmail(token);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", message);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Email không được để trống");
         }
+        authService.resendVerificationEmail(email);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Đã gửi lại email xác thực");
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        try {
-            AuthResponse response = authService.login(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Authentication authentication) {
-        try {
-            if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
-                 return ResponseEntity.status(401).body("Chưa xác thực");
-            }
-            User user = (User) authentication.getPrincipal();
-            AuthResponse.UserDto response = authService.getCurrentUser(user.getEmail());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+             return ResponseEntity.status(401).body("Chưa xác thực");
         }
+        User user = (User) authentication.getPrincipal();
+        AuthResponse.UserDto response = authService.getCurrentUser(user.getEmail());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
-        try {
-            String email = request.get("email");
-            if (email == null || email.isBlank()) {
-                throw new RuntimeException("Email không được để trống");
-            }
-            authService.forgotPassword(email);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Đã gửi email khôi phục mật khẩu");
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Email không được để trống");
         }
+        authService.forgotPassword(email);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Đã gửi email khôi phục mật khẩu");
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
-        try {
-            String token = request.get("token");
-            String newPassword = request.get("newPassword");
-            
-            if (token == null || token.isBlank() || newPassword == null || newPassword.isBlank()) {
-                throw new RuntimeException("Dữ liệu không hợp lệ");
-            }
-            
-            authService.resetPassword(token, newPassword);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Đổi mật khẩu thành công");
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
+        
+        if (token == null || token.isBlank() || newPassword == null || newPassword.isBlank()) {
+            throw new RuntimeException("Dữ liệu không hợp lệ");
         }
+        
+        authService.resetPassword(token, newPassword);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Đổi mật khẩu thành công");
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new RuntimeException("Refresh Token không được để trống");
+        }
+        
+        AuthResponse response = authService.refreshToken(refreshToken);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleLogin(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        if (token == null || token.isBlank()) {
+            throw new RuntimeException("Google Token không được để trống");
+        }
+        AuthResponse response = authService.googleLogin(token);
+        return ResponseEntity.ok(response);
     }
 }

@@ -72,6 +72,14 @@ public class User {
     @Column(name = "reset_token_expiry")
     private Instant resetTokenExpiry;
 
+    // ── Account Lockout Fields ─────────────────────────────────
+    @Column(name = "failed_attempts", nullable = true)
+    @Builder.Default
+    private Integer failedAttempts = 0;
+
+    @Column(name = "lock_time")
+    private Instant lockTime;
+
     // ── Timestamps ─────────────────────────────────────────────
 
     @CreationTimestamp

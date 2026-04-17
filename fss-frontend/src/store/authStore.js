@@ -14,6 +14,7 @@ const useAuthStore = create(
     (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       authError: null,
 
@@ -35,6 +36,36 @@ const useAuthStore = create(
           set({ 
             user: data.user, 
             token: data.token,
+            refreshToken: data.refreshToken,
+            isAuthenticated: true, 
+            authError: null 
+          });
+          return { success: true, role: data.user.role };
+        } catch (error) {
+          set({ authError: 'Lỗi kết nối đến máy chủ.' });
+          return { success: false, error: 'Network error' };
+        }
+      },
+
+      googleLogin: async (googleToken) => {
+        try {
+          const response = await fetch(`${API_URL}/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: googleToken }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            set({ authError: data.error || 'Đăng nhập Google thất bại' });
+            return { success: false, error: data.error };
+          }
+
+          set({ 
+            user: data.user, 
+            token: data.token,
+            refreshToken: data.refreshToken,
             isAuthenticated: true, 
             authError: null 
           });
@@ -68,19 +99,73 @@ const useAuthStore = create(
         }
       },
 
+      resendVerification: async (email) => {
+        try {
+          const response = await fetch(`${API_URL}/resend-verification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+             set({ authError: data.error || 'Lỗi gửi lại email' });
+             return { success: false, error: data.error };
+          }
+          set({ authError: null });
+          return { success: true, message: data.message };
+        } catch (error) {
+           set({ authError: 'Lỗi kết nối đến máy chủ.' });
+           return { success: false, error: 'Network error' };
+        }
+      },
+
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false, authError: null });
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false, authError: null });
       },
 
       clearError: () => set({ authError: null }),
 
+      // Đổi Refresh Token lấy Access Token mới
+      refreshAuthToken: async () => {
+        const { refreshToken, logout } = get();
+        if (!refreshToken) {
+          logout();
+          return false;
+        }
+
+        try {
+          const response = await fetch(`${API_URL}/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            set({ 
+              token: data.token, 
+              refreshToken: data.refreshToken, // Giữ lại hoặc cập nhật refresh token mới
+              user: data.user,
+              isAuthenticated: true 
+            });
+            return true;
+          } else {
+            logout();
+            return false;
+          }
+        } catch (error) {
+          logout();
+          return false;
+        }
+      },
+
       // Khi ứng dụng khởi động, nếu có token thì gọi API này để lấy thông tin user mới nhất
       fetchCurrentUser: async () => {
-        const { token } = get();
+        const { token, refreshAuthToken, logout } = get();
         if (!token) return;
 
         try {
-          const response = await fetch(`${API_URL}/me`, {
+          let response = await fetch(`${API_URL}/me`, {
             method: 'GET',
             headers: { 
               'Authorization': `Bearer ${token}` 
@@ -90,12 +175,32 @@ const useAuthStore = create(
           if (response.ok) {
             const userData = await response.json();
             set({ user: userData, isAuthenticated: true });
+          } else if (response.status === 401) {
+            // Token hết hạn -> Thử Refresh Token
+            const refreshed = await refreshAuthToken();
+            if (refreshed) {
+              // Refresh thành công -> Gọi lại API /me bằng token mới
+              const newToken = get().token;
+              const retryResponse = await fetch(`${API_URL}/me`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${newToken}` },
+              });
+              if (retryResponse.ok) {
+                const userData = await retryResponse.json();
+                set({ user: userData, isAuthenticated: true });
+              } else {
+                logout();
+              }
+            } else {
+              // Refresh thất bại -> Logout luôn
+              logout();
+            }
           } else {
-            // Token hết hạn hoặc không hợp lệ -> Logout
-            get().logout();
+            logout();
           }
         } catch (error) {
           console.error("Failed to fetch user");
+          logout();
         }
       },
 
@@ -111,9 +216,10 @@ const useAuthStore = create(
     }),
     {
       name: 'fss-auth',
-      version: 6,
+      version: 7, // Tăng version lên 7 để ép update local storage
       partialize: (state) => ({
         token: state.token,
+        refreshToken: state.refreshToken,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
