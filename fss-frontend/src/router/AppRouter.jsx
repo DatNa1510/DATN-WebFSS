@@ -22,6 +22,7 @@ import ProductDetailPage from '../pages/customer/ProductDetailPage';
 import CartPage from '../pages/customer/CartPage';
 import CheckoutPage from '../pages/customer/CheckoutPage';
 import ProfilePage from '../pages/customer/ProfilePage';
+import PaymentResultPage from '../pages/customer/PaymentResultPage';
 import VisualSearchPage from '../pages/customer/VisualSearchPage';
 import BlogPage from '../pages/customer/BlogPage';
 import BlogDetailPage from '../pages/customer/BlogDetailPage';
@@ -35,6 +36,7 @@ import AdminAccounts from '../pages/admin/AdminAccounts';
 
 // Cart Drawer
 import CartDrawer from '../components/ui/CartDrawer';
+import ToastContainer from '../components/ui/ToastContainer';
 
 // Protected routes
 function CustomerRoute() {
@@ -55,6 +57,7 @@ function CustomerLayout() {
     <>
       <Header />
       <CartDrawer />
+      <ToastContainer />
       <main className="w-full min-w-0">
         <Outlet />
       </main>
@@ -99,6 +102,7 @@ export default function AppRouter() {
           {/* Protected customer routes */}
           <Route element={<CustomerRoute />}>
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/payment-result" element={<PaymentResultPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/orders" element={<ProfilePage />} />
           </Route>

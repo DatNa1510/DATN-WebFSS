@@ -26,9 +26,14 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuthStore();
-  const { items, openCart } = useCartStore();
+  const { items, openCart, fetchCart } = useCartStore();
+  const totalItems = items?.reduce((sum, i) => sum + i.qty, 0) || 0;
 
-  const totalItems = items.reduce((sum, i) => sum + i.qty, 0);
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCart();
+    }
+  }, [isAuthenticated, fetchCart]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);

@@ -22,7 +22,7 @@ DB_CONFIG = {
     'port'    : 5432,
     'dbname'  : 'fss_db',        # <-- Tên database của bạn
     'user'    : 'postgres',       # <-- Tên user PostgreSQL
-    'password': 'your_password',  # <-- Mật khẩu PostgreSQL
+    'password': '123456',         # <-- Mật khẩu PostgreSQL
 }
 
 CSV_PATH   = r'd:\DATN\Web_FSS\fashion-dataset\products_1000.csv'
@@ -131,7 +131,8 @@ def main():
             id, gender, master_category, sub_category, article_type,
             base_colour, season, year, usage, product_display_name,
             image_path, price, original_price, stock, sold,
-            rating, review_count, is_new, is_best_seller
+            rating, review_count, is_new, is_best_seller,
+            created_at, updated_at
         ) VALUES %s
         ON CONFLICT (id) DO UPDATE SET
             price          = EXCLUDED.price,
@@ -145,6 +146,8 @@ def main():
             updated_at     = NOW()
     """
 
+    from datetime import datetime
+    now = datetime.now()
     values = [
         (
             r['id'], r['gender'], r['master_category'], r['sub_category'],
@@ -152,6 +155,7 @@ def main():
             r['usage'], r['product_display_name'], r['image_path'],
             r['price'], r['original_price'], r['stock'], r['sold'],
             r['rating'], r['review_count'], r['is_new'], r['is_best_seller'],
+            now, now,
         )
         for r in rows
     ]
