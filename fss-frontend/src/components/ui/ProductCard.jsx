@@ -6,6 +6,8 @@ import { formatPrice as formatPriceFashion, translate, translateName } from '../
 import { formatPrice as formatPriceMock } from '../../data/mockData';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
+import useWishlistStore from '../../store/wishlistStore';
+import { toast } from '../../store/toastStore';
 
 // Dùng formatPrice từ fashionData (ưu tiên) hoặc mockData
 const formatPrice = formatPriceFashion || formatPriceMock;
@@ -14,11 +16,12 @@ const formatPrice = formatPriceFashion || formatPriceMock;
 const FALLBACK = 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=60';
 
 export default function ProductCard({ product }) {
-  const [liked, setLiked] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
   const { addItem, openCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const { wishlist, toggleWishlist } = useWishlistStore();
   const isAdmin = user?.role === 'admin';
+  const liked = wishlist?.some(item => item.productId === product.id);
 
   // Normalize & Translate field names: hỗ trợ cả API backend (imagePath, productDisplayName) và mock data cũ (images, name)
   const name = translateName(product);
@@ -93,9 +96,16 @@ export default function ProductCard({ product }) {
         <div className="absolute top-4 right-4 flex flex-col gap-2 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
-                setLiked(!liked);
+                if (!isAuthenticated) {
+                  toast.warning('Vui lòng đăng nhập để sử dụng tính năng này!');
+                  return;
+                }
+                const res = await toggleWishlist(product.id);
+                if (res.success) {
+                  toast.success(liked ? 'Đã bỏ yêu thích' : 'Đã thêm vào yêu thích');
+                }
               }}
               className="w-10 h-10 bg-white/95 backdrop-blur-md rounded-sm flex items-center justify-center shadow-md hover:bg-[#e11d48] hover:text-white transition-all duration-300 border border-white/50"
               title={liked ? 'Bỏ yêu thích' : 'Yêu thích'}

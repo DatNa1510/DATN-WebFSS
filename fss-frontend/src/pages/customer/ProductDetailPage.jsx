@@ -8,6 +8,7 @@ import { reviews as mockReviews } from '../../data/mockData';
 import ProductCard from '../../components/ui/ProductCard';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
+import useWishlistStore from '../../store/wishlistStore';
 import { toast } from '../../store/toastStore';
 
 export default function ProductDetailPage() {
@@ -22,11 +23,12 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState(0);
   const [qty, setQty] = useState(1);
-  const [liked, setLiked] = useState(false);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const { addItem, openCart } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
+  const { wishlist, toggleWishlist } = useWishlistStore();
   const isAdmin = user?.role === 'admin';
+  const liked = wishlist?.some(item => item.productId === product?.id);
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -184,7 +186,16 @@ export default function ProductDetailPage() {
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => setLiked(!liked)}
+                  onClick={async () => {
+                    if (!isAuthenticated) {
+                      toast.warning('Vui lòng đăng nhập để sử dụng tính năng này!');
+                      return;
+                    }
+                    const res = await toggleWishlist(product.id);
+                    if (res.success) {
+                      toast.success(liked ? 'Đã bỏ yêu thích' : 'Đã thêm vào yêu thích');
+                    }
+                  }}
                   className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-primary hover:text-white transition-all"
                 >
                   <Heart size={20} className={liked ? 'fill-current' : ''} />

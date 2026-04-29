@@ -11,8 +11,6 @@ export default function CartDrawer() {
   const isAdmin = user?.role === 'admin';
   const safeItems = items || [];
   const subtotal = safeItems.reduce((s, i) => s + i.price * i.qty, 0);
-  const shipping = subtotal >= 500000 ? 0 : 35000;
-  const total = subtotal + shipping;
 
   return (
     <AnimatePresence>
@@ -127,33 +125,10 @@ export default function CartDrawer() {
             {/* Footer */}
             {safeItems.length > 0 && (
               <div className="border-t border-slate-100 px-6 py-6 space-y-5 bg-white shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
-                <div className="space-y-3">
-                  <div className="flex justify-between text-[13px]">
-                    <span className="text-slate-500 font-semibold uppercase tracking-wider">Tạm tính</span>
-                    <span className="font-bold text-foreground">{formatPrice(subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between text-[13px]">
-                    <span className="text-slate-500 font-semibold uppercase tracking-wider">Vận chuyển</span>
-                    <span className={`font-bold ${shipping === 0 ? 'text-green-600' : 'text-foreground'}`}>
-                      {shipping === 0 ? 'Miễn phí' : formatPrice(shipping)}
-                    </span>
-                  </div>
-                </div>
-
-                {shipping > 0 ? (
-                  <p className="text-[11px] font-semibold text-amber-700 bg-amber-50/50 px-3 py-2.5 rounded-sm text-center border border-amber-100 flex items-center justify-center gap-1.5">
-                    Mua thêm <span className="text-amber-800 font-bold">{formatPrice(500000 - subtotal)}</span> để miễn phí ship!
-                  </p>
-                ) : (
-                  <p className="text-[11px] font-semibold text-green-700 bg-green-50/50 px-3 py-2.5 rounded-sm text-center border border-green-100 flex items-center justify-center gap-1.5">
-                    ✨ Đơn hàng đã được miễn phí vận chuyển!
-                  </p>
-                )}
-                
                 <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
                   <div className="flex justify-between items-center">
-                    <span className="font-bold uppercase tracking-wider text-sm">Tổng cộng</span>
-                    <span className="text-xl font-black text-primary">{formatPrice(total)}</span>
+                    <span className="font-bold uppercase tracking-wider text-sm">Tạm tính</span>
+                    <span className="text-xl font-black text-primary">{formatPrice(subtotal)}</span>
                   </div>
                 </div>
                 
