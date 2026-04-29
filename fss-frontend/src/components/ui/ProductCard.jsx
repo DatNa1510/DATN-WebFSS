@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Star, Heart } from 'lucide-react';
 import { useState } from 'react';
-import { formatPrice as formatPriceFashion } from '../../data/fashionData';
+import { formatPrice as formatPriceFashion, translate, translateName } from '../../data/fashionData';
 import { formatPrice as formatPriceMock } from '../../data/mockData';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
@@ -20,9 +20,23 @@ export default function ProductCard({ product }) {
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
 
+  // Normalize & Translate field names: hỗ trợ cả API backend (imagePath, productDisplayName) và mock data cũ (images, name)
+  const name = translateName(product);
+  const imageUrl = product.imagePath
+    ? (product.imagePath.startsWith('http')
+        ? product.imagePath
+        : `http://localhost:8080${product.imagePath}`)
+    : (product.images?.[imgIdx] || FALLBACK);
+  const sizes = product.sizes || ['S', 'M', 'L', 'XL'];
+  const colorNames = product.colorNames || [translate(product.baseColour) || 'Mặc định'];
+
+  const articleType = translate(product.articleType || product.category);
+  // Default values for missing gender cases covered by UI fallback
+  const translatedGender = translate(product.gender);
+
   const handleQuickAdd = (e) => {
     e.preventDefault();
-    addItem(product, product.sizes[0], product.colorNames[0]);
+    addItem({ ...product, name, sizes, colorNames }, sizes[0], colorNames[0]);
     openCart();
   };
 
@@ -43,12 +57,10 @@ export default function ProductCard({ product }) {
         className="block relative overflow-hidden rounded-sm aspect-[3/4] bg-surface-secondary"
       >
         <img
-          src={product.images?.[imgIdx] || FALLBACK}
-          alt={product.name}
+          src={imageUrl}
+          alt={name}
           className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
           onError={(e) => { e.target.src = FALLBACK; }}
-          onMouseEnter={() => product.images?.[1] && setImgIdx(1)}
-          onMouseLeave={() => setImgIdx(0)}
           loading="lazy"
         />
 
@@ -110,11 +122,11 @@ export default function ProductCard({ product }) {
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex flex-col gap-0.5">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              {product.articleType || product.category}
+              {articleType}
             </span>
-            {product.gender && (
+            {translatedGender && (
               <span className="text-[9px] font-bold text-[#7c3aed]/70 uppercase tracking-wide">
-                {product.gender === 'Men' ? 'Nam' : product.gender === 'Women' ? 'Nữ' : product.gender === 'Boys' ? 'Bé trai' : product.gender === 'Girls' ? 'Bé gái' : 'Unisex'}
+                {translatedGender}
               </span>
             )}
           </div>
@@ -127,7 +139,7 @@ export default function ProductCard({ product }) {
         {/* Product Name */}
         <Link to={`/products/${product.id}`} className="block mb-1.5">
           <h3 className="font-black text-[13px] text-slate-800 leading-tight hover:text-[#00168d] transition-colors line-clamp-2 uppercase tracking-wide">
-            {product.name}
+            {name}
           </h3>
         </Link>
 

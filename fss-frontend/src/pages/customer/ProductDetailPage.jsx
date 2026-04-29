@@ -3,11 +3,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, ShoppingBag, Heart, Shield, Truck, RefreshCw, Sparkles, Check, ArrowRight, Info } from 'lucide-react';
 import axios from 'axios';
-import { getProductById, getSimilarProducts, formatPrice } from '../../data/fashionData';
+import { getProductById, getSimilarProducts, formatPrice, translate, translateName } from '../../data/fashionData';
 import { reviews as mockReviews } from '../../data/mockData';
 import ProductCard from '../../components/ui/ProductCard';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
+import { toast } from '../../store/toastStore';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -24,29 +25,66 @@ export default function ProductDetailPage() {
   const [liked, setLiked] = useState(false);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const { addItem, openCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const isAdmin = user?.role === 'admin';
 
-  const handleAddToCart = () => {
-    if (!selectedSize && product.sizes && product.sizes.length > 0) {
-      alert('Vui lòng chọn kích cỡ/size!');
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      toast.warning('Vui lòng đăng nhập để thêm vào giỏ hàng!');
+      setTimeout(() => navigate('/login'), 800);
       return;
     }
-    const colorToSave = product.colorNames?.[selectedColor] || product.colour;
-    addItem(product, selectedSize || 'Freesize', colorToSave, qty);
-    setAddedFeedback(true);
-    setTimeout(() => setAddedFeedback(false), 2000);
-    openCart();
+    if (!selectedSize && product.sizes && product.sizes.length > 0) {
+      toast.warning('Vui lòng chọn kích cỡ/size!');
+      return;
+    }
+    const colorToSave = '';
+    const translatedName = translateName(product);
+    // Truyền imagePath gốc để cartStore xử lý đúng
+    const success = await addItem({ ...product, name: translatedName }, selectedSize || 'Freesize', colorToSave, qty);
+    if(success) {
+      toast.success('Đã thêm vào giỏ hàng!');
+      setAddedFeedback(true);
+      setTimeout(() => setAddedFeedback(false), 2000);
+      openCart();
+    }
   };
 
-  const handleBuyNow = () => {
-    if (!selectedSize && product.sizes && product.sizes.length > 0) {
-      alert('Vui lòng chọn kích cỡ/size!');
+  const handleBuyNow = async () => {
+    if (!isAuthenticated) {
+      toast.warning('Vui lòng đăng nhập để thêm vào giỏ hàng!');
+      setTimeout(() => navigate('/login'), 800);
       return;
     }
-    const colorToSave = product.colorNames?.[selectedColor] || product.colour;
-    addItem(product, selectedSize || 'Freesize', colorToSave, qty);
-    navigate('/cart');
+    if (!selectedSize && product.sizes && product.sizes.length > 0) {
+      toast.warning('Vui lòng chọn kích cỡ/size!');
+      return;
+    }
+    const colorToSave = '';
+    const translatedName = translateName(product);
+    const success = await addItem({ ...product, name: translatedName }, selectedSize || 'Freesize', colorToSave, qty);
+    if(success) {
+      navigate('/cart');
+    }
+  };
+
+  // ─── Normalize product: hỗ trợ cả backend (imagePath) và mock (images[])
+  const normalizeProduct = (raw) => {
+    if (!raw) return null;
+    const BASE = 'http://localhost:8080';
+    let images;
+    if (raw.images && raw.images.length > 0) {
+      images = raw.images;
+    } else if (raw.imagePath) {
+      // Backend trả về imagePath, có thể là nhiều ảnh phân cách bằng dấu phẩy
+      images = raw.imagePath.split(',').map(p => p.trim().startsWith('http') ? p.trim() : `${BASE}${p.trim()}`);
+    } else {
+      images = ['https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&q=80'];
+    }
+    const sizes = raw.sizes && raw.sizes.length > 0
+      ? raw.sizes
+      : ['S', 'M', 'L', 'XL'];
+    return { ...raw, images, sizes };
   };
 
   useEffect(() => {
@@ -62,14 +100,12 @@ export default function ProductDetailPage() {
       try {
         // Thử gọi API Backend
         const res = await axios.get(`http://localhost:8080/api/products/${id}`);
-        setProduct(res.data);
-
-        // Cần truyền category hiện tại để lấy similar (tạm thời fallback local data)
-        setSimilar(getSimilarProducts(res.data.category || res.data.masterCategory, res.data.id || id));
+        setProduct(normalizeProduct(res.data));
+        setSimilar(getSimilarProducts(res.data.masterCategory || res.data.category, res.data.id || id));
       } catch (err) {
         console.warn('API lỗi, fallback local JSON...', err.message);
         const fallbackProduct = getProductById(id);
-        setProduct(fallbackProduct);
+        setProduct(normalizeProduct(fallbackProduct));
         setSimilar(getSimilarProducts(fallbackProduct.category, fallbackProduct.id));
       } finally {
         setLoading(false);
@@ -106,7 +142,7 @@ export default function ProductDetailPage() {
           <span className="opacity-30">•</span>
           <Link to="/products" className="hover:text-primary transition-colors">Sản phẩm</Link>
           <span className="opacity-30">•</span>
-          <span className="text-primary font-black">{product.category}</span>
+          <span className="text-primary font-black">{translate(product.category || product.masterCategory)}</span>
         </motion.nav>
 
         {/* Main Product Section */}
@@ -186,7 +222,7 @@ export default function ProductDetailPage() {
               </span>
 
               <h1 className="text-4xl sm:text-5xl lg:text-[2.8rem] font-bold font-display text-foreground leading-tight">
-                {product.name}
+                {translateName(product)}
               </h1>
 
               {/* Rating & Reviews */}
@@ -238,31 +274,31 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="flex justify-between border-b pb-1 border-slate-200">
                   <span className="text-muted-foreground font-medium">Đối tượng:</span>
-                  <span className="font-bold">{product.gender || 'Chung'}</span>
+                  <span className="font-bold">{translate(product.gender) || 'Chung'}</span>
                 </div>
                 <div className="flex justify-between border-b pb-1 border-slate-200">
                   <span className="text-muted-foreground font-medium">Nhóm:</span>
-                  <span className="font-bold">{product.category || product.masterCategory}</span>
+                  <span className="font-bold">{translate(product.category || product.masterCategory)}</span>
                 </div>
                 <div className="flex justify-between border-b pb-1 border-slate-200">
                   <span className="text-muted-foreground font-medium">Phân loại:</span>
-                  <span className="font-bold">{product.subCat || product.subCategory}</span>
+                  <span className="font-bold">{translate(product.subCat || product.subCategory)}</span>
                 </div>
                 <div className="flex justify-between border-b pb-1 border-slate-200">
                   <span className="text-muted-foreground font-medium">Chi tiết:</span>
-                  <span className="font-bold">{product.articleType}</span>
+                  <span className="font-bold">{translate(product.articleType)}</span>
                 </div>
                 <div className="flex justify-between border-b pb-1 border-slate-200">
                   <span className="text-muted-foreground font-medium">Màu sắc:</span>
-                  <span className="font-bold">{product.colour || product.baseColour}</span>
+                  <span className="font-bold">{translate(product.colour || product.baseColour)}</span>
                 </div>
                 <div className="flex justify-between border-b pb-1 border-slate-200">
                   <span className="text-muted-foreground font-medium">Hoàn cảnh:</span>
-                  <span className="font-bold">{product.usage || 'Đa dụng'}</span>
+                  <span className="font-bold">{translate(product.usage) || 'Đa dụng'}</span>
                 </div>
                 <div className="flex justify-between border-b pb-1 border-slate-200">
                   <span className="text-muted-foreground font-medium">Bộ sưu tập:</span>
-                  <span className="font-bold">{product.season ? `${product.season} ${product.year || ''}` : 'Mới'}</span>
+                  <span className="font-bold">{product.season ? `${translate(product.season)} ${product.year || ''}` : 'Mới'}</span>
                 </div>
               </div>
             </div>

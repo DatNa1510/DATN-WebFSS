@@ -124,33 +124,61 @@ export const VN_DICT = {
   'Copper': 'Đồng'
 };
 
-function translate(text) {
+export function translate(text) {
   if (!text) return text;
   return VN_DICT[text] || text;
 }
 
-function translateName(name) {
-  if (!name) return name;
-  let translated = name;
-  for (const [en, vn] of Object.entries(VN_DICT)) {
-    const regex = new RegExp(`\\b${en}\\b`, 'gi');
-    translated = translated.replace(regex, vn);
+export function translateName(product) {
+  if (!product) return "Sản phẩm";
+  
+  const rawName = product.productDisplayName || product.name || '';
+  if (!rawName) return "Sản phẩm";
+
+  const enGender = product.gender || '';
+  const enColor = product.baseColour || '';
+  const enArticle = product.articleType || '';
+
+  // 1. Phân tách để lấy đúng phần Tên riêng (Thương hiệu + Dòng sản phẩm)
+  let modelName = rawName;
+  
+  // Xóa các từ vựng đặc trưng để lọc ra tên gốc
+  const wordsToRemove = [
+    enGender, enColor, enArticle, 
+    'Men', 'Women', 'Boys', 'Girls', 'Unisex', 
+    'Shoes', 'Watches', 'Shirt', 'Tshirts', 'Solid', 'Striped', 'Casual', 'Formal'
+  ];
+
+  wordsToRemove.forEach(term => {
+    if (term && term.length > 2) {
+      // case-insensitive word replacement
+      const regex = new RegExp(`\\b${term}\\b`, 'gi');
+      modelName = modelName.replace(regex, '');
+    }
+  });
+
+  // Xóa khoảng trắng thừa và dấu câu thừa
+  modelName = modelName.replace(/[\-]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  // 2. Lấy các thành phần tiếng Việt
+  const vnArticle = translate(enArticle) || 'Sản phẩm';
+  const vnColor = translate(enColor);
+  const vnGender = translate(enGender);
+
+  // 3. Lắp ráp tự nhiên chuẩn ngữ pháp Tiếng Việt (Thương mại điện tử)
+  // Format: [Loại] + [Tên riêng] + [màu X] + [dành cho Y]
+  let finalName = vnArticle;
+
+  if (modelName.length > 0) {
+    // Tránh trùng lặp nếu modelName vô tình còn dính
+    finalName += ` ${modelName}`;
   }
-  // Các từ bổ sung thường gặp
-  translated = translated.replace(/\bSolid\b/gi, 'Trơn');
-  translated = translated.replace(/\bPrinted\b/gi, 'In hình');
-  translated = translated.replace(/\bStriped\b/gi, 'Sọc');
-  translated = translated.replace(/\bChecked\b/gi, 'Kẻ ô');
-  translated = translated.replace(/\bBraided\b/gi, 'Đan');
-  translated = translated.replace(/\bLeather\b/gi, 'Da');
-  translated = translated.replace(/\bGraphic\b/gi, 'Đồ họa');
-  translated = translated.replace(/\bFloral\b/gi, 'Họa tiết hoa');
-  translated = translated.replace(/\bRound Neck\b/gi, 'Cổ tròn');
-  translated = translated.replace(/\bV-Neck\b/gi, 'Cổ chữ V');
-  translated = translated.replace(/\bSleeveless\b/gi, 'Sát nách');
-  translated = translated.replace(/\bCasual\b/gi, 'Thường ngày');
-  translated = translated.replace(/\bOfficial\b/gi, 'Chính hãng');
-  return translated;
+
+  if (vnColor && vnColor !== 'Mặc định') {
+    finalName += ` màu ${vnColor}`;
+  }
+
+  return finalName;
 }
 
 // ─── MAP CATEGORY SANG TIẾNG VIỆT ─────────────────────
@@ -222,7 +250,7 @@ const ENRICHED = rawProducts.map((p) => {
 
   return {
     ...p,
-    name: translateName(p.productDisplayName),
+    name: translateName(p),
     // Đường dẫn ảnh phục vụ qua Vite middleware
     images: [`/fashion-images/${p.id}.jpg`],
     price,
@@ -278,6 +306,7 @@ export function getProducts({
   page = 0,
   limit = 20,
   category = 'all',
+  gender = 'all',
   search = '',
   sort = 'newest',
   minPrice = 0,
@@ -288,6 +317,11 @@ export function getProducts({
   // Filter by category
   if (category && category !== 'all') {
     list = list.filter((p) => p.rawMasterCategory === category);
+  }
+
+  // Filter by gender
+  if (gender && gender !== 'all') {
+    list = list.filter((p) => p.gender === translate(gender) || p.gender === gender);
   }
 
   // Filter by search

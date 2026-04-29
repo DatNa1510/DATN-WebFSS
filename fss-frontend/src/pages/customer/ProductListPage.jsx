@@ -54,6 +54,7 @@ export default function ProductListPage() {
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
 
   const activeCategory = searchParams.get('category') || 'all';
+  const activeGender = searchParams.get('gender') || 'all';
 
   // Pagination state
   const [products, setProducts] = useState([]);
@@ -79,6 +80,7 @@ export default function ProductListPage() {
           page: pg,
           limit: PAGE_SIZE,
           category: activeCategory,
+          gender: activeGender,
           search: search,
           sort: sortBy,
           minPrice: range.min,
@@ -100,6 +102,7 @@ export default function ProductListPage() {
         page: pg,
         limit: PAGE_SIZE,
         category: activeCategory,
+        gender: activeGender,
         search: search,
         sort: sortBy,
         minPrice: range.min,
@@ -113,7 +116,7 @@ export default function ProductListPage() {
       setLoading(false);
       setIsInitial(false);
     }
-  }, [activeCategory, search, sortBy, priceRange]);
+  }, [activeCategory, activeGender, search, sortBy, priceRange]);
 
   // ─── RESET ON FILTER CHANGE ─────────────────────────
   useEffect(() => {
@@ -122,7 +125,7 @@ export default function ProductListPage() {
     setProducts([]);
     setHasMore(true);
     loadProducts(0, true);
-  }, [activeCategory, search, sortBy, priceRange]); // eslint-disable-line
+  }, [activeCategory, activeGender, search, sortBy, priceRange]); // eslint-disable-line
 
   // ─── LOAD MORE WHEN PAGE CHANGES ────────────────────
   useEffect(() => {
@@ -137,6 +140,13 @@ export default function ProductListPage() {
     const params = new URLSearchParams(searchParams);
     if (slug === 'all') params.delete('category');
     else params.set('category', slug);
+    setSearchParams(params);
+  };
+
+  const setGender = (slug) => {
+    const params = new URLSearchParams(searchParams);
+    if (slug === 'all') params.delete('gender');
+    else params.set('gender', slug);
     setSearchParams(params);
   };
 
@@ -303,6 +313,35 @@ export default function ProductListPage() {
                             }`}
                         >
                           {range.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Gender Filters */}
+                <div className="mb-8 pb-8 border-b border-slate-100">
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] mb-4">Giới tính</p>
+                  <div className="space-y-3.5">
+                    {[
+                      { id: 'all', label: 'Tất cả' },
+                      { id: 'Men', label: 'Nam' },
+                      { id: 'Women', label: 'Nữ' }
+                    ].map((genderObj) => (
+                      <label key={genderObj.id} className="flex items-center gap-3 cursor-pointer group">
+                        <div
+                          onClick={() => setGender(genderObj.id)}
+                          className={`w-4 h-4 flex items-center justify-center border-[2px] rounded-sm transition-all cursor-pointer ${activeGender === genderObj.id ? 'border-[#00168d] bg-[#00168d]' : 'border-slate-300 group-hover:border-[#00168d]'
+                            }`}
+                        >
+                          {activeGender === genderObj.id && <div className="w-1.5 h-1.5 bg-white rounded-[1px]" />}
+                        </div>
+                        <span
+                          onClick={() => setGender(genderObj.id)}
+                          className={`text-[13px] font-bold transition-colors cursor-pointer ${activeGender === genderObj.id ? 'text-[#00168d]' : 'text-slate-600 group-hover:text-slate-800'
+                            }`}
+                        >
+                          {genderObj.label}
                         </span>
                       </label>
                     ))}
