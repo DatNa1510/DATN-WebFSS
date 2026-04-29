@@ -9,7 +9,8 @@ export default function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQty } = useCartStore();
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
-  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const safeItems = items || [];
+  const subtotal = safeItems.reduce((s, i) => s + i.price * i.qty, 0);
   const shipping = subtotal >= 500000 ? 0 : 35000;
   const total = subtotal + shipping;
 
@@ -39,8 +40,8 @@ export default function CartDrawer() {
                 <ShoppingBag size={20} className="text-primary" />
                 <div className="flex flex-col justify-center">
                   <span className="font-black text-foreground block text-lg leading-normal tracking-tight pt-1">GIỎ HÀNG</span>
-                  {items.length > 0 && (
-                    <span className="text-xs font-semibold text-muted-foreground leading-none">{items.length} sản phẩm</span>
+                  {safeItems.length > 0 && (
+                    <span className="text-xs font-semibold text-muted-foreground leading-none">{safeItems.length} sản phẩm</span>
                   )}
                 </div>
               </div>
@@ -58,10 +59,10 @@ export default function CartDrawer() {
 
             {/* Items */}
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col space-y-4">
-              {items.length === 0 ? (
+              {safeItems.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                  <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center mb-6">
-                    <ShoppingBag size={40} className="text-primary/40" />
+                  <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <ShoppingBag size={32} className="text-primary/40" />
                   </div>
                   <h3 className="font-bold text-xl text-foreground mb-2">Giỏ hàng của bạn đang trống</h3>
                   <p className="text-sm text-muted-foreground mb-8 max-w-[250px]">
@@ -77,7 +78,7 @@ export default function CartDrawer() {
                 </div>
               ) : (
                 <AnimatePresence>
-                  {items.map((item) => (
+                  {safeItems.map((item) => (
                     <motion.div
                       key={item.key}
                       layout
@@ -102,8 +103,10 @@ export default function CartDrawer() {
                             <Trash2 size={16} />
                           </button>
                         </div>
-                        <div className="flex mt-1">
-                          <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-sm">{item.size} · {item.color}</span>
+                        <div className="flex mt-1 gap-1.5 flex-wrap">
+                          {item.size && (
+                            <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-sm">Size: {item.size}</span>
+                          )}
                         </div>
                         
                         <div className="flex items-center justify-between mt-auto pt-2">
@@ -122,7 +125,7 @@ export default function CartDrawer() {
             </div>
 
             {/* Footer */}
-            {items.length > 0 && (
+            {safeItems.length > 0 && (
               <div className="border-t border-slate-100 px-6 py-6 space-y-5 bg-white shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
                 <div className="space-y-3">
                   <div className="flex justify-between text-[13px]">
