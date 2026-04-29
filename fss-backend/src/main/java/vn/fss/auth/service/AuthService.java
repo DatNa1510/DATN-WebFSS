@@ -145,13 +145,12 @@ public class AuthService {
         String token = jwtUtil.generateToken(user);
         
         // --- Sinh Refresh Token ---
-        refreshTokenRepository.deleteByUser(user); // Xóa token cũ nếu có
         String rToken = UUID.randomUUID().toString();
-        RefreshToken refreshToken = RefreshToken.builder()
-                .user(user)
-                .token(rToken)
-                .expiryDate(Instant.now().plus(7, ChronoUnit.DAYS))
-                .build();
+        RefreshToken refreshToken = refreshTokenRepository.findByUser(user).orElse(
+            RefreshToken.builder().user(user).build()
+        );
+        refreshToken.setToken(rToken);
+        refreshToken.setExpiryDate(Instant.now().plus(7, ChronoUnit.DAYS));
         refreshTokenRepository.save(refreshToken);
 
         return AuthResponse.builder()
@@ -286,13 +285,12 @@ public class AuthService {
                 String token = jwtUtil.generateToken(user);
                 
                 // Sinh Refresh Token
-                refreshTokenRepository.deleteByUser(user);
                 String rToken = UUID.randomUUID().toString();
-                RefreshToken refreshToken = RefreshToken.builder()
-                        .user(user)
-                        .token(rToken)
-                        .expiryDate(Instant.now().plus(7, ChronoUnit.DAYS))
-                        .build();
+                RefreshToken refreshToken = refreshTokenRepository.findByUser(user).orElse(
+                    RefreshToken.builder().user(user).build()
+                );
+                refreshToken.setToken(rToken);
+                refreshToken.setExpiryDate(Instant.now().plus(7, ChronoUnit.DAYS));
                 refreshTokenRepository.save(refreshToken);
 
                 return AuthResponse.builder()
@@ -315,5 +313,47 @@ public class AuthService {
             log.error("Lỗi xác thực Google", e);
             throw new RuntimeException("Xác thực Google thất bại: " + e.getMessage());
         }
+    }
+
+    // ── CẬP NHẬT HỒ SƠ ──────────────────────────────────────────────────────
+    @Transactional
+    public AuthResponse.UserDto updateProfile(String email, String fullName, String phone) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        if (fullName != null && !fullName.isBlank()) {
+            user.setFullName(fullName.trim());
+        }
+        if (phone != null) {
+            user.setPhone(phone.trim());
+        }
+        userRepository.save(user);
+
+        return AuthResponse.UserDto.builder()
+                .id(user.getId())
+                .name(user.getFullName())
+                .email(user.getEmail())
+                .role(user.getRole().name().toLowerCase())
+                .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() :
+                        (user.getRole() == User.Role.ADMIN ? "/admin-pfp.jpg" : "/default-customer.jpg"))
+                .phone(user.getPhone())
+                .build();
+    }
+
+    // ── ĐỔI MẬT KHẨU ────────────────────────────────────────────────────────
+    @Transactional
+    public void changePassword(String email, String oldPassword, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Mật khẩu hiện tại không đúng");
+        }
+        if (newPassword.length() < 6) {
+            throw new RuntimeException("Mật khẩu mới phải có ít nhất 6 ký tự");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

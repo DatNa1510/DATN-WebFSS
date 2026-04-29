@@ -35,10 +35,24 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                // Thêm các public endpoints khác ở đây (ví dụ: /api/products)
+                // Public auth endpoints — không cần JWT
+                .requestMatchers(
+                    "/api/auth/login",
+                    "/api/auth/register",
+                    "/api/auth/verify",
+                    "/api/auth/resend-verification",
+                    "/api/auth/forgot-password",
+                    "/api/auth/reset-password",
+                    "/api/auth/refresh",
+                    "/api/auth/google"
+                ).permitAll()
+                // Public product & static
                 .requestMatchers("/api/products/**").permitAll()
+                .requestMatchers("/api/payment/momo-callback").permitAll()
+                .requestMatchers("/api/payment/vietqr-callback").permitAll()
+                .requestMatchers("/fashion-dataset/**").permitAll()
                 .requestMatchers("/error").permitAll()
+                // Mọi request còn lại đều cần JWT (bao gồm /api/auth/profile, /api/orders, /api/cart)
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

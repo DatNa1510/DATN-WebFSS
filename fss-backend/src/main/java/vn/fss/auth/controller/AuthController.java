@@ -104,12 +104,40 @@ public class AuthController {
     }
 
     @PostMapping("/google")
-    public ResponseEntity<AuthResponse> googleLogin(@RequestBody Map<String, String> request) {
-        String token = request.get("token");
-        if (token == null || token.isBlank()) {
-            throw new RuntimeException("Google Token không được để trống");
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            if (token == null || token.isBlank()) {
+                throw new RuntimeException("Google Token không được để trống");
+            }
+            AuthResponse response = authService.googleLogin(token);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-        AuthResponse response = authService.googleLogin(token);
-        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(Authentication auth,
+                                           @RequestBody Map<String, String> request) {
+        try {
+            AuthResponse.UserDto updated = authService.updateProfile(
+                    auth.getName(), request.get("name"), request.get("phone"));
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<?> changePassword(Authentication auth,
+                                            @RequestBody Map<String, String> request) {
+        try {
+            authService.changePassword(auth.getName(),
+                    request.get("oldPassword"), request.get("newPassword"));
+            return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công!"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

@@ -8,6 +8,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 
+import java.security.Principal;
+
 /**
  * Entity đại diện cho bảng `users` trong PostgreSQL.
  * Lưu thông tin tài khoản, mật khẩu đã hash, và trạng thái xác thực email.
@@ -18,7 +20,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class User implements Principal {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -89,6 +91,11 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Override
+    public String getName() {
+        return this.email;
+    }
 
     /**
      * ENUM vai trò người dùng

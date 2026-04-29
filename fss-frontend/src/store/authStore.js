@@ -204,10 +204,41 @@ const useAuthStore = create(
         }
       },
 
-      updateProfile: (data) =>
-        set((state) => ({
-          user: state.user ? { ...state.user, ...data } : null
-        })),
+      updateProfile: async (data) => {
+        const { token } = get();
+        if (!token) return { success: false, error: 'Chưa đăng nhập' };
+        try {
+          const res = await fetch(`${API_URL}/profile`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(data),
+          });
+          const json = await res.json();
+          if (!res.ok) return { success: false, error: json.error || 'Lỗi cập nhật hồ sơ' };
+          // Cập nhật user state từ response
+          set(state => ({ user: state.user ? { ...state.user, ...json } : null }));
+          return { success: true };
+        } catch {
+          return { success: false, error: 'Lỗi kết nối' };
+        }
+      },
+
+      changePassword: async (oldPassword, newPassword) => {
+        const { token } = get();
+        if (!token) return { success: false, error: 'Chưa đăng nhập' };
+        try {
+          const res = await fetch(`${API_URL}/change-password`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ oldPassword, newPassword }),
+          });
+          const json = await res.json();
+          if (!res.ok) return { success: false, error: json.error || 'Lỗi đổi mật khẩu' };
+          return { success: true, message: json.message };
+        } catch {
+          return { success: false, error: 'Lỗi kết nối' };
+        }
+      },
 
       updateAvatar: (avatarDataUrl) =>
         set((state) => ({
@@ -216,7 +247,7 @@ const useAuthStore = create(
     }),
     {
       name: 'fss-auth',
-      version: 7, // Tăng version lên 7 để ép update local storage
+      version: 8, // Tăng lên 8 vì thêm changePassword
       partialize: (state) => ({
         token: state.token,
         refreshToken: state.refreshToken,
