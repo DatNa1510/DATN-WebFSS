@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, ChevronRight, Package, MapPin, Heart, User,
@@ -7,6 +8,10 @@ import {
   TrendingUp, ShoppingBag, CreditCard
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import useOrderStore from '../../store/orderStore';
+import useAddressStore from '../../store/addressStore';
+import useWishlistStore from '../../store/wishlistStore';
+import AddressModal from '../../components/ui/AddressModal';
 import { formatPrice, orderStatusMap } from '../../data/mockData';
 
 /* ─────────────────────────────────────────
@@ -92,12 +97,18 @@ const sideMenuColors = {
    STATUS CHIP
 ───────────────────────────────────────── */
 const statusConfig = {
-  delivered: { label: 'Đã giao', bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
-  ĐÃ_GIAO: { label: 'Đã giao', bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
-  processing: { label: 'Đang xử lý', bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
-  pending: { label: 'Chờ xử lý', bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' },
-  shipping: { label: 'Đang giao', bg: '#dbeafe', color: '#1e40af', dot: '#3b82f6' },
-  cancelled: { label: 'Đã huỷ', bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
+  // Backend enums (uppercase)
+  PENDING:   { label: 'Chờ xác nhận', bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' },
+  CONFIRMED: { label: 'Đã xác nhận', bg: '#dbeafe', color: '#1e40af', dot: '#3b82f6' },
+  SHIPPING:  { label: 'Đang giao',    bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
+  DELIVERED: { label: 'Đã giao',      bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
+  CANCELLED: { label: 'Đã huỷ',      bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
+  // Legacy lowercase
+  delivered:  { label: 'Đã giao',      bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
+  processing: { label: 'Đang xử lý',  bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
+  pending:    { label: 'Chờ xử lý',   bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' },
+  shipping:   { label: 'Đang giao',    bg: '#dbeafe', color: '#1e40af', dot: '#3b82f6' },
+  cancelled:  { label: 'Đã huỷ',      bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
 };
 
 function StatusChip({ status }) {
@@ -118,6 +129,7 @@ function StatusChip({ status }) {
 ───────────────────────────────────────── */
 export default function ProfilePage() {
   const { user, updateProfile, updateAvatar, logout } = useAuthStore();
+  const location = useLocation();
 
   const [sideTab, setSideTab] = useState('profile');
   const [mainTab, setMainTab] = useState('info');
@@ -138,12 +150,40 @@ export default function ProfilePage() {
     }
   }, [user?.name, user?.email, user?.phone]);
 
-  const orders = user?.orders || [];
+  const { orders, isLoading: ordersLoading, fetchOrders, cancelOrder } = useOrderStore();
+  const { addresses, isLoading: addressLoading, fetchAddresses, deleteAddress } = useAddressStore();
+  const { wishlist, fetchWishlist, toggleWishlist } = useWishlistStore();
   const fileInputRef = useRef(null);
 
-  const handleSave = () => {
-    updateProfile({ name: form.name });
-    setEditing(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addressToEdit, setAddressToEdit] = useState(null);
+
+  // Fetch orders & addresses khi chuyển tab
+  useEffect(() => {
+    if (sideTab === 'orders') fetchOrders();
+    if (sideTab === 'address') fetchAddresses();
+    if (sideTab === 'wishlist') fetchWishlist();
+  }, [sideTab, fetchOrders, fetchAddresses, fetchWishlist]);
+
+  // Tự động chuyển tab nếu được redirect từ trang khác (vd: CheckoutPage)
+  useEffect(() => {
+    if (location.state?.tab) {
+      setSideTab(location.state.tab);
+    }
+  }, [location.state]);
+
+  const [saveMsg, setSaveMsg] = useState('');
+
+  const handleSave = async () => {
+    const result = await updateProfile({ name: form.name, phone: form.phone });
+    if (result?.success) {
+      setSaveMsg('✅ Cập nhật hồ sơ thành công!');
+      setEditing(false);
+      setTimeout(() => setSaveMsg(''), 3000);
+    } else {
+      setSaveMsg(`❌ ${result?.error || 'Lỗi cập nhật'}`);
+      setTimeout(() => setSaveMsg(''), 3000);
+    }
   };
 
   const handleAvatarChange = (e) => {
@@ -159,9 +199,9 @@ export default function ProfilePage() {
 
   const sideMenuItems = [
     { id: 'profile', label: 'Hồ sơ của tôi', sub: 'Thông tin & bảo mật' },
-    { id: 'orders', label: 'Đơn hàng', sub: `${orders.length} đơn hàng` },
-    { id: 'address', label: 'Sổ địa chỉ', sub: 'Chưa có địa chỉ' },
-    { id: 'wishlist', label: 'Yêu thích', sub: 'Sản phẩm đã thích' },
+    { id: 'orders',  label: 'Đơn hàng',      sub: orders.length > 0 ? `${orders.length} đơn hàng` : 'Chưa có đơn hàng' },
+    { id: 'address', label: 'Sổ địa chỉ',    sub: 'Chưa có địa chỉ' },
+    { id: 'wishlist',label: 'Yêu thích',     sub: 'Sản phẩm đã thích' },
   ];
 
   /* Stagger container variants */
@@ -175,6 +215,7 @@ export default function ProfilePage() {
   };
 
   return (
+    <>
     <div
       className="min-h-screen page-enter relative overflow-hidden"
       style={{
@@ -574,6 +615,17 @@ export default function ProfilePage() {
                         </motion.div>
                       </motion.div>
 
+                      {/* Save message notification */}
+                      {saveMsg && (
+                        <div className={`mb-4 px-4 py-3 rounded-sm text-sm font-semibold flex items-center gap-2 ${
+                          saveMsg.startsWith('✅')
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-red-50 text-red-600 border border-red-200'
+                        }`}>
+                          {saveMsg}
+                        </div>
+                      )}
+
                       {/* Edit History Timeline */}
                       <div
                         className="rounded-sm overflow-hidden"
@@ -681,9 +733,32 @@ export default function ProfilePage() {
                       animate="visible"
                       className="space-y-4"
                     >
-                      {orders.map((order, idx) => (
+                      {/* Loading */}
+                      {ordersLoading && orders.length === 0 && (
+                        <div className="flex justify-center py-12">
+                          <div className="flex flex-col items-center gap-3 text-slate-400">
+                            <div className="w-8 h-8 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
+                            <p className="text-sm font-medium">Đang tải đơn hàng...</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Empty */}
+                      {!ordersLoading && orders.length === 0 && (
+                        <div className="text-center py-16 flex flex-col items-center justify-center">
+                          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                            style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(167,139,250,0.06))' }}>
+                            <Box size={28} className="text-violet-400" />
+                          </div>
+                          <p className="text-[15px] font-bold text-slate-500 mb-1">Chưa có đơn hàng nào</p>
+                          <p className="text-[12px] text-slate-400">Hãy mua sắm và quay lại đây nhé!</p>
+                        </div>
+                      )}
+
+                      {/* Order cards */}
+                      {orders.map((order) => (
                         <motion.div
-                          key={idx}
+                          key={order.id}
                           variants={fadeUp}
                           className="relative overflow-hidden rounded-sm group transition-all duration-300 hover:-translate-y-0.5"
                           style={{
@@ -716,38 +791,45 @@ export default function ProfilePage() {
                                 </div>
                                 <div>
                                   <p className="text-[9px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5">Mã đơn hàng</p>
-                                  <p className="text-[14px] font-black text-slate-800">{order.id}</p>
+                                  <p className="text-[14px] font-black text-slate-800">{order.orderCode}</p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-4">
                                 <div>
                                   <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase mb-0.5">Ngày đặt</p>
-                                  <p className="text-[12px] font-bold text-slate-600">{order.date}</p>
+                                  <p className="text-[12px] font-bold text-slate-600">
+                                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : '—'}
+                                  </p>
                                 </div>
-                                <StatusChip status={order.status} />
+                                <StatusChip status={order.status?.toLowerCase()} />
                               </div>
                             </div>
 
-                            {/* Items */}
+                            {/* Items — hiển thị ảnh thật */}
                             <div className="space-y-3 mb-5">
-                              {order.items.map((item, i) => (
-                                <div key={i} className="flex items-center justify-between">
+                              {(order.items || []).map((item) => (
+                                <div key={item.id} className="flex items-center justify-between">
                                   <div className="flex items-center gap-3">
-                                    <div
-                                      className="w-14 h-16 rounded-sm shrink-0"
-                                      style={{
-                                        background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
-                                        border: '2px solid rgba(226,232,240,0.8)',
-                                      }}
-                                    />
+                                    {item.productImage ? (
+                                      <img
+                                        src={item.productImage}
+                                        alt={item.productName}
+                                        className="w-14 h-16 rounded-sm object-cover shrink-0"
+                                        style={{ border: '2px solid rgba(226,232,240,0.8)' }}
+                                        onError={e => { e.target.style.display = 'none'; }}
+                                      />
+                                    ) : (
+                                      <div className="w-14 h-16 rounded-sm shrink-0"
+                                        style={{ background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)', border: '2px solid rgba(226,232,240,0.8)' }} />
+                                    )}
                                     <div>
-                                      <p className="text-[13px] font-bold text-slate-800">{item.name}</p>
+                                      <p className="text-[13px] font-bold text-slate-800 line-clamp-1">{item.productName}</p>
                                       <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                                        Size: {item.size} · SL: {item.qty}
+                                        {item.size && `Size: ${item.size} · `}SL: {item.quantity}
                                       </p>
                                     </div>
                                   </div>
-                                  <p className="text-[13px] font-black text-slate-700">{formatPrice(item.price)}</p>
+                                  <p className="text-[13px] font-black text-slate-700">{formatPrice(item.subtotal)}</p>
                                 </div>
                               ))}
                             </div>
@@ -763,33 +845,50 @@ export default function ProfilePage() {
                                   className="text-[19px] font-black tracking-tight"
                                   style={{ background: 'linear-gradient(90deg, #00168d, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
                                 >
-                                  {formatPrice(order.total)}
+                                  {formatPrice(order.totalAmount)}
                                 </p>
                               </div>
-                              <button
-                                className="flex items-center gap-2 px-5 py-2.5 rounded-sm text-[11px] font-black text-slate-600 transition-all hover:-translate-y-0.5"
-                                style={{
-                                  background: 'rgba(248,250,252,0.8)',
-                                  border: '2px solid rgba(226,232,240,0.8)',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0,22,141,0.06), rgba(124,58,237,0.04))';
-                                  e.currentTarget.style.color = '#00168d';
-                                  e.currentTarget.style.borderColor = 'rgba(0,22,141,0.2)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'rgba(248,250,252,0.8)';
-                                  e.currentTarget.style.color = '#475569';
-                                  e.currentTarget.style.borderColor = 'rgba(226,232,240,0.8)';
-                                }}
-                              >
-                                Chi tiết đơn hàng
-                                <ChevronRight size={13} strokeWidth={2.5} />
-                              </button>
+                              <div className="flex items-center gap-2">
+                                {/* Nút huỷ đơn - chỉ hiện khi PENDING */}
+                                {order.status === 'PENDING' && (
+                                  <button
+                                    onClick={async () => {
+                                      if (!window.confirm('Bạn có chắc muốn huỷ đơn hàng này?')) return;
+                                      const res = await cancelOrder(order.id);
+                                      if (!res.success) alert(res.error);
+                                    }}
+                                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-sm text-[11px] font-bold text-red-600 transition-all hover:-translate-y-0.5"
+                                    style={{ background: 'rgba(254,242,242,0.8)', border: '2px solid rgba(252,165,165,0.5)' }}
+                                  >
+                                    Huỷ đơn
+                                  </button>
+                                )}
+                                <button
+                                  className="flex items-center gap-2 px-5 py-2.5 rounded-sm text-[11px] font-black text-slate-600 transition-all hover:-translate-y-0.5"
+                                  style={{
+                                    background: 'rgba(248,250,252,0.8)',
+                                    border: '2px solid rgba(226,232,240,0.8)',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0,22,141,0.06), rgba(124,58,237,0.04))';
+                                    e.currentTarget.style.color = '#00168d';
+                                    e.currentTarget.style.borderColor = 'rgba(0,22,141,0.2)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(248,250,252,0.8)';
+                                    e.currentTarget.style.color = '#475569';
+                                    e.currentTarget.style.borderColor = 'rgba(226,232,240,0.8)';
+                                  }}
+                                >
+                                  Chi tiết đơn hàng
+                                  <ChevronRight size={13} strokeWidth={2.5} />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </motion.div>
                       ))}
+
                     </motion.div>
                   </div>
                 </motion.div>
@@ -827,83 +926,56 @@ export default function ProfilePage() {
                       animate={{ opacity: 1, y: 0 }}
                       className="grid gap-4 mb-5"
                     >
-                      {/* Default address card */}
-                      {form.address && (
-                        <div
-                          className="relative overflow-hidden rounded-sm p-6 group transition-all duration-300 hover:-translate-y-0.5"
-                          style={{
-                            background: 'linear-gradient(135deg, rgba(5,150,105,0.04), rgba(255,255,255,0.95))',
-                            border: '2px solid rgba(5,150,105,0.2)',
-                            boxShadow: '0 4px 20px rgba(5,150,105,0.08)',
-                          }}
-                        >
-                          {/* Accent glow */}
-                          <div className="absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 rounded-full opacity-20"
-                            style={{ background: 'radial-gradient(circle, #059669, transparent)' }} />
-
-                          <div className="flex items-start gap-4 relative z-10">
-                            <div
-                              className="w-11 h-11 rounded-sm flex items-center justify-center shrink-0 self-center"
-                              style={{ background: 'linear-gradient(135deg, #059669, #34d399)', boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}
-                            >
-                              <MapPin size={18} className="text-white" strokeWidth={2.5} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2.5 mb-2">
-                                <h4 className="text-[14px] font-black text-slate-800">Địa chỉ mặc định</h4>
-                                <span
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
-                                  style={{ background: 'rgba(5,150,105,0.1)', color: '#059669', border: '2px solid rgba(5,150,105,0.15)' }}
-                                >
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                  Mặc định
-                                </span>
+                      {addressLoading ? (
+                        <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" /></div>
+                      ) : (
+                        addresses.map(addr => (
+                          <div
+                            key={addr.id}
+                            className={`relative overflow-hidden rounded-sm p-6 group transition-all duration-300 hover:-translate-y-0.5 ${addr.isDefault ? 'border-emerald-200' : 'border-slate-200'}`}
+                            style={{
+                              background: addr.isDefault ? 'linear-gradient(135deg, rgba(5,150,105,0.04), rgba(255,255,255,0.95))' : 'rgba(255,255,255,0.95)',
+                              borderWidth: '2px',
+                              boxShadow: addr.isDefault ? '0 4px 20px rgba(5,150,105,0.08)' : 'none',
+                            }}
+                          >
+                            {addr.isDefault && <div className="absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #059669, transparent)' }} />}
+                            <div className="flex items-start gap-4 relative z-10">
+                              <div
+                                className="w-11 h-11 rounded-sm flex items-center justify-center shrink-0 self-center"
+                                style={addr.isDefault ? { background: 'linear-gradient(135deg, #059669, #34d399)', boxShadow: '0 4px 12px rgba(5,150,105,0.3)' } : { background: '#f1f5f9' }}
+                              >
+                                <MapPin size={18} className={addr.isDefault ? 'text-white' : 'text-slate-400'} strokeWidth={2.5} />
                               </div>
-                              <p className="text-[13.5px] text-slate-600 font-medium leading-relaxed">{form.address}</p>
-                              <div className="flex items-center gap-4 mt-4">
-                                <button
-                                  className="text-[11px] font-black uppercase tracking-wider transition-all"
-                                  style={{ color: '#059669', borderBottom: '2px solid rgba(5,150,105,0.3)', paddingBottom: '1px' }}
-                                >
-                                  Chỉnh sửa
-                                </button>
-                                <button
-                                  className="text-[11px] font-black uppercase tracking-wider transition-all text-red-400"
-                                  style={{ borderBottom: '2px solid rgba(239,68,68,0.25)', paddingBottom: '1px' }}
-                                >
-                                  Xoá
-                                </button>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2.5 mb-2">
+                                  <h4 className="text-[14px] font-black text-slate-800">{addr.recipientName} - {addr.phone}</h4>
+                                  {addr.isDefault && (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider" style={{ background: 'rgba(5,150,105,0.1)', color: '#059669', border: '2px solid rgba(5,150,105,0.15)' }}>
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Mặc định
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[13.5px] text-slate-600 font-medium leading-relaxed">{addr.address}, {addr.district}, {addr.city}</p>
+                                <div className="flex items-center gap-4 mt-4">
+                                  <button onClick={() => { setAddressToEdit(addr); setIsAddressModalOpen(true); }} className="text-[11px] font-black uppercase tracking-wider transition-all" style={{ color: '#059669', borderBottom: '2px solid rgba(5,150,105,0.3)' }}>Chỉnh sửa</button>
+                                  <button onClick={() => { if(window.confirm('Xoá địa chỉ này?')) deleteAddress(addr.id); }} className="text-[11px] font-black uppercase tracking-wider transition-all text-red-400" style={{ borderBottom: '2px solid rgba(239,68,68,0.25)' }}>Xoá</button>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        ))
                       )}
 
-                      {/* Add new address – dashed card */}
                       <button
+                        onClick={() => { setAddressToEdit(null); setIsAddressModalOpen(true); }}
                         className="w-full flex flex-col items-center justify-center gap-3 py-10 rounded-sm transition-all duration-300 group hover:-translate-y-0.5"
-                        style={{
-                          border: '2px dashed rgba(226,232,240,0.9)',
-                          background: 'rgba(248,250,252,0.5)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = 'rgba(0,22,141,0.25)';
-                          e.currentTarget.style.background = 'rgba(0,22,141,0.02)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = 'rgba(226,232,240,0.9)';
-                          e.currentTarget.style.background = 'rgba(248,250,252,0.5)';
-                        }}
+                        style={{ border: '2px dashed rgba(226,232,240,0.9)', background: 'rgba(248,250,252,0.5)' }}
                       >
-                        <div
-                          className="w-11 h-11 rounded-none flex items-center justify-center transition-all duration-300 group-hover:scale-110"
-                          style={{ background: 'rgba(0,22,141,0.06)', border: '2px solid rgba(0,22,141,0.12)' }}
-                        >
+                        <div className="w-11 h-11 rounded-none flex items-center justify-center transition-all duration-300 group-hover:scale-110" style={{ background: 'rgba(0,22,141,0.06)', border: '2px solid rgba(0,22,141,0.12)' }}>
                           <Plus size={18} className="text-primary" />
                         </div>
-                        <span className="text-[12px] font-black text-slate-400 uppercase tracking-widest group-hover:text-primary transition-colors">
-                          Thêm địa chỉ mới
-                        </span>
+                        <span className="text-[12px] font-black text-slate-400 uppercase tracking-widest group-hover:text-primary transition-colors">Thêm địa chỉ mới</span>
                       </button>
                     </motion.div>
                   </div>
@@ -927,34 +999,58 @@ export default function ProfilePage() {
                     boxShadow: '0 8px 40px rgba(0,22,141,0.07)',
                   }}
                 >
-                  <div className="flex flex-col items-center justify-center py-24 px-10 text-center min-h-[450px]">
-                    <div className="relative mb-8">
-                      <div className="absolute inset-0 rounded-full blur-3xl opacity-40 scale-150"
-                        style={{ background: 'radial-gradient(circle, #fb7185, transparent)' }} />
-                      <div
-                        className="relative w-24 h-24 rounded-full flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, rgba(225,29,72,0.1), rgba(251,113,133,0.08))', border: '2px solid rgba(225,29,72,0.12)' }}
-                      >
-                        <Heart size={36} className="text-rose-400 fill-rose-300" strokeWidth={1.5} />
+                    {wishlist.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-24 px-10 text-center min-h-[450px]">
+                        <div className="relative mb-8">
+                          <div className="absolute inset-0 rounded-full blur-3xl opacity-40 scale-150"
+                            style={{ background: 'radial-gradient(circle, #fb7185, transparent)' }} />
+                          <div
+                            className="relative w-24 h-24 rounded-full flex items-center justify-center"
+                            style={{ background: 'linear-gradient(135deg, rgba(225,29,72,0.1), rgba(251,113,133,0.08))', border: '2px solid rgba(225,29,72,0.12)' }}
+                          >
+                            <Heart size={36} className="text-rose-400 fill-rose-300" strokeWidth={1.5} />
+                          </div>
+                        </div>
+                        <p className="text-[11px] font-black tracking-[0.25em] text-slate-400 uppercase mb-3">Danh sách yêu thích</p>
+                        <p className="text-[16px] text-slate-500 mb-8 max-w-xs leading-relaxed">Chưa có sản phẩm nào trong danh sách yêu thích của bạn.</p>
                       </div>
-                    </div>
-                    <p className="text-[11px] font-black tracking-[0.25em] text-slate-400 uppercase mb-3">
-                      Danh sách yêu thích
-                    </p>
-                    <p className="text-[16px] text-slate-500 mb-8 max-w-xs leading-relaxed">
-                      Chưa có sản phẩm nào trong danh sách yêu thích của bạn.
-                    </p>
-                    <button
-                      className="flex items-center gap-2.5 px-8 py-3.5 rounded-sm text-[12px] font-black text-white transition-all hover:-translate-y-0.5"
-                      style={{
-                        background: 'linear-gradient(135deg, #e11d48, #fb7185)',
-                        boxShadow: '0 8px 24px rgba(225,29,72,0.25)',
-                      }}
-                    >
-                      <ShoppingBag size={14} />
-                      Khám phá sản phẩm
-                    </button>
-                  </div>
+                    ) : (
+                      <div className="p-6 md:p-8">
+                        <div className="flex items-start gap-4 mb-8">
+                          <div className="w-1.5 h-10 rounded-none shrink-0 mt-0.5" style={{ background: 'linear-gradient(180deg, #e11d48, #fb7185)' }} />
+                          <div>
+                            <h2 className="text-[20px] font-black text-slate-800 tracking-tight">Sản phẩm yêu thích</h2>
+                            <p className="text-[12px] text-slate-400 mt-0.5">Các sản phẩm bạn đã lưu</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {wishlist.map(item => (
+                            <div key={item.id} className="group relative bg-white border border-slate-200 p-3 flex flex-col gap-3 hover:border-rose-200 transition-all">
+                              <button onClick={() => toggleWishlist(item.productId)} className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-rose-500 hover:bg-rose-50 hover:scale-110 transition-all backdrop-blur-sm shadow-sm">
+                                <Heart size={16} className="fill-rose-500" />
+                              </button>
+                              <div className="aspect-[3/4] bg-slate-100 overflow-hidden relative">
+                                {item.imageUrl ? (
+                                  <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                ) : (
+                                  <div className="w-full h-full bg-slate-200" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">{item.productCategory}</p>
+                                <h3 className="text-[13px] font-bold text-slate-800 line-clamp-1 mb-2">{item.productName}</h3>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[14px] font-black text-rose-600">{formatPrice(item.price)}</span>
+                                  {item.originalPrice > item.price && (
+                                    <span className="text-[11px] text-slate-400 line-through">{formatPrice(item.originalPrice)}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1059,6 +1155,12 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+    <AddressModal
+      isOpen={isAddressModalOpen}
+      onClose={() => setIsAddressModalOpen(false)}
+      addressToEdit={addressToEdit}
+    />
+    </>
   );
 }
 
@@ -1066,11 +1168,13 @@ export default function ProfilePage() {
    PASSWORD SECTION
 ───────────────────────────────────────── */
 function PasswordSection() {
+  const { changePassword } = useAuthStore();
   const [vals, setVals] = useState({ old: '', new: '', confirm: '' });
   const [showPwd, setShowPwd] = useState({ old: false, new: false, confirm: false });
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
   const [strength, setStrength] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const calcStrength = (pw) => {
     let s = 0;
@@ -1081,15 +1185,22 @@ function PasswordSection() {
     return s;
   };
 
-  const handle = (e) => {
+  const handle = async (e) => {
     e.preventDefault();
     if (vals.new !== vals.confirm) { setError('Mật khẩu mới không khớp!'); return; }
-    if (vals.new.length < 8) { setError('Mật khẩu phải có ít nhất 8 ký tự'); return; }
+    if (vals.new.length < 6) { setError('Mật khẩu phải có ít nhất 6 ký tự'); return; }
     setError('');
-    setDone(true);
-    setTimeout(() => setDone(false), 3000);
-    setVals({ old: '', new: '', confirm: '' });
-    setStrength(0);
+    setIsLoading(true);
+    const result = await changePassword(vals.old, vals.new);
+    setIsLoading(false);
+    if (result?.success) {
+      setDone(true);
+      setTimeout(() => setDone(false), 3000);
+      setVals({ old: '', new: '', confirm: '' });
+      setStrength(0);
+    } else {
+      setError(result?.error || 'Đổi mật khẩu thất bại');
+    }
   };
 
   const fields = [
@@ -1220,14 +1331,17 @@ function PasswordSection() {
 
             <button
               type="submit"
-              className="w-full h-12 flex items-center justify-center gap-2 rounded-sm text-[12px] font-black tracking-[0.15em] uppercase text-white transition-all hover:-translate-y-0.5"
+              disabled={isLoading}
+              className="w-full h-12 flex items-center justify-center gap-2 rounded-sm text-[12px] font-black tracking-[0.15em] uppercase text-white transition-all hover:-translate-y-0.5 disabled:opacity-60"
               style={{
                 background: 'linear-gradient(135deg, #00168d, #7c3aed)',
                 boxShadow: '0 8px 24px rgba(0,22,141,0.25)',
               }}
             >
-              <Shield size={14} />
-              Cập nhật mật khẩu
+              {isLoading
+                ? <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Đang xử lý...</>
+                : <><Shield size={14} /> Cập nhật mật khẩu</>
+              }
             </button>
           </form>
         </div>
