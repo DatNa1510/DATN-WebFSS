@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, CreditCard, Banknote, Smartphone, MapPin, User, Phone, Mail, Package, AlertCircle, Loader2, Truck, ShieldCheck, ChevronRight, Lock, ArrowLeft, Zap, RotateCcw, Tag, TicketPercent } from 'lucide-react';
+import { CheckCircle2, CreditCard, Banknote, Smartphone, MapPin, User, Phone, Mail, Package, AlertCircle, Loader2, Truck, ShieldCheck, ChevronRight, Lock, ArrowLeft, Zap, RotateCcw, Tag, TicketPercent, Clock } from 'lucide-react';
 import VoucherModal from '../../components/ui/VoucherModal';
 import PaymentModal from '../../components/ui/PaymentModal';
 import useCartStore from '../../store/cartStore';
@@ -39,10 +39,11 @@ export default function CheckoutPage() {
   const [selectedVoucher, setSelectedVoucher] = useState(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   
-  // Payment States
   const [paymentLoading, setPaymentLoading] = useState(false);
-  const [qrCode, setQrCode] = useState(null);
+  const [paymentData, setPaymentData] = useState(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
+  const pendingOrderRef = useRef(null); // lưu order khi chờ QR payment
 
   useEffect(() => { 
     if (user) {
@@ -64,7 +65,8 @@ export default function CheckoutPage() {
     }
   }, [addresses, selectedAddress]);
 
-  useEffect(() => { if (!done && sel.length === 0) navigate('/cart', { replace: true }); }, [sel.length, navigate, done]);
+  const isOrdering = useRef(false);
+  useEffect(() => { if (!done && sel.length === 0 && !isOrdering.current && !isPaymentModalOpen) navigate('/cart', { replace: true }); }, [sel.length, navigate, done, isPaymentModalOpen]);
 
   const sub = sel?.reduce((s, i) => s + i.price * i.qty, 0) || 0;
   
@@ -77,21 +79,22 @@ export default function CheckoutPage() {
 
   const ships = SHIPS.map(m => ({ ...m, final: m.price }));
   const activeS = ships.find(m => m.id === ship) || ships[0];
-  const total = Math.max(0, sub + activeS.final - disc);
+  const total = Math.max(5000, sub + activeS.final - disc);
   const valid = !!selectedAddress;
 
   const handleOrder = async () => {
+    isOrdering.current = true;
     if (!valid) {
       toast.error('Vui lòng chọn địa chỉ giao hàng');
+      isOrdering.current = false;
       return;
     }
     setPaymentLoading(true);
-    const r = await placeOrder({ recipientName: selectedAddress.recipientName, recipientPhone: selectedAddress.phone, address: selectedAddress.address, district: selectedAddress.district, city: selectedAddress.city, note: '', paymentMethod: pay, shippingMethod: ship, selectedItemIds: sel?.map(i => parseInt(i.key, 10)) || [] });
+    const r = await placeOrder({ recipientName: selectedAddress.recipientName, recipientPhone: selectedAddress.phone, address: selectedAddress.address, district: selectedAddress.district, city: selectedAddress.city, note: '', paymentMethod: pay, shippingMethod: ship, selectedItemIds: sel?.map(i => parseInt(i.key, 10)) || [], voucherCode: selectedVoucher?.code || null });
     
     if (r.success) {
       await fetchCart();
       
-      // Handle Online Payment
       if (pay === 'momo' || pay === 'vietqr') {
         try {
           const res = await fetch(`http://localhost:8080/api/payment/create/${r.order.id}`, {
@@ -104,26 +107,35 @@ export default function CheckoutPage() {
           const data = await res.json();
           if (res.ok) {
             if (pay === 'momo') {
+              toast.success('Đang chuyển hướng MoMo...');
               window.location.href = data.paymentUrl;
             } else if (pay === 'vietqr') {
-              setQrCode(data.qrCode);
-              setDone(r.order);
+              // VietQR: chỉ hiện QR modal, CHƯA hiện done screen
+              // Done screen chỉ hiện sau khi thanh toán thành công
+              toast.info('Vui lòng hoàn tất thanh toán qua QR để xác nhận đơn hàng.');
+              pendingOrderRef.current = r.order;
+              setPaymentData(data);
               setIsPaymentModalOpen(true);
+              // Không setDone ở đây!
             }
           } else {
             toast.error(data.error || 'Lỗi tạo thanh toán!');
-            setDone(r.order); // Still show order success, but payment failed
+            // Nếu tạo QR thất bại vẫn cho xem đơn
+            setDone(r.order);
           }
         } catch (error) {
           toast.error('Lỗi kết nối server thanh toán!');
           setDone(r.order);
         }
       } else {
-        setDone(r.order); // COD
+        // COD
+        toast.success('Đặt hàng thành công!');
+        setDone(r.order);
       }
     } else {
       toast.error(r.error || 'Đặt hàng thất bại!');
     }
+    isOrdering.current = false;
     setPaymentLoading(false);
   };
 
@@ -136,19 +148,43 @@ export default function CheckoutPage() {
         <div className="min-h-[80vh] flex items-center justify-center">
           <motion.div initial={{ scale: .9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', bounce: .4 }}
             className="w-full max-w-md mx-4 border-2 border-slate-200 p-10 text-center bg-white shadow-xl">
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: .2, type: 'spring', bounce: .6 }}
-              className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 size={36} className="text-green-500" />
-            </motion.div>
-            <h2 className="text-xl font-bold text-gray-800 mb-1">Đặt hàng thành công!</h2>
-            <p className="text-gray-400 text-sm mb-6">Cảm ơn bạn đã mua sắm tại FSS ✨</p>
+            {(pay === 'vietqr' || pay === 'momo') && !isPaid ? (
+              <>
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: .2, type: 'spring', bounce: .6 }}
+                  className="w-16 h-16 rounded-full bg-amber-50 inline-flex items-center justify-center mb-4">
+                  <Clock size={36} className="text-amber-500" />
+                </motion.div>
+                <h2 className="text-xl font-bold text-gray-800 mb-1">Đơn hàng đang chờ thanh toán!</h2>
+                <p className="text-gray-400 text-sm mb-6">Vui lòng hoàn tất thanh toán để FSS xử lý đơn hàng</p>
+              </>
+            ) : (
+              <>
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: .2, type: 'spring', bounce: .6 }}
+                  className="w-16 h-16 rounded-full bg-green-50 inline-flex items-center justify-center mb-4">
+                  <CheckCircle2 size={36} className="text-green-500" />
+                </motion.div>
+                <h2 className="text-xl font-bold text-gray-800 mb-1">Đặt hàng thành công!</h2>
+                <p className="text-gray-400 text-sm mb-6">Cảm ơn bạn đã mua sắm tại FSS</p>
+              </>
+            )}
             <div className="text-left mb-6 space-y-3 p-4 border-2 border-slate-200">
               <div className="flex justify-between"><span className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Mã đơn hàng</span><span className="font-mono font-bold text-blue-700">{done.orderCode}</span></div>
               <div className="flex justify-between"><span className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Tổng tiền</span><span className="text-xl font-bold text-blue-700 tabular-nums">{formatPrice(done.totalAmount || total)}</span></div>
+              {pay === 'vietqr' && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Thanh toán</span>
+                  {isPaid
+                    ? <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full"><CheckCircle2 size={12}/> Đã xác nhận</span>
+                    : <span className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block"/> Chờ thanh toán</span>
+                  }
+                </div>
+              )}
             </div>
             <div className="flex flex-col gap-2">
-              {pay === 'vietqr' && qrCode && !isPaymentModalOpen && (
-                <button onClick={() => setIsPaymentModalOpen(true)} className="py-3 bg-blue-700 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-800 transition-all mb-2">Xem mã QR thanh toán</button>
+              {pay === 'vietqr' && paymentData?.qrCode && !isPaid && (
+                <button onClick={() => setIsPaymentModalOpen(true)} className="py-3 bg-blue-700 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-800 transition-all mb-2">
+                  {isPaymentModalOpen ? 'Đang mở QR...' : 'Xem mã QR thanh toán'}
+                </button>
               )}
               <Link to="/profile" state={{ tab: 'orders' }} className="py-3 border-2 border-blue-700 text-blue-700 font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-50 transition-all">Xem đơn hàng</Link>
               <button onClick={() => navigate('/')} className="py-3 text-gray-400 text-sm font-medium hover:text-gray-600 transition-all">Về trang chủ</button>
@@ -199,8 +235,8 @@ export default function CheckoutPage() {
                             onClick={() => setSelectedAddress(addr)}
                             className={`p-4 border-2 cursor-pointer transition-all ${selectedAddress?.id === addr.id ? 'border-blue-600 bg-blue-50/50' : 'border-slate-200 hover:border-blue-300'}`}
                           >
-                            <div className="flex items-start gap-3">
-                              <div className={`w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0 flex items-center justify-center ${selectedAddress?.id === addr.id ? 'border-blue-600' : 'border-slate-300'}`}>
+                            <div className="flex items-center gap-3">
+                              <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${selectedAddress?.id === addr.id ? 'border-blue-600' : 'border-slate-300'}`}>
                                 {selectedAddress?.id === addr.id && <div className="w-2 h-2 bg-blue-600 rounded-full" />}
                               </div>
                               <div className="flex-1">
@@ -369,12 +405,18 @@ export default function CheckoutPage() {
       />
 
       {/* Payment Modal */}
-      {isPaymentModalOpen && qrCode && (
+      {isPaymentModalOpen && paymentData?.qrCode && (
         <PaymentModal
-          qrCode={qrCode}
+          paymentData={paymentData}
           onClose={() => setIsPaymentModalOpen(false)}
-          amount={done?.totalAmount || total}
-          orderCode={`FSS-${done?.id}`}
+          onPaymentConfirmed={() => {
+            setIsPaymentModalOpen(false);
+            setIsPaid(true);
+            setDone(pendingOrderRef.current); // ← hiện done screen sau khi confirmed
+          }}
+          amount={pendingOrderRef.current?.totalAmount || total}
+          orderCode={paymentData?.transferContent || `FSS-${pendingOrderRef.current?.id}`}
+          orderId={pendingOrderRef.current?.id}
         />
       )}
 

@@ -2,6 +2,7 @@ package vn.fss.order.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.fss.auth.entity.User;
 import vn.fss.auth.repository.UserRepository;
@@ -16,6 +17,8 @@ import vn.fss.order.entity.OrderStatus;
 import vn.fss.order.repository.OrderRepository;
 import vn.fss.product.entity.Product;
 import vn.fss.product.repository.ProductRepository;
+import vn.fss.notification.service.NotificationService;
+import vn.fss.notification.model.Notification.NotificationType;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,12 +27,16 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final NotificationService notificationService;
+    private final VietQRPaymentService vietQRPaymentService;
+    private final VoucherService voucherService;
 
     private static final BigDecimal FREE_SHIPPING_THRESHOLD = new BigDecimal("500000");
 
@@ -82,7 +89,14 @@ public class OrderService {
                 ? new BigDecimal("35000") : BigDecimal.ZERO;
                 
         BigDecimal shippingFee = baseShippingFee.subtract(shippingDiscount).max(BigDecimal.ZERO);
-        BigDecimal totalAmount = subtotal.add(shippingFee);
+        
+        // ── Validate & tính discount phía Backend (không tin Frontend) ──────
+        BigDecimal discount = voucherService.calculateDiscount(request.getVoucherCode(), subtotal);
+        BigDecimal totalAmount = subtotal.add(shippingFee).subtract(discount);
+        BigDecimal MIN_AMOUNT = new BigDecimal("5000");
+        if (totalAmount.compareTo(MIN_AMOUNT) < 0) {
+            totalAmount = MIN_AMOUNT;
+        }
 
         // Tạo địa chỉ giao hàng đầy đủ
         String fullAddress = buildAddress(request);
@@ -93,6 +107,7 @@ public class OrderService {
                 .status(OrderStatus.PENDING)
                 .subtotal(subtotal)
                 .shippingFee(shippingFee)
+                .discount(discount)
                 .totalAmount(totalAmount)
                 .paymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "cod")
                 .recipientName(request.getRecipientName())
@@ -139,10 +154,28 @@ public class OrderService {
             cartItemRepository.delete(ci);
         }
 
+        // Tạo thông báo cho người dùng
+        if ("vietqr".equals(request.getPaymentMethod()) || "momo".equals(request.getPaymentMethod())) {
+            notificationService.createNotification(
+                    user,
+                    "Chờ thanh toán",
+                    "Đơn hàng " + String.format("FSS-%06d", saved.getId()) + " đã được tạo. Vui lòng hoàn tất thanh toán.",
+                    NotificationType.INFO
+            );
+        } else {
+            notificationService.createNotification(
+                    user,
+                    "Đặt hàng thành công",
+                    "Đơn hàng " + String.format("FSS-%06d", saved.getId()) + " đã được đặt thành công.",
+                    NotificationType.SUCCESS
+            );
+        }
+
         return mapToResponse(saved);
     }
 
     // ─── LỊCH SỬ ĐƠN HÀNG ───────────────────────────────────────────────────
+    @Transactional
     public List<OrderResponse> getUserOrders(String email) {
         User user = findUser(email);
         return orderRepository.findByUserOrderByCreatedAtDesc(user)
@@ -150,11 +183,61 @@ public class OrderService {
     }
 
     // ─── CHI TIẾT ĐƠN HÀNG ──────────────────────────────────────────────────
+    @Transactional
     public OrderResponse getOrderById(String email, Long orderId) {
         User user = findUser(email);
         Order order = orderRepository.findByIdAndUser(orderId, user)
                 .orElseThrow(() -> new IllegalArgumentException("Đơn hàng không tồn tại"));
+
+        // Chủ động kiểm tra trạng thái thanh toán nếu là VietQR và vẫn đang PENDING
+        // Điều này giúp localhost tự cập nhật trạng thái mà không cần đợi Webhook (không thể nhận Webhook)
+        if (order.getStatus() == OrderStatus.PENDING && "vietqr".equals(order.getPaymentMethod())) {
+            if (vietQRPaymentService.isPaid(order.getId())) {
+                order.setStatus(OrderStatus.CONFIRMED);
+                orderRepository.save(order);
+                notificationService.createNotification(
+                        user,
+                        "Thanh toán thành công",
+                        "Đơn hàng " + String.format("FSS-%06d", order.getId()) + " đã được thanh toán thành công (kiểm tra tự động).",
+                        NotificationType.SUCCESS
+                );
+                log.info("Order {} confirmed via proactive API poll in getOrderById", order.getId());
+            }
+        }
+
         return mapToResponse(order);
+    }
+
+    // ─── HUỶ ĐƠN HÀNG KHI QR HẾT HẠN (gọi từ Frontend) ─────────────────────
+    @Transactional
+    public Map<String, Object> expirePaymentOrder(String email, Long orderId) {
+        User user = findUser(email);
+        Order order = orderRepository.findByIdAndUser(orderId, user)
+                .orElseThrow(() -> new IllegalArgumentException("Đơn hàng không tồn tại"));
+
+        // Chỉ huỷ nếu vẫn đang PENDING và là đơn VietQR/MoMo
+        if (order.getStatus() != OrderStatus.PENDING) {
+            return Map.of("alreadyProcessed", true, "status", order.getStatus().name());
+        }
+        if (!"vietqr".equals(order.getPaymentMethod()) && !"momo".equals(order.getPaymentMethod())) {
+            return Map.of("error", "Only online payment orders can be expired");
+        }
+
+        // Hoàn lại tồn kho
+        for (OrderItem item : order.getItems()) {
+            if (item.getProduct() != null) {
+                Product p = item.getProduct();
+                p.setStock(p.getStock() + item.getQuantity());
+                p.setSold(Math.max(0, p.getSold() - item.getQuantity()));
+                productRepository.save(p);
+            }
+        }
+
+        // Xóa hoàn toàn đơn hàng khỏi hệ thống theo yêu cầu của user
+        orderRepository.delete(order);
+        log.info("Order {} deleted from system due to failed/cancelled payment (stock restored)", orderId);
+
+        return Map.of("deleted", true, "orderId", orderId);
     }
 
     // ─── HUỶ ĐƠN HÀNG ───────────────────────────────────────────────────────
@@ -179,7 +262,16 @@ public class OrderService {
         }
 
         order.setStatus(OrderStatus.CANCELLED);
-        return mapToResponse(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        
+        notificationService.createNotification(
+            user, 
+            "Đã hủy đơn hàng", 
+            "Đơn hàng " + String.format("FSS-%06d", saved.getId()) + " đã được hủy theo yêu cầu của bạn.", 
+            NotificationType.WARNING
+        );
+
+        return mapToResponse(saved);
     }
 
     // ─── HELPERS ─────────────────────────────────────────────────────────────
@@ -219,6 +311,7 @@ public class OrderService {
                 .statusLabel(STATUS_LABELS.getOrDefault(order.getStatus(), order.getStatus().name()))
                 .subtotal(order.getSubtotal())
                 .shippingFee(order.getShippingFee())
+                .discount(order.getDiscount() != null ? order.getDiscount() : BigDecimal.ZERO)
                 .totalAmount(order.getTotalAmount())
                 .paymentMethod(order.getPaymentMethod())
                 .paymentMethodLabel(PAYMENT_LABELS.getOrDefault(order.getPaymentMethod(), order.getPaymentMethod()))

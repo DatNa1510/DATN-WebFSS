@@ -59,4 +59,15 @@ public class OrderController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    // Huỷ đơn hàng do QR/thanh toán hết hạn (hoàn tồn kho)
+    @PatchMapping("/{id}/expire")
+    public ResponseEntity<?> expireOrder(Authentication auth, @PathVariable Long id) {
+        try {
+            Map<String, Object> result = orderService.expirePaymentOrder(auth.getName(), id);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

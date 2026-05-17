@@ -16,29 +16,57 @@ export default function PaymentResultPage() {
 
   // PayOS uses `code` instead of `resultCode`, and `orderCode` instead of `orderId`
   const payosCode = searchParams.get('code');
+  const payosCancel = searchParams.get('cancel');
   const payosOrderId = searchParams.get('orderCode');
 
   useEffect(() => {
-    // Check MoMo
-    if (resultCode !== null) {
-      if (resultCode === '0' || resultCode === '9000') {
-        setStatus('success');
-      } else {
-        setStatus('failed');
+    const handlePaymentResult = async () => {
+      let isSuccess = false;
+      let targetOrderId = null;
+
+      // Check MoMo
+      if (resultCode !== null) {
+        isSuccess = (resultCode === '0' || resultCode === '9000');
+        targetOrderId = orderId ? orderId.split('_')[0] : null;
+      } 
+      // Check PayOS
+      else if (payosCode !== null || payosCancel === 'true') {
+        isSuccess = (payosCancel !== 'true' && payosCode === '00');
+        targetOrderId = payosOrderId;
       }
-    } 
-    // Check PayOS
-    else if (payosCode !== null) {
-      if (payosCode === '00') {
-        setStatus('success');
+
+      if (targetOrderId) {
+        if (isSuccess) {
+          setStatus('success');
+        } else {
+          setStatus('failed');
+          // If payment failed/cancelled, notify backend to expire/cancel the order
+          try {
+            const authStorage = JSON.parse(localStorage.getItem('fss-auth'));
+            const token = authStorage?.state?.token;
+            if (token) {
+              const res = await fetch(`http://localhost:8080/api/orders/${targetOrderId}/expire`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              if (res.ok) {
+                import('../../store/toastStore').then(m => m.toast.info('Đơn hàng đã được hủy tự động do thanh toán không thành công.'));
+              }
+            }
+          } catch (err) {
+            console.error('Failed to notify backend about failed payment:', err);
+          }
+        }
       } else {
-        setStatus('failed');
+        // No valid params, might be direct access
+        navigate('/');
       }
-    } else {
-      // No valid params, might be direct access
-      navigate('/');
-    }
-  }, [resultCode, payosCode, navigate]);
+    };
+
+    handlePaymentResult();
+  }, [resultCode, payosCode, payosCancel, orderId, payosOrderId, navigate]);
 
   if (status === 'loading') {
     return (
@@ -62,7 +90,7 @@ export default function PaymentResultPage() {
           initial={{ scale: 0 }} 
           animate={{ scale: 1 }} 
           transition={{ delay: 0.2, type: 'spring', bounce: 0.6 }}
-          className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center ${isSuccess ? 'bg-green-50' : 'bg-red-50'}`}
+          className={`w-20 h-20 rounded-full inline-flex items-center justify-center mb-6 ${isSuccess ? 'bg-green-50' : 'bg-red-50'}`}
         >
           {isSuccess ? (
             <CheckCircle2 size={40} className="text-green-500" />
@@ -72,13 +100,15 @@ export default function PaymentResultPage() {
         </motion.div>
 
         <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-2">
-          {isSuccess ? 'Thanh toán thành công!' : 'Thanh toán thất bại!'}
+          {isSuccess ? 'Thanh toán thành công!' : 'Thanh toán không thành công'}
         </h2>
         
         <p className="text-gray-500 text-sm mb-8">
           {isSuccess 
             ? 'Cảm ơn bạn đã mua sắm tại FSS. Đơn hàng của bạn đang được xử lý.' 
-            : (message || 'Có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau.')}
+            : (resultCode === '1006' || payosCancel === 'true'
+                ? 'Bạn đã hủy quá trình thanh toán. Đơn hàng này sẽ bị hủy tự động để hoàn lại kho hàng.' 
+                : (message || 'Có lỗi xảy ra trong quá trình thanh toán hoặc giao dịch bị từ chối. Vui lòng kiểm tra lại ví MoMo của bạn.'))}
         </p>
 
         <div className="bg-gray-50 border border-gray-100 p-5 text-left mb-8 space-y-4">

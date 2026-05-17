@@ -55,6 +55,11 @@ const useOrderStore = create((set, get) => ({
           productImage: normalizeImage(item.productImage),
         }))
       };
+      
+      // Cập nhật thông báo ngay lập tức
+      const { fetchNotifications } = (await import('./notificationStore')).default.getState();
+      fetchNotifications();
+
       // Thêm vào đầu danh sách
       set(state => ({
         orders: [newOrder, ...state.orders],
