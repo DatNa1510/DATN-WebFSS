@@ -50,14 +50,15 @@ with open(STYLES_CSV, encoding="utf-8", errors="replace") as f:
         try:
             cat = row.get("masterCategory", "").strip()
             subCat = row.get("subCategory", "").strip()
+            gender = row.get("gender", "").strip()
             
-            # Exclude innerwear & loungewear
-            if cat in CATEGORIES and subCat not in {"Innerwear", "Loungewear and Nightwear"}:
+            # Exclude innerwear, loungewear, and kids (Boys, Girls)
+            if cat in CATEGORIES and subCat not in {"Innerwear", "Loungewear and Nightwear"} and gender not in {"Boys", "Girls"}:
                 all_products.append({
                     "id"                : int(row["id"]),
-                    "gender"            : row.get("gender", "").strip(),
+                    "gender"            : gender,
                     "masterCategory"    : cat,
-                    "subCategory"       : row.get("subCategory", "").strip(),
+                    "subCategory"       : subCat,
                     "articleType"       : row.get("articleType", "").strip(),
                     "baseColour"        : row.get("baseColour", "").strip(),
                     "season"            : row.get("season", "").strip(),

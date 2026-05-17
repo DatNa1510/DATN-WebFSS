@@ -55,3 +55,10 @@ build/
 .idea/
 fashion-dataset/
 .env*
+
+# AI Service
+fss-ai-service/venv/
+fss-ai-service/chroma_db/
+**/__pycache__/
+fss-ai-service/get-pip.py
+
