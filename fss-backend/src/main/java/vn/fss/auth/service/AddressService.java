@@ -8,6 +8,8 @@ import vn.fss.auth.entity.User;
 import vn.fss.auth.entity.UserAddress;
 import vn.fss.auth.repository.UserAddressRepository;
 import vn.fss.auth.repository.UserRepository;
+import vn.fss.notification.service.NotificationService;
+import vn.fss.notification.model.Notification;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +20,7 @@ public class AddressService {
 
     private final UserAddressRepository addressRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public List<AddressDto> getUserAddresses(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
@@ -52,7 +55,15 @@ public class AddressService {
                 .isDefault(shouldBeDefault)
                 .build();
 
-        return AddressDto.fromEntity(addressRepository.save(address));
+        UserAddress saved = addressRepository.save(address);
+        notificationService.createNotification(
+            user, 
+            "Địa chỉ mới", 
+            "Bạn vừa thêm một địa chỉ giao hàng mới: " + dto.getAddress(), 
+            Notification.NotificationType.SUCCESS
+        );
+
+        return AddressDto.fromEntity(saved);
     }
 
     @Transactional
@@ -81,7 +92,15 @@ public class AddressService {
             address.setIsDefault(true);
         }
 
-        return AddressDto.fromEntity(addressRepository.save(address));
+        UserAddress saved = addressRepository.save(address);
+        notificationService.createNotification(
+            user, 
+            "Cập nhật địa chỉ", 
+            "Địa chỉ '" + dto.getRecipientName() + "' đã được cập nhật thành công.", 
+            Notification.NotificationType.INFO
+        );
+
+        return AddressDto.fromEntity(saved);
     }
 
     @Transactional
@@ -95,6 +114,12 @@ public class AddressService {
         
         boolean wasDefault = address.getIsDefault();
         addressRepository.delete(address);
+        notificationService.createNotification(
+            user, 
+            "Xóa địa chỉ", 
+            "Địa chỉ '" + address.getRecipientName() + "' đã bị xóa khỏi sổ địa chỉ.", 
+            Notification.NotificationType.WARNING
+        );
 
         if (wasDefault) {
             List<UserAddress> remaining = addressRepository.findByUserOrderByIsDefaultDescCreatedAtDesc(user);

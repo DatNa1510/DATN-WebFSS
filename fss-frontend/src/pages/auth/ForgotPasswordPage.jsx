@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, ArrowRight } from 'lucide-react';
+import useAuthStore from '../../store/authStore';
 
 export default function ForgotPasswordPage() {
+  const { isAuthenticated } = useAuthStore();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -42,13 +44,13 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex relative bg-white">
       {/* Back to Home Button */}
       <Link
-        to="/login"
+        to={isAuthenticated ? "/profile" : "/login"}
         className="absolute top-10 left-10 z-50 flex items-center gap-3 text-[12px] font-black uppercase tracking-[0.3em] text-primary hover:opacity-100 transition-all group lg:text-white"
       >
         <div className="w-8 h-8 rounded-full border border-slate-100 lg:border-white/20 flex items-center justify-center group-hover:bg-slate-50 lg:group-hover:bg-white/10 transition-colors">
           <span className="text-lg">←</span>
         </div>
-        VỀ ĐĂNG NHẬP
+        {isAuthenticated ? "VỀ HỒ SƠ" : "VỀ ĐĂNG NHẬP"}
       </Link>
 
       {/* Left panel */}
@@ -99,10 +101,10 @@ export default function ForgotPasswordPage() {
                   Một email khôi phục mật khẩu đã được gửi đến hộp thư của bạn. Vui lòng kiểm tra email.
                 </p>
                 <Link
-                  to="/login"
+                  to={isAuthenticated ? "/profile" : "/login"}
                   className="w-full py-3.5 bg-primary text-white text-[13px] font-black uppercase tracking-[0.2em] rounded-none hover:bg-secondary transition-all shadow-xl shadow-primary/20 flex items-center justify-center"
                 >
-                  QUAY LẠI ĐĂNG NHẬP
+                  {isAuthenticated ? "QUAY LẠI HỒ SƠ" : "QUAY LẠI ĐĂNG NHẬP"}
                 </Link>
               </motion.div>
             ) : (

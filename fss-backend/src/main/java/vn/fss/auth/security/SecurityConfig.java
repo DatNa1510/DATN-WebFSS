@@ -48,6 +48,10 @@ public class SecurityConfig {
                 ).permitAll()
                 // Public product & static
                 .requestMatchers("/api/products/**").permitAll()
+                // Public reviews (GET) — POST yêu cầu auth qua anyRequest().authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/**").permitAll()
+                // Visual Search (AI) — không cần auth
+                .requestMatchers("/api/search/**").permitAll()
                 .requestMatchers("/api/payment/momo-callback").permitAll()
                 .requestMatchers("/api/payment/vietqr-callback").permitAll()
                 .requestMatchers("/fashion-dataset/**").permitAll()

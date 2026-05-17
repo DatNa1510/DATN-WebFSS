@@ -122,7 +122,13 @@ public class AuthController {
                                            @RequestBody Map<String, String> request) {
         try {
             AuthResponse.UserDto updated = authService.updateProfile(
-                    auth.getName(), request.get("name"), request.get("phone"));
+                    auth.getName(), 
+                    request.get("name"), 
+                    request.get("phone"),
+                    request.get("dob"),
+                    request.get("gender"),
+                    request.get("bio")
+            );
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -136,6 +142,16 @@ public class AuthController {
             authService.changePassword(auth.getName(),
                     request.get("oldPassword"), request.get("newPassword"));
             return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công!"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/audit-logs")
+    public ResponseEntity<?> getAuditLogs(Authentication auth) {
+        try {
+            java.util.List<vn.fss.auth.entity.UserAuditLog> logs = authService.getAuditLogs(auth.getName());
+            return ResponseEntity.ok(logs);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

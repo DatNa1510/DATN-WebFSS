@@ -122,4 +122,90 @@ public class DataMigrationConfig {
             }
         };
     }
+
+    /**
+     * Tự động dịch tên sản phẩm sang Tiếng Việt chuyên nghiệp.
+     * Ví dụ: "Nike Men Black Shoes" -> "Giày thể thao Nike nam màu Đen"
+     */
+    @Bean
+    public CommandLineRunner translateProducts(JdbcTemplate jdbcTemplate) {
+        return args -> {
+            log.info("Đang kiểm tra và dịch tên sản phẩm sang Tiếng Việt...");
+            try {
+                // Chỉ dịch những sản phẩm chưa có dấu Tiếng Việt hoặc từ "màu" (tránh dịch đè)
+                var products = jdbcTemplate.queryForList(
+                    "SELECT id, product_display_name, gender, master_category, sub_category, article_type, base_colour " +
+                    "FROM products WHERE product_display_name !~ '[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]'",
+                    java.util.Map.class
+                );
+
+                if (products.isEmpty()) {
+                    log.info("Tất cả sản phẩm đã được dịch hoặc không cần dịch thêm.");
+                    return;
+                }
+
+                log.info("Phát hiện {} sản phẩm cần dịch.", products.size());
+
+                // Từ điển dịch thuật chuyên nghiệp (Java version)
+                java.util.Map<String, String> dict = new java.util.HashMap<>();
+                dict.put("Apparel", "Quần áo"); dict.put("Footwear", "Giày dép"); dict.put("Accessories", "Phụ kiện");
+                dict.put("Topwear", "Trang phục trên"); dict.put("Bottomwear", "Trang phục dưới"); dict.put("Innerwear", "Đồ lót");
+                dict.put("Headwear", "Mũ & Nón"); dict.put("Shoes", "Giày"); dict.put("Watches", "Đồng hồ");
+                dict.put("Bags", "Túi xách"); dict.put("Belts", "Thắt lưng"); dict.put("Socks", "Vớ & Tất");
+                dict.put("Jewellery", "Trang sức"); dict.put("Eyewear", "Mắt kính"); dict.put("Fragrance", "Nước hoa");
+                dict.put("Wallets", "Ví & Bóp"); dict.put("Tshirts", "Áo thun"); dict.put("Shirts", "Áo sơ mi");
+                dict.put("Casual Shoes", "Giày thời trang"); dict.put("Sports Shoes", "Giày thể thao");
+                dict.put("Formal Shoes", "Giày tây"); dict.put("Handbags", "Túi xách tay"); dict.put("Shorts", "Quần short");
+                dict.put("Jeans", "Quần Jeans"); dict.put("Trousers", "Quần dài"); dict.put("Jackets", "Áo khoác");
+                dict.put("Sweaters", "Áo len"); dict.put("Sandals", "Sandal / Xăng-đan"); dict.put("Heels", "Giày cao gót");
+                dict.put("Tops", "Áo kiểu"); dict.put("Caps", "Mũ lưỡi trai"); dict.put("Men", "Nam");
+                dict.put("Women", "Nữ"); dict.put("Boys", "Bé trai"); dict.put("Girls", "Bé gái");
+                dict.put("Unisex", "Unisex"); dict.put("Black", "Đen"); dict.put("White", "Trắng");
+                dict.put("Blue", "Xanh dương"); dict.put("Red", "Đỏ"); dict.put("Grey", "Xám");
+                dict.put("Green", "Xanh lá"); dict.put("Brown", "Nâu"); dict.put("Yellow", "Vàng");
+                dict.put("Pink", "Hồng"); dict.put("Purple", "Tím"); dict.put("Orange", "Cam");
+                dict.put("Navy Blue", "Xanh Navy"); dict.put("Silver", "Bạc"); dict.put("Gold", "Vàng kim");
+
+                int count = 0;
+                for (var p : products) {
+                    String idStr = p.get("id").toString();
+                    String rawName = (String) p.get("product_display_name");
+                    String gender = (String) p.get("gender");
+                    String article = (String) p.get("article_type");
+                    String color = (String) p.get("base_colour");
+
+                    // Logic dịch tên: [Loại] + [Tên riêng] + [màu X] + [dành cho Y]
+                    String vnArticle = dict.getOrDefault(article, "Sản phẩm");
+                    String vnColor = dict.getOrDefault(color, "");
+                    String vnGender = dict.getOrDefault(gender, "");
+
+                    // Lọc tên riêng (Brand/Model)
+                    String modelName = rawName;
+                    String[] wordsToRemove = {gender, article, color, "Men", "Women", "Casual", "Solid", "Printed", "Shoes", "Shirt"};
+                    for (String word : wordsToRemove) {
+                        if (word != null && word.length() > 2) {
+                            modelName = modelName.replaceAll("(?i)\\b" + word + "\\b", "");
+                        }
+                    }
+                    modelName = modelName.replaceAll("\\s+", " ").trim();
+
+                    // Lắp ráp tên mới
+                    StringBuilder newName = new StringBuilder(vnArticle);
+                    if (!modelName.isEmpty()) newName.append(" ").append(modelName);
+                    if (!vnColor.isEmpty()) newName.append(" màu ").append(vnColor);
+                    if (!vnGender.isEmpty()) newName.append(" cho ").append(vnGender);
+
+                    jdbcTemplate.update(
+                        "UPDATE products SET product_display_name = ? WHERE id = ?",
+                        newName.toString().trim(), Long.parseLong(idStr)
+                    );
+                    count++;
+                }
+                log.info("✅ Đã dịch thành công {} tên sản phẩm sang Tiếng Việt.", count);
+
+            } catch (Exception e) {
+                log.error("Lỗi khi dịch tên sản phẩm: {}", e.getMessage());
+            }
+        };
+    }
 }

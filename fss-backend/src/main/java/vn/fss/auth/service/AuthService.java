@@ -12,9 +12,13 @@ import vn.fss.auth.dto.LoginRequest;
 import vn.fss.auth.dto.RegisterRequest;
 import vn.fss.auth.entity.RefreshToken;
 import vn.fss.auth.entity.User;
+import vn.fss.auth.entity.UserAuditLog;
 import vn.fss.auth.repository.RefreshTokenRepository;
+import vn.fss.auth.repository.UserAuditLogRepository;
 import vn.fss.auth.repository.UserRepository;
 import vn.fss.auth.security.JwtUtil;
+import vn.fss.notification.service.NotificationService;
+import vn.fss.notification.model.Notification;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -30,6 +34,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
+    private final NotificationService notificationService;
+    private final UserAuditLogRepository userAuditLogRepository;
 
     @org.springframework.beans.factory.annotation.Value("${google.client-id}")
     private String googleClientId;
@@ -54,6 +60,14 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        UserAuditLog logRecord = UserAuditLog.builder()
+                .user(user)
+                .actionTitle("Khởi tạo hồ sơ khách hàng")
+                .actionDetail("Tài khoản đang chờ chuẩn hóa thông tin")
+                .actionType(UserAuditLog.ActionType.PROFILE)
+                .build();
+        userAuditLogRepository.save(logRecord);
 
         // Gửi email xác thực (đã được cấu hình @Async trong EmailService)
         try {
@@ -164,6 +178,9 @@ public class AuthService {
                         .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : 
                                (user.getRole() == User.Role.ADMIN ? "/admin-pfp.jpg" : "/default-customer.jpg"))
                         .phone(user.getPhone())
+                        .dob(user.getDob())
+                        .gender(user.getGender())
+                        .bio(user.getBio())
                         .build())
                 .build();
     }
@@ -180,6 +197,9 @@ public class AuthService {
                 .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : 
                                (user.getRole() == User.Role.ADMIN ? "/admin-pfp.jpg" : "/default-customer.jpg"))
                 .phone(user.getPhone())
+                .dob(user.getDob())
+                .gender(user.getGender())
+                .bio(user.getBio())
                 .build();
     }
 
@@ -278,7 +298,16 @@ public class AuthService {
                             .isEnabled(true) // Google đã verify nên active luôn
                             .role(User.Role.CUSTOMER)
                             .build();
-                    return userRepository.save(newUser);
+                    User savedUser = userRepository.save(newUser);
+                    
+                    UserAuditLog logRecord = UserAuditLog.builder()
+                            .user(savedUser)
+                            .actionTitle("Khởi tạo hồ sơ khách hàng")
+                            .actionDetail("Đăng nhập lần đầu qua Google")
+                            .actionType(UserAuditLog.ActionType.PROFILE)
+                            .build();
+                    userAuditLogRepository.save(logRecord);
+                    return savedUser;
                 });
 
                 // Sinh token
@@ -317,17 +346,65 @@ public class AuthService {
 
     // ── CẬP NHẬT HỒ SƠ ──────────────────────────────────────────────────────
     @Transactional
-    public AuthResponse.UserDto updateProfile(String email, String fullName, String phone) {
+    public AuthResponse.UserDto updateProfile(String email, String fullName, String phone, String dob, String gender, String bio) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
-        if (fullName != null && !fullName.isBlank()) {
+        java.util.List<String> changes = new java.util.ArrayList<>();
+        if (fullName != null && !fullName.isBlank() && !fullName.trim().equals(user.getFullName())) {
             user.setFullName(fullName.trim());
+            changes.add("họ tên");
         }
-        if (phone != null) {
+        if (phone != null && !phone.trim().equals(user.getPhone() != null ? user.getPhone() : "")) {
             user.setPhone(phone.trim());
+            changes.add("số điện thoại");
         }
+        if (dob != null && !dob.trim().equals(user.getDob() != null ? user.getDob() : "")) {
+            user.setDob(dob.trim());
+            changes.add("ngày sinh");
+        }
+        if (gender != null && !gender.trim().equals(user.getGender() != null ? user.getGender() : "")) {
+            user.setGender(gender.trim());
+            changes.add("giới tính");
+        }
+        if (bio != null && !bio.trim().equals(user.getBio() != null ? user.getBio() : "")) {
+            user.setBio(bio.trim());
+            changes.add("tiểu sử");
+        }
+        
+        if (changes.isEmpty()) {
+            return getCurrentUser(email);
+        }
+
         userRepository.save(user);
+
+        notificationService.createNotification(
+            user, 
+            "Cập nhật hồ sơ", 
+            "Thông tin cá nhân của bạn đã được cập nhật thành công.", 
+            Notification.NotificationType.SUCCESS
+        );
+
+        String actionTitle;
+        String actionDetail;
+
+        if (changes.size() == 1) {
+            String field = changes.get(0);
+            // Capitalize first letter for title
+            actionTitle = "Cập nhật " + field;
+            actionDetail = "Bạn đã thay đổi " + field;
+        } else {
+            actionTitle = "Cập nhật thông tin hồ sơ";
+            actionDetail = "Bạn đã thay đổi: " + String.join(", ", changes);
+        }
+
+        UserAuditLog logRecord = UserAuditLog.builder()
+                .user(user)
+                .actionTitle(actionTitle)
+                .actionDetail(actionDetail)
+                .actionType(UserAuditLog.ActionType.PROFILE)
+                .build();
+        userAuditLogRepository.save(logRecord);
 
         return AuthResponse.UserDto.builder()
                 .id(user.getId())
@@ -337,6 +414,9 @@ public class AuthService {
                 .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() :
                         (user.getRole() == User.Role.ADMIN ? "/admin-pfp.jpg" : "/default-customer.jpg"))
                 .phone(user.getPhone())
+                .dob(user.getDob())
+                .gender(user.getGender())
+                .bio(user.getBio())
                 .build();
     }
 
@@ -355,5 +435,28 @@ public class AuthService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+
+        notificationService.createNotification(
+            user, 
+            "Đổi mật khẩu", 
+            "Mật khẩu tài khoản của bạn đã được thay đổi thành công.", 
+            Notification.NotificationType.WARNING
+        );
+
+        UserAuditLog logRecord = UserAuditLog.builder()
+                .user(user)
+                .actionTitle("Tài khoản được bảo vệ")
+                .actionDetail("Hệ thống đã mã hóa mật khẩu cấp cao")
+                .actionType(UserAuditLog.ActionType.SECURITY)
+                .build();
+        userAuditLogRepository.save(logRecord);
+    }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public java.util.List<UserAuditLog> getAuditLogs(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        return userAuditLogRepository.findByUserOrderByCreatedAtDesc(user);
     }
 }
+

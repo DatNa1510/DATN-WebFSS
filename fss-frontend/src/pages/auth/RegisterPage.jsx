@@ -20,6 +20,7 @@ function getPasswordStrength(pw) {
 export default function RegisterPage() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
@@ -211,7 +212,7 @@ export default function RegisterPage() {
                   <div className="relative">
                     <input
                       id="reg-confirm"
-                      type="password"
+                      type={showConfirmPassword ? 'text' : 'password'}
                       name="confirm"
                       required
                       autoComplete="new-password"
@@ -221,6 +222,13 @@ export default function RegisterPage() {
                       className={`w-full border-b border-secondary/10 bg-transparent pt-2 pb-3 text-[15px] font-medium focus:outline-none transition-all placeholder:text-slate-200 rounded-none ${passwordMismatch ? 'border-rose-500' : 'border-slate-100 focus:border-primary'
                         }`}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
                   {passwordMismatch && (
                     <p className="text-[13px] font-bold text-rose-500 mt-2 uppercase">MẬT KHẨU KHÔNG KHỚP</p>
@@ -229,15 +237,15 @@ export default function RegisterPage() {
 
                 {/* Terms */}
                 <label className="flex items-start gap-4 cursor-pointer group mt-8">
-                  <div className="relative mt-0.5">
+                  <div className="relative mt-0.5 w-4 h-4 flex items-center justify-center shrink-0">
                     <input
                       id="reg-terms"
                       type="checkbox"
                       checked={agreed}
                       onChange={(e) => setAgreed(e.target.checked)}
-                      className="w-4 h-4 rounded-sm border-2 border-slate-200 appearance-none checked:bg-primary checked:border-primary transition-all cursor-pointer"
+                      className="absolute inset-0 m-0 w-full h-full rounded-sm border-2 border-slate-200 appearance-none checked:bg-primary checked:border-primary transition-all cursor-pointer"
                     />
-                    {agreed && <Check size={12} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white pointer-events-none" />}
+                    {agreed && <Check size={12} strokeWidth={3} className="relative z-10 text-white pointer-events-none" />}
                   </div>
                   <span className="text-[14px] text-muted-foreground leading-relaxed font-medium">
                     Tôi đồng ý với{' '}

@@ -17,6 +17,7 @@ const useAuthStore = create(
       refreshToken: null,
       isAuthenticated: false,
       authError: null,
+      auditLogs: [],
 
       login: async (email, password) => {
         try {
@@ -217,6 +218,7 @@ const useAuthStore = create(
           if (!res.ok) return { success: false, error: json.error || 'Lỗi cập nhật hồ sơ' };
           // Cập nhật user state từ response
           set(state => ({ user: state.user ? { ...state.user, ...json } : null }));
+          get().fetchAuditLogs();
           return { success: true };
         } catch {
           return { success: false, error: 'Lỗi kết nối' };
@@ -234,6 +236,7 @@ const useAuthStore = create(
           });
           const json = await res.json();
           if (!res.ok) return { success: false, error: json.error || 'Lỗi đổi mật khẩu' };
+          get().fetchAuditLogs();
           return { success: true, message: json.message };
         } catch {
           return { success: false, error: 'Lỗi kết nối' };
@@ -244,6 +247,22 @@ const useAuthStore = create(
         set((state) => ({
           user: state.user ? { ...state.user, avatar: avatarDataUrl } : null
         })),
+
+      fetchAuditLogs: async () => {
+        const { token } = get();
+        if (!token) return;
+        try {
+          const res = await fetch(`${API_URL}/audit-logs`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ auditLogs: data });
+          }
+        } catch (error) {
+          console.error("Failed to fetch audit logs", error);
+        }
+      },
     }),
     {
       name: 'fss-auth',

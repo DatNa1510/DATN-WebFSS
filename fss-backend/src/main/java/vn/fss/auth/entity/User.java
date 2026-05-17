@@ -46,6 +46,18 @@ public class User implements Principal {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
+    // Ngày sinh (optional)
+    @Column(length = 20)
+    private String dob;
+
+    // Giới tính (optional)
+    @Column(length = 20)
+    private String gender;
+
+    // Tiểu sử (optional)
+    @Column(length = 500)
+    private String bio;
+
     // Vai trò: CUSTOMER hoặc ADMIN
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

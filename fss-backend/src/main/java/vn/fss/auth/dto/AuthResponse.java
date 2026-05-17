@@ -26,5 +26,8 @@ public class AuthResponse {
         private String role;
         private String avatar;
         private String phone;
+        private String dob;
+        private String gender;
+        private String bio;
     }
 }
