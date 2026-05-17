@@ -20,10 +20,7 @@ export default function CartPage() {
   const isAllSelected = items?.length > 0 && selectedKeys?.length === items?.length;
 
   const subtotal = selectedItems.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const shipping = subtotal >= 500000 || subtotal === 0 ? 0 : 35000;
-  const total = subtotal + shipping;
-  const freeShipRemaining = Math.max(500000 - subtotal, 0);
-  const freeShipProgress = Math.min((subtotal / 500000) * 100, 100);
+  const total = subtotal;
   const totalQty = items?.reduce((s, i) => s + i.qty, 0) || 0;
 
   /* ========== LOADING ========== */
@@ -69,7 +66,7 @@ export default function CartPage() {
           </p>
           <Link
             to="/products"
-            className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-primary text-white font-semibold text-[14px] rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary/20 group"
+            className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-primary text-white font-semibold text-[14px] rounded-sm hover:bg-primary-700 transition-all shadow-lg shadow-primary/20 group"
           >
             Khám phá ngay
             <ArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
@@ -114,37 +111,7 @@ export default function CartPage() {
         </div>
       </div>
 
-      {/* ===== FREE SHIPPING BAR ===== */}
-      {subtotal > 0 && shipping > 0 && (
-        <div className="layout-page mt-6">
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl border border-black/[0.04] px-5 py-4 shadow-xs"
-          >
-            <div className="flex items-center gap-3.5">
-              <div className="w-9 h-9 rounded-xl bg-primary-50 flex items-center justify-center shrink-0">
-                <Truck size={17} className="text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] text-foreground-secondary leading-snug">
-                  Mua thêm <span className="font-bold text-primary">{formatPrice(freeShipRemaining)}</span> để được <span className="font-semibold text-success">miễn phí vận chuyển</span>
-                </p>
-                <div className="mt-2 w-full h-[5px] bg-surface-tertiary rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ background: 'linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-400) 100%)' }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${freeShipProgress}%` }}
-                    transition={{ duration: 1, ease: 'easeOut' }}
-                  />
-                </div>
-              </div>
-              <span className="text-[12px] font-bold text-primary tabular-nums shrink-0">{Math.round(freeShipProgress)}%</span>
-            </div>
-          </motion.div>
-        </div>
-      )}
+
 
       {/* ===== MAIN GRID ===== */}
       <div className="layout-page mt-6">
@@ -331,19 +298,7 @@ export default function CartPage() {
                   <span className="text-[13px] text-muted-foreground">Tạm tính ({selectedItems.reduce((s, i) => s + i.qty, 0)} sản phẩm)</span>
                   <span className="text-[14px] font-semibold text-foreground tabular-nums">{formatPrice(subtotal)}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[13px] text-muted-foreground">Vận chuyển</span>
-                  {subtotal === 0 ? (
-                    <span className="text-[14px] font-semibold text-foreground tabular-nums">0 đ</span>
-                  ) : shipping === 0 ? (
-                    <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-success">
-                      <Truck size={13} />
-                      Miễn phí
-                    </span>
-                  ) : (
-                    <span className="text-[14px] font-semibold text-foreground tabular-nums">{formatPrice(shipping)}</span>
-                  )}
-                </div>
+
               </div>
 
               {/* Total */}

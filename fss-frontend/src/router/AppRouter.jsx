@@ -27,6 +27,7 @@ import VisualSearchPage from '../pages/customer/VisualSearchPage';
 import BlogPage from '../pages/customer/BlogPage';
 import BlogDetailPage from '../pages/customer/BlogDetailPage';
 import ContactPage from '../pages/customer/ContactPage';
+import OrderSuccessPage from '../pages/customer/OrderSuccessPage';
 
 // Admin
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -58,7 +59,7 @@ function CustomerLayout() {
       <Header />
       <CartDrawer />
       <ToastContainer />
-      <main className="w-full min-w-0">
+      <main className="w-full min-w-0 pb-40">
         <Outlet />
       </main>
       <Footer />
@@ -102,9 +103,12 @@ export default function AppRouter() {
           {/* Protected customer routes */}
           <Route element={<CustomerRoute />}>
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/order-success/:id" element={<OrderSuccessPage />} />
             <Route path="/payment-result" element={<PaymentResultPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/orders" element={<ProfilePage />} />
+            <Route path="/address" element={<ProfilePage />} />
+            <Route path="/wishlist" element={<ProfilePage />} />
           </Route>
         </Route>
 

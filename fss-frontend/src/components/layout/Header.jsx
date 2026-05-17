@@ -3,10 +3,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag, Search, User, Menu, X, Camera, ChevronDown,
-  LogOut, Settings, Package
+  LogOut, Settings, Package, Bell, Check, Trash2, Clock
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useCartStore from '../../store/cartStore';
+import useNotificationStore from '../../store/notificationStore';
 
 const navLinks = [
   { label: 'Trang chủ', path: '/' },
@@ -21,19 +22,26 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notiOpen, setNotiOpen] = useState(false);
   const userMenuRef = useRef(null);
+  const notiRef = useRef(null);
 
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuthStore();
   const { items, openCart, fetchCart } = useCartStore();
+  const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotificationStore();
   const totalItems = items?.reduce((sum, i) => sum + i.qty, 0) || 0;
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchCart();
+      fetchNotifications();
+      // Polling notifications every 30s
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
     }
-  }, [isAuthenticated, fetchCart]);
+  }, [isAuthenticated, fetchCart, fetchNotifications]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -44,6 +52,7 @@ export default function Header() {
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false);
+      if (notiRef.current && !notiRef.current.contains(e.target)) setNotiOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -142,24 +151,86 @@ export default function Header() {
             <div className="flex items-center gap-2">
               {/* Cart - chỉ hiện cho customer */}
               {(!isAuthenticated || user?.role !== 'admin') && (
-              <motion.button
-                whileTap={{ scale: 0.92 }}
-                onClick={openCart}
-                className="relative flex items-center justify-center p-2 rounded-xl text-tertiary hover:text-primary hover:bg-[#F1F5F9] transition-colors"
-                title="Giỏ hàng"
-              >
-                <ShoppingBag size={22} strokeWidth={1.5} />
-                {totalItems > 0 && (
-                  <motion.span
-                    key={totalItems}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-0 -right-1 bg-primary text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-1 shadow-sm border-2 border-white"
+                <motion.button
+                  whileTap={{ scale: 0.92 }}
+                  onClick={openCart}
+                  className="relative flex items-center justify-center p-2 rounded-xl text-tertiary hover:text-primary hover:bg-[#F1F5F9] transition-colors"
+                  title="Giỏ hàng"
+                >
+                  <ShoppingBag size={22} strokeWidth={1.5} />
+                  {totalItems > 0 && (
+                    <motion.span
+                      key={totalItems}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute top-0 -right-1 bg-primary text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-1 shadow-sm border-2 border-white"
+                    >
+                      {totalItems > 99 ? '99+' : totalItems}
+                    </motion.span>
+                  )}
+                </motion.button>
+              )}
+
+              {/* Notifications */}
+              {isAuthenticated && (
+                <div className="relative" ref={notiRef}>
+                  <motion.button
+                    whileTap={{ scale: 0.92 }}
+                    onClick={() => setNotiOpen(!notiOpen)}
+                    className="relative flex items-center justify-center p-2 rounded-xl text-tertiary hover:text-primary hover:bg-[#F1F5F9] transition-colors"
+                    title="Thông báo"
                   >
-                    {totalItems > 99 ? '99+' : totalItems}
-                  </motion.span>
-                )}
-              </motion.button>
+                    <Bell size={22} strokeWidth={1.5} />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white" />
+                    )}
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {notiOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                        className="absolute right-0 top-full mt-3 w-96 bg-white shadow-2xl border border-slate-100 rounded-sm overflow-hidden z-50 flex flex-col"
+                      >
+                        <div className="px-8 py-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                          <h3 className="text-[13px] font-black text-primary uppercase tracking-wider">Thông báo</h3>
+                          {unreadCount > 0 && (
+                            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); markAllAsRead(); setNotiOpen(false); }} className="text-[11px] font-bold text-primary hover:underline">Đánh dấu đã đọc</button>
+                          )}
+                        </div>
+                        <div className="max-h-[420px] overflow-y-auto custom-scrollbar pb-2">
+                          {notifications.length === 0 ? (
+                            <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                              <Bell size={32} strokeWidth={1} className="mb-2 opacity-20" />
+                              <p className="text-[12px] font-medium">Bạn chưa có thông báo nào</p>
+                            </div>
+                          ) : (
+                            notifications.map((n) => (
+                              <div
+                                key={n.id}
+                                onClick={() => { markAsRead(n.id); setNotiOpen(false); }}
+                                className={`p-4 border-b border-slate-50 cursor-pointer transition-colors flex gap-3 ${!n.read ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-slate-50'}`}
+                              >
+                                <div className={`w-2 h-2 mt-2 rounded-full shrink-0 ${!n.read ? 'bg-primary' : 'bg-transparent'}`} />
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-[13px] leading-snug mb-1 ${!n.read ? 'font-bold text-slate-900' : 'font-medium text-slate-600'}`}>{n.title}</p>
+                                  <p className="text-[12px] text-slate-400 break-words mb-2">{n.message}</p>
+                                  <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-bold">
+                                    <Clock size={12} />
+                                    {new Date(n.createdAt).toLocaleString('vi-VN')}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
 
               {/* User Account */}
@@ -191,7 +262,7 @@ export default function Header() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 15, scale: 0.95 }}
                       transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                      className="absolute right-0 top-full mt-3 w-80 bg-white shadow-2xl shadow-primary/10 border border-slate-200 py-0 z-50 overflow-hidden rounded-md"
+                      className="absolute right-0 top-full mt-3 w-80 bg-white shadow-2xl shadow-primary/10 border border-slate-200 py-0 z-50 overflow-hidden rounded-sm"
                     >
                       {/* Header section với gradient */}
                       <div className="px-6 py-5 bg-gradient-to-r from-primary/5 to-primary/10 border-b border-slate-100">

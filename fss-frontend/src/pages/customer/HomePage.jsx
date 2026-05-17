@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Zap, Shield, Truck, ChevronRight } from 'lucide-react';
-import { getProducts, getProductById, formatPrice } from '../../data/fashionData';
+import axios from 'axios';
+import { formatPrice } from '../../data/fashionData';
 import ProductCard from '../../components/ui/ProductCard';
 
 /* Khung chung với header/footer — luôn có lề hai bên */
@@ -30,12 +31,37 @@ const features = [
 
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [heroProducts, setHeroProducts] = useState([]);
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+  const [filteredProducts, setFilteredProducts] = useState([]);
 
-  // Lấy chính xác sản phẩm "REVV NAM STEEL RING" theo ID để tránh lỗi tìm kiếm
-  const heroProduct = getProductById(48946);
+  useEffect(() => {
+    // Lấy top 3 Best Seller
+    axios.get('http://localhost:8080/api/products?limit=3&sort=best-seller')
+      .then(res => {
+        if (res.data && res.data.items) {
+          setHeroProducts(res.data.items);
+        }
+      })
+      .catch(err => console.error('Loi tai hero products:', err));
+  }, []);
 
-  const productsData = getProducts({ limit: 8, category: activeCategory, sort: 'best-seller' });
-  const filteredProducts = productsData.items;
+  useEffect(() => {
+    if (heroProducts.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentHeroIndex(prev => (prev + 1) % heroProducts.length);
+    }, 6000); // 6 seconds
+    return () => clearInterval(interval);
+  }, [heroProducts]);
+
+  const heroProduct = heroProducts[currentHeroIndex] || {};
+
+  useEffect(() => {
+    // Lấy danh sách sản phẩm nổi bật
+    axios.get(`http://localhost:8080/api/products?limit=8&category=${activeCategory}&sort=best-seller`)
+      .then(res => setFilteredProducts(res.data.items || []))
+      .catch(err => console.error('Loi tai products:', err));
+  }, [activeCategory]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -95,41 +121,72 @@ export default function HomePage() {
               transition={{ duration: 0.7, delay: 0.1 }}
               className="relative w-full"
             >
-              <div className="group relative w-full rounded-[2rem] overflow-hidden shadow-elevation ring-1 ring-black/5">
-                <img
-                  src={heroProduct.images?.[0] || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=60'}
-                  alt={heroProduct.name}
-                  className="w-full h-[min(400px,50vh)] sm:h-[480px] lg:h-[520px] object-cover object-top"
-                />
+              <div className="group relative w-full rounded-[2rem] overflow-hidden shadow-elevation ring-1 ring-black/5 bg-slate-100">
+                <AnimatePresence mode="wait">
+                  {heroProduct.id && (
+                    <motion.div
+                      key={heroProduct.id}
+                      initial={{ opacity: 0, filter: 'blur(8px)', scale: 1.05 }}
+                      animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
+                      exit={{ opacity: 0, filter: 'blur(8px)', scale: 0.95 }}
+                      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute inset-0"
+                    >
+                      <img
+                        src={heroProduct.imagePath ? `http://localhost:8080${heroProduct.imagePath}` : (heroProduct.images?.[0] || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=60')}
+                        alt={heroProduct.productDisplayName || heroProduct.name}
+                        className="w-full h-full object-cover object-top"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                {/* Fixed height container to preserve aspect ratio during transitions */}
+                <div className="w-full h-[min(400px,50vh)] sm:h-[480px] lg:h-[520px]" />
+
                 {/* Overlay Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300 pointer-events-none" />
 
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => window.location.href = `/products/${heroProduct.id}`}
-                  className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all"
+                  className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all z-20"
                   aria-label="View product"
                 >
                   <ChevronRight size={24} strokeWidth={2.5} />
                 </motion.button>
 
                 {/* Bottom Card */}
-                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 bg-gradient-to-t from-black via-black/80 to-transparent backdrop-blur-sm border-t border-white/10">
-                  <span className="badge badge-primary mb-3 uppercase tracking-widest text-[10px]">
-                    🔥 Best Seller
-                  </span>
-                  <h3 className="font-display font-bold text-white text-lg sm:text-xl leading-snug">
-                    {heroProduct.name}
-                  </h3>
-                  <p className="text-white/70 text-sm mt-1 mb-2">Thiết kế tôn dáng, trải nghiệm cao cấp</p>
-                  <p className="text-white/90 font-bold text-lg mt-2">{formatPrice(heroProduct.price)}</p>
-                  <Link
-                    to={`/products/${heroProduct.id}`}
-                    className="mt-4 flex w-full items-center justify-center py-3 rounded-xl bg-white text-primary text-xs font-bold uppercase tracking-wider hover:bg-white/90 transition-all shadow-lg"
-                  >
-                    Xem chi tiết
-                  </Link>
+                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 bg-gradient-to-t from-black/90 via-black/60 to-transparent backdrop-blur-[2px] border-t border-white/10 z-20">
+                  <AnimatePresence mode="wait">
+                    {heroProduct.id && (
+                      <motion.div
+                        key={`content-${heroProduct.id}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="badge badge-primary uppercase tracking-widest text-[10px]">
+                            🔥 Best Seller
+                          </span>
+                        </div>
+                        <h3 className="font-display font-bold text-white text-lg sm:text-xl leading-snug line-clamp-1">
+                          {heroProduct.productDisplayName || heroProduct.name}
+                        </h3>
+                        <p className="text-white/70 text-sm mt-1 mb-2">Thiết kế tôn dáng, trải nghiệm cao cấp</p>
+                        <p className="text-white/90 font-bold text-lg mt-2">{formatPrice(heroProduct.price)}</p>
+                        <Link
+                          to={`/products/${heroProduct.id}`}
+                          className="mt-4 flex w-full items-center justify-center py-3 rounded-xl bg-white text-primary text-xs font-bold uppercase tracking-wider hover:bg-white/90 transition-all shadow-lg"
+                        >
+                          Xem chi tiết
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             </motion.div>

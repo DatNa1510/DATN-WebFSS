@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, MessageSquare, ChevronDown, Share, ArrowRight } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, ChevronDown, Share } from 'lucide-react';
 import { contactInfo } from '../../data/mockData';
 
 const containerClass = 'layout-page';
@@ -39,7 +39,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="page-enter bg-white min-h-screen pb-20">
+    <div className="page-enter bg-white min-h-screen pb-32">
       {/* ===== HERO SECTION ===== */}
       <section className="relative pt-20 pb-16 lg:pt-28 lg:pb-24 overflow-hidden bg-slate-50">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 -skew-x-12 translate-x-1/4" />
@@ -57,7 +57,7 @@ export default function ContactPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-4xl lg:text-6xl font-bold font-display text-headline mb-6"
+              className="text-3xl lg:text-5xl font-bold font-display text-headline mb-6"
             >
               Liên hệ <span className="text-primary italic">ngay</span>
             </motion.h1>
@@ -93,7 +93,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">Địa chỉ</p>
-                      <p className="text-headline font-bold text-sm leading-snug">{contactInfo.address}</p>
+                      <p className="text-slate-900 font-bold text-sm leading-snug">{contactInfo.address}</p>
                     </div>
                   </div>
 
@@ -103,7 +103,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">Hotline</p>
-                      <p className="text-headline font-bold text-sm leading-snug">{contactInfo.phone}</p>
+                      <p className="text-slate-900 font-bold text-sm leading-snug">{contactInfo.phone}</p>
                       <p className="text-muted-foreground text-xs mt-1">{contactInfo.workingHours}</p>
                     </div>
                   </div>
@@ -114,7 +114,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">Email</p>
-                      <p className="text-headline font-bold text-sm leading-snug">{contactInfo.email}</p>
+                      <p className="text-slate-900 font-bold text-sm leading-snug">{contactInfo.email}</p>
                     </div>
                   </div>
                 </div>
@@ -161,7 +161,7 @@ export default function ContactPage() {
                 <form onSubmit={handleSubmit} className="space-y-8">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Họ và tên</label>
+                      <label className="text-[12px] font-bold text-slate-600 ml-1 block">Họ và tên</label>
                       <input
                         required
                         type="text"
@@ -173,7 +173,7 @@ export default function ContactPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Email</label>
+                      <label className="text-[12px] font-bold text-slate-600 ml-1 block">Email</label>
                       <input
                         required
                         type="email"
@@ -186,7 +186,7 @@ export default function ContactPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Chủ đề</label>
+                    <label className="text-[12px] font-bold text-slate-600 ml-1 block">Chủ đề</label>
                     <input
                       required
                       type="text"
@@ -198,7 +198,7 @@ export default function ContactPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Tin nhắn</label>
+                    <label className="text-[12px] font-bold text-slate-600 ml-1 block">Tin nhắn</label>
                     <textarea
                       required
                       name="message"
@@ -255,27 +255,33 @@ export default function ContactPage() {
       </section>
 
       {/* ===== FAQ SECTION ===== */}
-      <section className="pt-24 pb-48 lg:pt-32 lg:pb-72 bg-slate-50">
+      <section className="pt-12 pb-20 lg:pt-16 lg:pb-28" style={{ background: 'linear-gradient(180deg, #f0f4ff 0%, #f8faff 100%)' }}>
         <div className={containerClass}>
-          <div className="text-center mb-16">
-            <h2 className="text-2xl lg:text-4xl font-black font-display text-headline mb-4 tracking-tight">Câu hỏi thường gặp</h2>
-            <p className="text-muted-foreground">Giải đáp nhanh các thắc mắc phổ biến của bạn.</p>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-stretch">
-            {/* FAQ List */}
-            <div className="space-y-4">
+          <div className="flex flex-col items-center">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl lg:text-3xl font-bold font-display text-slate-800 mb-3">Câu hỏi thường gặp</h2>
+              <p className="text-primary font-medium text-sm">Giải đáp nhanh các thắc mắc phổ biến của bạn.</p>
+            </div>
+            <div className="max-w-3xl w-full">
               {contactInfo.faq.map((item, index) => (
                 <div
                   key={index}
-                  className="bg-white !rounded-sm border border-slate-100 shadow-none transition-all"
+                  className={`transition-all duration-200 ${index !== contactInfo.faq.length - 1 ? 'border-b border-slate-200/60' : ''}`}
                 >
                   <button
                     onClick={() => setActiveFaq(activeFaq === index ? null : index)}
-                    className="w-full px-10 py-7 flex items-center justify-between text-left group"
+                    className="w-full px-2 py-5 flex items-center justify-between text-left hover:opacity-70 transition-all"
                   >
-                    <span className="font-bold italic text-foreground group-hover:text-primary transition-colors">{item.q}</span>
-                    <div className={`p-2 rounded-sm bg-slate-50 transition-transform duration-300 ${activeFaq === index ? 'rotate-180 bg-primary/10 text-primary' : ''}`}>
-                      <ChevronDown size={18} />
+                    <span className={`font-semibold text-[15px] pr-4 transition-colors ${activeFaq === index ? 'text-primary' : 'text-slate-800'}`}>{item.q}</span>
+                    <div
+                      className="shrink-0 w-7 h-7 flex items-center justify-center rounded-sm transition-all duration-300"
+                      style={{
+                        background: activeFaq === index ? 'rgba(0,22,141,0.08)' : '#f1f5f9',
+                        color: activeFaq === index ? '#00168d' : '#94a3b8',
+                        transform: activeFaq === index ? 'rotate(180deg)' : 'rotate(0deg)',
+                      }}
+                    >
+                      <ChevronDown size={16} />
                     </div>
                   </button>
                   <AnimatePresence>
@@ -284,9 +290,10 @@ export default function ContactPage() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                       >
-                        <div className="px-8 pb-8 pt-2 text-muted-foreground leading-relaxed">
+                        <div className="px-6 pb-6 pt-0 text-slate-600 text-[14px] leading-relaxed">
                           {item.a}
                         </div>
                       </motion.div>
@@ -294,46 +301,6 @@ export default function ContactPage() {
                   </AnimatePresence>
                 </div>
               ))}
-            </div>
-
-            {/* Stretched Multi-color Neon Gradient Newsletter Subscription */}
-            <div className="relative h-full">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className="w-full h-full bg-gradient-to-br from-[#00FFE7] via-[#3EADFF] to-[#8E37FF] p-12 lg:p-20 text-center rounded-[2rem] shadow-2xl flex flex-col items-center justify-center border-none overflow-hidden relative"
-              >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent)] pointer-events-none" />
-                <h3 className="text-xl lg:text-3xl font-black font-display text-white mb-6 uppercase tracking-tight leading-tight w-full drop-shadow-sm">
-                  Đăng ký nhận <br /> ưu đãi từ FSS
-                </h3>
-
-                <p className="text-xs lg:text-base text-white/90 font-bold leading-relaxed w-full mb-12 uppercase tracking-widest">
-                  Nhận thông tin sớm nhất về các bộ sưu tập mới.
-                </p>
-
-                <div className="w-full max-w-md space-y-10">
-                  <div className="relative border-b-2 border-white/30 focus-within:border-white transition-colors">
-                    <input
-                      type="email"
-                      placeholder="NHẬP EMAIL CỦA BẠN"
-                      className="w-full bg-transparent px-0 py-6 text-center text-sm lg:text-base font-black text-white outline-none !rounded-sm placeholder:text-white/40 tracking-[0.3em]"
-                    />
-                  </div>
-
-                  <button className="w-full inline-flex items-center justify-center gap-4 px-12 py-7 bg-white text-black hover:bg-black hover:text-white transition-all duration-300 rounded-full font-black text-xs lg:text-sm uppercase tracking-[0.3em] group shadow-2xl">
-                    Gửi ngay
-                    <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
-                  </button>
-                </div>
-
-                <div className="mt-20 w-full opacity-60 px-4">
-                  <p className="text-[10px] lg:text-[11px] text-white font-bold leading-relaxed uppercase tracking-wider text-center">
-                    Bằng cách nhấp vào nút Đăng ký, bạn đồng ý với <span className="underline cursor-pointer hover:text-white transition-colors">Chính sách bảo mật và cookie</span> của chúng tôi. Vui lòng Đăng nhập khi bạn đã có tài khoản.
-                  </p>
-                </div>
-              </motion.div>
             </div>
           </div>
         </div>

@@ -7,43 +7,39 @@ import useToastStore from '../../store/toastStore';
 const CONFIG = {
   success: {
     icon: CheckCircle2,
-    bg: 'linear-gradient(135deg, rgba(2,62,47,0.97), rgba(4,120,87,0.93))',
-    border: 'rgba(52,211,153,0.5)',
-    iconColor: '#6ee7b7',
-    progress: '#34d399',
-    glow: 'rgba(16,185,129,0.35)',
+    bg: '#ffffff',
+    border: '#e2e8f0',
+    iconColor: '#10b981',
+    progress: '#10b981',
     label: 'Thành công',
-    labelColor: '#6ee7b7',
+    labelColor: '#059669',
   },
   error: {
     icon: XCircle,
-    bg: 'linear-gradient(135deg, rgba(100,20,20,0.97), rgba(160,20,20,0.93))',
-    border: 'rgba(252,165,165,0.5)',
-    iconColor: '#fca5a5',
+    bg: '#ffffff',
+    border: '#e2e8f0',
+    iconColor: '#ef4444',
     progress: '#ef4444',
-    glow: 'rgba(239,68,68,0.35)',
     label: 'Lỗi',
-    labelColor: '#fca5a5',
+    labelColor: '#dc2626',
   },
   warning: {
     icon: AlertTriangle,
-    bg: 'linear-gradient(135deg, rgba(100,45,5,0.97), rgba(160,70,5,0.93))',
-    border: 'rgba(252,211,77,0.5)',
-    iconColor: '#fcd34d',
+    bg: '#ffffff',
+    border: '#e2e8f0',
+    iconColor: '#f59e0b',
     progress: '#f59e0b',
-    glow: 'rgba(245,158,11,0.35)',
     label: 'Cảnh báo',
-    labelColor: '#fcd34d',
+    labelColor: '#d97706',
   },
   info: {
     icon: Info,
-    bg: 'linear-gradient(135deg, rgba(10,15,60,0.97), rgba(0,22,141,0.93))',
-    border: 'rgba(147,197,253,0.5)',
-    iconColor: '#93c5fd',
+    bg: '#ffffff',
+    border: '#e2e8f0',
+    iconColor: '#3b82f6',
     progress: '#3b82f6',
-    glow: 'rgba(59,130,246,0.35)',
     label: 'Thông báo',
-    labelColor: '#93c5fd',
+    labelColor: '#2563eb',
   },
 };
 
@@ -79,47 +75,30 @@ function ToastItem({ id, message, type, duration }) {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: 80, scale: 0.88 }}
+      initial={{ opacity: 0, x: 40, scale: 0.95 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 80, scale: 0.85 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+      exit={{ opacity: 0, x: 40, scale: 0.95 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       onMouseEnter={stopTimer}
       onMouseLeave={startTimer}
       onClick={() => removeToast(id)}
       style={{
         background: cfg.bg,
-        border: `1.5px solid ${cfg.border}`,
-        boxShadow: `0 12px 48px ${cfg.glow}, 0 4px 12px rgba(0,0,0,0.4)`,
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        borderRadius: '14px',
+        border: `1px solid ${cfg.border}`,
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+        borderRadius: '4px',
         overflow: 'hidden',
-        width: '380px',
+        width: '360px',
         cursor: 'pointer',
         userSelect: 'none',
       }}
     >
-      {/* Top glow line */}
-      <div style={{
-        height: '2px',
-        background: `linear-gradient(90deg, transparent, ${cfg.iconColor}, transparent)`,
-        opacity: 0.7,
-      }} />
-
       {/* Content */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '16px 18px 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '16px 18px' }}>
 
-        {/* Icon container with glow */}
-        <div style={{ position: 'relative', flexShrink: 0, marginTop: '1px' }}>
-          <div style={{
-            position: 'absolute',
-            inset: '-4px',
-            borderRadius: '50%',
-            background: cfg.iconColor,
-            filter: 'blur(10px)',
-            opacity: 0.4,
-          }} />
-          <Icon size={26} style={{ color: cfg.iconColor, position: 'relative' }} strokeWidth={2.2} />
+        {/* Icon */}
+        <div style={{ flexShrink: 0, marginTop: '2px' }}>
+          <Icon size={22} style={{ color: cfg.iconColor }} strokeWidth={2.5} />
         </div>
 
         {/* Text */}
@@ -127,19 +106,18 @@ function ToastItem({ id, message, type, duration }) {
           <p style={{
             fontSize: '11px',
             fontWeight: 800,
-            letterSpacing: '0.12em',
+            letterSpacing: '0.05em',
             textTransform: 'uppercase',
             color: cfg.labelColor,
-            marginBottom: '4px',
-            opacity: 0.85,
+            marginBottom: '2px',
           }}>
             {cfg.label}
           </p>
           <p style={{
             fontSize: '14px',
             fontWeight: 600,
-            color: 'rgba(255,255,255,0.95)',
-            lineHeight: '1.45',
+            color: '#1e293b',
+            lineHeight: '1.5',
             wordBreak: 'break-word',
           }}>
             {message}
@@ -154,31 +132,29 @@ function ToastItem({ id, message, type, duration }) {
             width: '24px',
             height: '24px',
             borderRadius: '6px',
-            background: 'rgba(255,255,255,0.1)',
+            background: 'transparent',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'background 0.2s',
-            marginTop: '1px',
+            marginTop: '-2px',
           }}
-          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+          onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+          onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
         >
-          <X size={13} color="rgba(255,255,255,0.8)" />
+          <X size={14} color="#64748b" />
         </button>
       </div>
 
       {/* Progress bar */}
-      <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', margin: '0 18px 14px' , borderRadius: '999px' }}>
+      <div style={{ height: '2px', background: '#f1f5f9' }}>
         <div style={{
           height: '100%',
-          borderRadius: '999px',
-          background: `linear-gradient(90deg, ${cfg.progress}, ${cfg.iconColor})`,
+          background: cfg.progress,
           width: `${progress}%`,
           transition: 'width 0.05s linear',
-          boxShadow: `0 0 6px ${cfg.progress}80`,
         }} />
       </div>
     </motion.div>

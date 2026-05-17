@@ -19,15 +19,14 @@ export default function BlogDetailPage() {
       <div className="min-h-screen flex flex-col items-center justify-center text-center px-4 bg-white page-enter">
         <h1 className="text-6xl font-bold font-display text-primary mb-4 block">404</h1>
         <p className="text-xl text-muted-foreground mb-8">Rất tiếc, bài viết này không tồn tại.</p>
-        <Link to="/blog" className="px-8 py-3 bg-primary text-white font-bold rounded-sm hover:opacity-90 transition-opacity">
+        <Link to="/blog" className="px-8 py-3 bg-primary text-white font-bold rounded-xs hover:opacity-90 transition-opacity">
           Quay lại trang Blog
         </Link>
       </div>
     );
   }
 
-  // Lấy các bài viết khác
-  const relatedPosts = blogPosts.filter(p => p.id !== post.id).slice(0, 3);
+
 
   return (
     <div className="min-h-screen bg-white pb-32 page-enter">
@@ -41,7 +40,7 @@ export default function BlogDetailPage() {
               <ArrowLeft size={16} /> Về trang chủ Blog
            </Link>
            <div className="flex items-center gap-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-white/90 mb-5">
-              <span className="px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-sm border border-white/10">{post.category}</span>
+              <span className="px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-xs border border-white/10">{post.category}</span>
               <span className="flex items-center gap-1.5"><Calendar size={14} /> {post.date}</span>
               <span className="flex items-center gap-1.5"><Clock size={14} /> {post.readingTime} đọc</span>
            </div>
@@ -78,7 +77,7 @@ export default function BlogDetailPage() {
                 <p>Không khó để bắt gặp trên các sàn diễn lớn từ Paris đến Milan hay qua những bộ hình thời trang đường phố (street style), các Fashionista đang lăng xê vô cùng tích cực những item có màu sắc trung tính nhã nhặn như kem, beige, xám, và các dải màu pastel nhẹ nhàng. Việc chuyển dịch tone màu này không chỉ tôn lên nét đẹp thanh lịch của người mặc mà còn giúp trang phục dễ dàng hòa hợp với mọi vóc dáng và độ tuổi.</p>
                 
                 <div className="my-10">
-                   <img src={relatedPosts[0]?.image || post.image} alt="Xu hướng thời trang" className="w-full rounded-sm shadow-soft hover:shadow-lg transition-all duration-300" />
+                   <img src={post.image} alt="Xu hướng thời trang" className="w-full rounded-xs shadow-soft hover:shadow-lg transition-all duration-300" />
                    <p className="text-center text-sm text-muted-foreground mt-4 italic">Hình ảnh mang tính chất minh họa cho xu hướng đang thịnh hành.</p>
                 </div>
 
@@ -94,54 +93,10 @@ export default function BlogDetailPage() {
               </div>
            </article>
 
-           {/* Tags */}
-           <div className="mt-16 pt-8 border-t border-border flex flex-wrap gap-3">
-             <span className="px-4 py-2 bg-surface-secondary text-xs font-bold text-muted-foreground uppercase tracking-wider rounded-[2px] transition-colors hover:bg-slate-200 cursor-pointer">#{post.category}</span>
-             <span className="px-4 py-2 bg-surface-secondary text-xs font-bold text-muted-foreground uppercase tracking-wider rounded-[2px] transition-colors hover:bg-slate-200 cursor-pointer">#Fashion2026</span>
-             <span className="px-4 py-2 bg-surface-secondary text-xs font-bold text-muted-foreground uppercase tracking-wider rounded-[2px] transition-colors hover:bg-slate-200 cursor-pointer">#StyleGuide</span>
-           </div>
+
         </div>
       </section>
 
-      {/* ===== RELATED POSTS ===== */}
-      <section className="layout-page pt-20 lg:pt-32">
-        <h2 className="text-2xl lg:text-3xl font-bold font-display text-headline mb-8 lg:mb-12 border-b border-border pb-4 uppercase tracking-widest text-center">
-          Bài viết cùng chủ đề
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-          {relatedPosts.map((rp, index) => (
-             <motion.div 
-               key={rp.id}
-               initial={{ opacity: 0, y: 20 }}
-               whileInView={{ opacity: 1, y: 0 }}
-               viewport={{ once: true }}
-               transition={{ delay: index * 0.1 }}
-             >
-               <Link to={`/blog/${rp.id}`} className="group flex flex-col h-full">
-                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-6 bg-slate-100 shadow-soft group-hover:shadow-elevation transition-all duration-500">
-                    <img src={rp.image} alt={rp.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                    <div className="absolute top-4 left-4">
-                      <span className="px-5 py-2 bg-white/95 backdrop-blur-md text-[#00168d] text-[11px] font-black uppercase tracking-[0.15em] rounded-[2px] shadow-sm border border-[#00168d]/5">
-                        {rp.category}
-                      </span>
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold font-display text-headline mb-3 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
-                    {rp.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm line-clamp-3 leading-relaxed mb-4">
-                    {rp.excerpt}
-                  </p>
-                  <div className="mt-auto flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    <span>{rp.date}</span>
-                    <span className="w-1 h-1 bg-primary rounded-[2px]" />
-                    <span>{rp.readingTime} đọc</span>
-                  </div>
-               </Link>
-             </motion.div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

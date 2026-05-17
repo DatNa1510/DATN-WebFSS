@@ -41,7 +41,7 @@ export default function BlogPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-4xl lg:text-6xl font-bold font-display text-headline mb-6"
+              className="text-3xl lg:text-5xl font-bold font-display text-headline mb-6"
             >
               Tin tức <span className="text-primary italic">Thời trang</span>
             </motion.h1>
@@ -110,7 +110,7 @@ export default function BlogPage() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-8 py-4 rounded-[2px] text-[13px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${activeCategory === cat
+                  className={`px-6 py-3 rounded-[2px] text-[12px] font-black uppercase tracking-wider transition-all whitespace-nowrap border ${activeCategory === cat
                       ? 'bg-[#00168d] text-white border-[#00168d] shadow-lg shadow-[#00168d]/20'
                       : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
