@@ -10,6 +10,8 @@ import vn.fss.product.entity.Product;
 import vn.fss.product.entity.WishlistItem;
 import vn.fss.product.repository.ProductRepository;
 import vn.fss.product.repository.WishlistItemRepository;
+import vn.fss.notification.service.NotificationService;
+import vn.fss.notification.model.Notification;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,7 +23,9 @@ public class WishlistService {
     private final WishlistItemRepository wishlistRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
+    @Transactional
     public List<WishlistItemDto> getUserWishlist(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         return wishlistRepository.findByUserOrderByAddedAtDesc(user)
@@ -35,7 +39,15 @@ public class WishlistService {
         
         wishlistRepository.findByUserAndProduct(user, product).ifPresentOrElse(
             wishlistRepository::delete,
-            () -> wishlistRepository.save(WishlistItem.builder().user(user).product(product).build())
+            () -> {
+                wishlistRepository.save(WishlistItem.builder().user(user).product(product).build());
+                notificationService.createNotification(
+                    user, 
+                    "Danh sách yêu thích", 
+                    "Đã thêm sản phẩm '" + (product.getProductDisplayName() != null ? product.getProductDisplayName() : "Sản phẩm") + "' vào danh sách yêu thích của bạn.",
+                    Notification.NotificationType.INFO
+                );
+            }
         );
     }
 

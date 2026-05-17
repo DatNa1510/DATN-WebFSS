@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, ShoppingBag, Heart, Shield, Truck, RefreshCw, Sparkles, Check, ArrowRight, Info } from 'lucide-react';
+import { Star, ShoppingBag, Heart, Shield, Truck, RefreshCw, Sparkles, Check, ArrowRight, Info, Cpu, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { getProductById, getSimilarProducts, formatPrice, translate, translateName } from '../../data/fashionData';
 import { reviews as mockReviews } from '../../data/mockData';
 import ProductCard from '../../components/ui/ProductCard';
+import ProductReviews from '../../components/ui/ProductReviews';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
 import useWishlistStore from '../../store/wishlistStore';
 import { toast } from '../../store/toastStore';
+import SizeGuideModal from '../../components/ui/SizeGuideModal';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -17,7 +19,10 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState(null);
   const [similar, setSimilar] = useState([]);
+  const [aiSimilar, setAiSimilar] = useState([]);
+  const [aiLoading, setAiLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
   const [imgIdx, setImgIdx] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
@@ -118,6 +123,37 @@ export default function ProductDetailPage() {
     window.scrollTo(0, 0);
   }, [id]);
 
+  // ─── Fetch AI similar products khi bấm nút ──────────────────────
+  const handleFindSimilar = async () => {
+    if (aiLoading) return;
+    setAiSimilar([]);
+    setAiLoading(true);
+    // Scroll xuống section trước khi có kết quả
+    setTimeout(() => {
+      document.getElementById('ai-similar-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+    try {
+      const res = await axios.get(`http://localhost:8080/api/search/similar/${product.id}?topK=5`);
+      if (res.data?.success && res.data.results?.length > 0) {
+        const BASE = 'http://localhost:8080';
+        const normalized = res.data.results.map(p => ({
+          ...p,
+          images: p.imagePath
+            ? p.imagePath.split(',').map(path =>
+                path.trim().startsWith('http') ? path.trim() : `${BASE}${path.trim()}`
+              )
+            : [],
+          sizes: ['S', 'M', 'L', 'XL'],
+        }));
+        setAiSimilar(normalized);
+      }
+    } catch (e) {
+      console.warn('AI similar fetch failed:', e.message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -196,9 +232,9 @@ export default function ProductDetailPage() {
                       toast.success(liked ? 'Đã bỏ yêu thích' : 'Đã thêm vào yêu thích');
                     }
                   }}
-                  className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-primary hover:text-white transition-all"
+                  className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-rose-50 transition-all"
                 >
-                  <Heart size={20} className={liked ? 'fill-current' : ''} />
+                  <Heart size={20} className={liked ? 'fill-rose-500 text-rose-500' : 'text-slate-400 group-hover:text-rose-500'} />
                 </motion.button>
               </div>
             </div>
@@ -229,10 +265,10 @@ export default function ProductDetailPage() {
             {/* Header */}
             <div className="space-y-6">
               <span className="text-xs font-bold text-primary-600 uppercase tracking-widest bg-primary-50 px-3 py-1 rounded-full inline-block">
-                Bộ sưu tập 2026
+                Bộ sưu tập
               </span>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-[2.8rem] font-bold font-display text-foreground leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-[1.9rem] font-bold font-display text-foreground leading-tight">
                 {translateName(product)}
               </h1>
 
@@ -244,11 +280,11 @@ export default function ProductDetailPage() {
                       <Star
                         key={s}
                         size={16}
-                        className={s <= Math.round(product.rating || 5) ? 'fill-amber-400 text-amber-400' : 'text-border'}
+                        className={s <= Math.round(product.rating != null ? product.rating : 5) ? 'fill-amber-400 text-amber-400' : 'text-border'}
                       />
                     ))}
                   </div>
-                  <span className="text-sm font-bold text-foreground">{product.rating || 5.0}/5</span>
+                  <span className="text-sm font-bold text-foreground">{product.rating != null ? Number(product.rating).toFixed(1) : '5.0'}/5</span>
                 </div>
                 <div className="h-4 w-px bg-border" />
                 <div className="text-sm font-semibold text-muted-foreground">
@@ -323,7 +359,10 @@ export default function ProductDetailPage() {
                   <label className="text-sm font-bold text-foreground uppercase tracking-wide">
                     Chọn kích cỡ
                   </label>
-                  <button className="text-xs font-semibold text-primary hover:text-primary-700 transition-colors">
+                  <button 
+                    onClick={() => setIsSizeGuideOpen(true)}
+                    className="text-xs font-semibold text-primary hover:text-primary-700 transition-colors"
+                  >
                     Hướng dẫn chọn size →
                   </button>
                 </div>
@@ -370,39 +409,59 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Action Buttons - Ẩn với admin */}
-            {!isAdmin && (
-              <div className="space-y-3 pt-4">
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleAddToCart}
-                  className={`w-full py-4 !rounded-sm font-bold text-base flex items-center justify-center gap-2 transition-all shadow-soft hover:shadow-lg ${addedFeedback
-                    ? 'bg-success text-white'
-                    : 'bg-primary text-white hover:bg-primary-700 active:scale-95'
-                    }`}
-                >
-                  {addedFeedback ? (
-                    <>
-                      <Check size={20} />
-                      Đã thêm vào giỏ hàng
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag size={20} />
-                      Thêm vào giỏ hàng
-                    </>
-                  )}
-                </motion.button>
+              {/* Action Buttons - Ẩn với admin */}
+              {!isAdmin && (
+                <div className="space-y-3 pt-4">
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleAddToCart}
+                    className={`w-full py-4 !rounded-sm font-bold text-base flex items-center justify-center gap-2 transition-all shadow-soft hover:shadow-lg ${addedFeedback
+                      ? 'bg-success text-white'
+                      : 'bg-primary text-white hover:bg-primary-700 active:scale-95'
+                      }`}
+                  >
+                    {addedFeedback ? (
+                      <>
+                        <Check size={20} />
+                        Đã thêm vào giỏ hàng
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag size={20} />
+                        Thêm vào giỏ hàng
+                      </>
+                    )}
+                  </motion.button>
 
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleBuyNow}
-                  className="w-full py-4 !rounded-sm font-bold text-base border-2 border-primary text-primary hover:bg-primary-50 transition-all"
-                >
-                  Mua ngay
-                </motion.button>
-              </div>
-            )}
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleBuyNow}
+                    className="w-full py-4 !rounded-sm font-bold text-base border-2 border-primary text-primary hover:bg-primary-50 transition-all"
+                  >
+                    Mua ngay
+                  </motion.button>
+
+                  {/* Nút Tìm sản phẩm tương đồng */}
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleFindSimilar}
+                    disabled={aiLoading}
+                    className="w-full py-4 !rounded-sm font-bold text-base border-2 border-dashed border-[#7c3aed]/40 text-[#7c3aed] hover:bg-[#7c3aed]/5 hover:border-[#7c3aed] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Đang tìm kiếm...
+                      </>
+                    ) : (
+                      <>
+                        <Cpu size={18} />
+                        Tìm sản phẩm tương đồng
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              )}
 
             {/* Benefits */}
             <div className="grid grid-cols-2 gap-4 pt-8 border-t border-border">
@@ -439,39 +498,77 @@ export default function ProductDetailPage() {
           </motion.div>
         </div>
 
-        {/* Similar Products Section */}
-        <section className="mt-40">
-          <div className="flex items-center justify-between mb-12">
+        {/* ── Reviews Section ── */}
+        <div className="mt-24 border-t border-slate-100 pt-20">
+          <ProductReviews productId={product?.id} />
+        </div>
+
+        {/* ── AI Similar Products Section ── */}
+        <div id="ai-similar-section" className="mt-16 border-t border-slate-100 pt-16">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-3xl font-bold font-display text-foreground mb-2">
-                Các sản phẩm liên quan
-              </h2>
-              <p className="text-muted-foreground">Những item được chọn lọc dành cho bạn</p>
+              <div className="flex items-center gap-3">
+                <Cpu size={22} className="text-[#7c3aed]" />
+                <h2 className="text-2xl font-bold text-slate-800">Sản phẩm tương đồng</h2>
+              </div>
             </div>
             <Link
-              to="/products"
-              className="inline-flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all"
+              to="/visual-search"
+              className="hidden sm:flex items-center gap-2 text-[12px] font-bold text-[#00168d] hover:text-[#7c3aed] transition-colors uppercase tracking-wider"
             >
-              Xem thêm
-              <ArrowRight size={18} />
+              Tìm bằng ảnh <ArrowRight size={14} />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {similar.map((p, i) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <ProductCard product={p} />
-              </motion.div>
-            ))}
-          </div>
-        </section>
+          {aiLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-sm border-2 border-slate-100 overflow-hidden animate-pulse">
+                  <div className="aspect-[3/4] bg-gradient-to-br from-slate-100 to-slate-200" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 bg-slate-200 rounded w-3/4" />
+                    <div className="h-4 bg-slate-100 rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : aiSimilar.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6"
+            >
+              {aiSimilar.map((p, i) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <ProductCard product={p} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <div className="text-center py-16 text-slate-400">
+              <div className="flex justify-center mb-3">
+                <Cpu size={40} className="opacity-30" />
+              </div>
+              <p className="text-sm font-semibold">Không tìm thấy sản phẩm tương đồng</p>
+              <p className="text-xs mt-1">Sản phẩm này chưa được index vào hệ thống AI</p>
+            </div>
+          )}
+        </div>
+
 
       </div>
+
+      <SizeGuideModal
+        isOpen={isSizeGuideOpen}
+        onClose={() => setIsSizeGuideOpen(false)}
+        category={product.masterCategory || product.category}
+        gender={product.gender}
+      />
     </div>
   );
 }

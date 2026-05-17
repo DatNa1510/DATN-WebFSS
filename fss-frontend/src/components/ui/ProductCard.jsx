@@ -110,7 +110,7 @@ export default function ProductCard({ product }) {
               className="w-10 h-10 bg-white/95 backdrop-blur-md rounded-sm flex items-center justify-center shadow-md hover:bg-[#e11d48] hover:text-white transition-all duration-300 border border-white/50"
               title={liked ? 'Bỏ yêu thích' : 'Yêu thích'}
             >
-              <Heart size={18} className={`transition-all ${liked ? 'fill-current' : ''}`} />
+              <Heart size={18} className={`transition-all ${liked ? 'fill-rose-500 text-rose-500' : 'text-rose-500'}`} />
             </motion.button>
             
             {!isAdmin && (
@@ -142,7 +142,7 @@ export default function ProductCard({ product }) {
           </div>
           <div className="flex items-center gap-1 bg-[#00168d]/5 px-2 py-1 rounded-sm border border-[#00168d]/10 shrink-0">
             <Star size={10} className="fill-[#00168d] text-[#00168d]" />
-            <span className="text-[10px] font-black text-[#00168d]">{product.rating || '4.5'}</span>
+            <span className="text-[10px] font-black text-[#00168d]">{product.rating != null ? Number(product.rating).toFixed(1) : '4.5'}</span>
           </div>
         </div>
 

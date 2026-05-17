@@ -83,8 +83,8 @@ export default function ProductListPage() {
           gender: activeGender,
           search: search,
           sort: sortBy,
-          minPrice: range.min,
-          maxPrice: range.max === Infinity ? 999999999 : range.max
+          minPrice: range.min.toString(),
+          maxPrice: (range.max === Infinity ? 999999999 : range.max).toString()
         }
       });
 
@@ -129,7 +129,7 @@ export default function ProductListPage() {
 
   // ─── LOAD MORE WHEN PAGE CHANGES ────────────────────
   useEffect(() => {
-    if (page === 0) return;
+    if (isInitial) return;
     loadProducts(page, false);
   }, [page]); // eslint-disable-line
 
@@ -215,23 +215,7 @@ export default function ProductListPage() {
             </form>
 
             <div className="flex flex-wrap lg:flex-nowrap items-center gap-4 w-full lg:w-auto">
-              {/* Compact Category Tabs */}
-              <div className="flex gap-1.5 overflow-x-auto lg:overflow-visible py-1">
-                {allCategories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setCategory(cat.slug)}
-                    className={`shrink-0 px-5 py-2.5 rounded-sm text-[11px] font-bold uppercase tracking-wider border-2 transition-all duration-200 ${activeCategory === cat.slug
-                        ? 'bg-[#00168d] text-white border-[#00168d] shadow-sm'
-                        : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300 hover:text-slate-800'
-                      } antialiased`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
 
-              <div className="h-8 w-[1px] bg-slate-200 hidden lg:block mx-1" />
 
               {/* Sort */}
               <div className="relative flex-1 lg:flex-none lg:min-w-[160px] group">
@@ -292,6 +276,31 @@ export default function ProductListPage() {
                     Bộ lọc
                   </h3>
                   <div className="h-[2px] w-12 bg-gradient-to-r from-[#00168d] to-[#7c3aed] rounded-full" />
+                </div>
+
+                {/* Category Filters */}
+                <div className="mb-8 pb-8 border-b border-slate-100">
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] mb-4">Danh mục</p>
+                  <div className="space-y-3.5">
+                    {allCategories.map((cat) => (
+                      <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
+                        <div
+                          onClick={() => setCategory(cat.slug)}
+                          className={`w-4 h-4 flex items-center justify-center border-[2px] rounded-sm transition-all cursor-pointer ${activeCategory === cat.slug ? 'border-[#00168d] bg-[#00168d]' : 'border-slate-300 group-hover:border-[#00168d]'
+                            }`}
+                        >
+                          {activeCategory === cat.slug && <div className="w-1.5 h-1.5 bg-white rounded-[1px]" />}
+                        </div>
+                        <span
+                          onClick={() => setCategory(cat.slug)}
+                          className={`text-[13px] font-bold transition-colors cursor-pointer ${activeCategory === cat.slug ? 'text-[#00168d]' : 'text-slate-600 group-hover:text-slate-800'
+                            }`}
+                        >
+                          {cat.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Price Ranges */}

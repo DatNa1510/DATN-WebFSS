@@ -52,6 +52,9 @@ public class Product {
     @Column(name = "original_price")
     private BigDecimal originalPrice;
 
+    @Column(name = "initial_stock", nullable = false)
+    private Integer initialStock = 50;
+
     @Column(nullable = false)
     private Integer stock = 50;
 

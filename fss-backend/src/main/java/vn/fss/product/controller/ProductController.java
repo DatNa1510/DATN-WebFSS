@@ -25,9 +25,11 @@ public class ProductController {
             @RequestParam(required = false, defaultValue = "all") String category,
             @RequestParam(required = false, defaultValue = "all") String gender,
             @RequestParam(required = false, defaultValue = "") String search,
-            @RequestParam(required = false, defaultValue = "newest") String sort) {
+            @RequestParam(required = false, defaultValue = "newest") String sort,
+            @RequestParam(defaultValue = "0") java.math.BigDecimal minPrice,
+            @RequestParam(defaultValue = "999999999") java.math.BigDecimal maxPrice) {
 
-        Page<Product> productPage = productService.getProducts(page, limit, category, gender, search, sort);
+        Page<Product> productPage = productService.getProducts(page, limit, category, gender, search, sort, minPrice, maxPrice);
 
         Map<String, Object> response = new HashMap<>();
         response.put("items", productPage.getContent());
