@@ -4,13 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Copy, CheckCircle2, Clock, AlertTriangle,
   Building2, CreditCard, FileText, ExternalLink,
-  Wifi, Loader2
+  Wifi, Loader2, Banknote
 } from 'lucide-react';
 import { formatPrice } from '../../data/mockData';
 import { toast } from '../../store/toastStore';
 import useAuthStore from '../../store/authStore';
 
-const PAYMENT_TIMEOUT = 5 * 60; // 5 phút = 300 giây
+const PAYMENT_TIMEOUT = 15 * 60; // 15 phút = 900 giây
 const POLL_INTERVAL   = 3000;    // poll mỗi 3 giây
 
 // ── Countdown hook ──────────────────────────────────────────────────────────
@@ -111,13 +111,23 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
     toast.success(`Đã sao chép ${label}`);
   };
 
-  const handleUserClose = () => {
-    toast.warning('Thanh toán chưa hoàn tất. Đơn hàng của bạn chưa được thanh toán thành công!');
+  const handleUserClose = async () => {
+    toast.warning('Thanh toán chưa hoàn tất. Đơn hàng của bạn đã bị hủy.');
+    if (orderId && token) {
+      try {
+        await fetch(`http://localhost:8080/api/orders/${orderId}/expire`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (err) {
+        console.error('Failed to auto-expire order on modal close:', err);
+      }
+    }
     onClose();
   };
 
   const color  = timerColor(pct);
-  const radius = 30;
+  const radius = 40;
   const circ   = 2 * Math.PI * radius;
   const dash   = (pct / 100) * circ;
 
@@ -129,37 +139,30 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.93, y: 20 }}
         transition={{ type: 'spring', stiffness: 340, damping: 28 }}
-        className="bg-white w-full max-w-[460px] shadow-2xl flex flex-col overflow-hidden"
-        style={{ borderRadius: 6, maxHeight: '96vh', overflowY: 'auto' }}
+        className="bg-white w-full max-w-[650px] shadow-2xl flex flex-col overflow-hidden"
+        style={{ borderRadius: 4, maxHeight: '96vh', overflowY: 'auto' }}
       >
         {/* ── HEADER ──────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#00168D]/10 flex items-center justify-center">
-              <CreditCard size={16} className="text-[#00168D]" />
+        <div className="flex items-stretch justify-between border-b-2 border-slate-100 bg-white">
+          <div className="flex items-stretch flex-1 min-w-0">
+            {/* Solid blue full-bleed left block */}
+            <div className="w-12 bg-[#00168D] flex items-center justify-center shrink-0 rounded-tl-[4px]">
+              <CreditCard size={20} className="text-white" />
             </div>
-            <div>
-              <h3 className="text-[15px] font-black text-gray-900 tracking-tight leading-none">
-                Chuyển khoản ngân hàng
+            {/* Header text */}
+            <div className="flex flex-col justify-center px-6 py-5">
+              <h3 className="text-[20px] font-black text-[#00168D] tracking-tight uppercase leading-none pb-1.5 pt-1">
+                Chuyển khoản VietQR
               </h3>
-              <p className="text-[11px] text-gray-400 mt-0.5">Quét mã QR qua app ngân hàng</p>
+              <p className="text-[13px] text-slate-500 font-medium">Quét mã QR qua ứng dụng ngân hàng</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Polling indicator */}
-            <div className="flex items-center gap-1 text-[10px] text-gray-400">
-              <motion.div
-                animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                className="w-1.5 h-1.5 rounded-full bg-emerald-400"
-              />
-              <span>Đang chờ</span>
-            </div>
+          <div className="flex items-center pr-6">
             <button
               onClick={handleUserClose}
-              className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors rounded-full"
+              className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors rounded-sm"
             >
-              <X size={17} />
+              <X size={20} />
             </button>
           </div>
         </div>
@@ -181,53 +184,32 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
           )}
         </AnimatePresence>
 
-        <div className="p-5 space-y-4">
+        <div className="p-6 space-y-6 bg-slate-50/50">
 
           {/* ── QR + TIMER SECTION ───────────────────────────────────── */}
-          <div className="flex gap-4 items-stretch bg-gradient-to-br from-slate-50 to-blue-50/30 border border-slate-100 p-4 rounded-sm">
+          <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-6 bg-white border-2 border-slate-200 p-6 rounded-sm shadow-sm">
             {/* QR Code */}
-            <div className={`bg-white p-2 shadow-sm border shrink-0 self-center ${expired ? 'border-red-200 opacity-30 grayscale' : 'border-gray-100'}`}>
+            <div className={`bg-white p-3 shadow-md border-2 shrink-0 self-center rounded-sm ${expired ? 'border-red-200 opacity-30 grayscale' : 'border-[#00168D]/20'}`}>
               {qrCode ? (
-                <QRCodeSVG value={qrCode} size={140} level="H" />
+                <QRCodeSVG value={qrCode} size={220} level="H" />
               ) : (
-                <div className="w-[140px] h-[140px] flex items-center justify-center text-gray-300 text-xs">No QR</div>
+                <div className="w-[220px] h-[220px] flex items-center justify-center text-slate-300 text-xs font-bold border-2 border-dashed border-slate-200">No QR</div>
               )}
             </div>
 
             {/* Right: timer + status + link */}
-            <div className="flex-1 flex flex-col items-center justify-between gap-3 py-1">
-              {/* Circular countdown */}
-              <div className="relative">
-                <svg width="80" height="80" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="40" cy="40" r={radius} stroke="#e5e7eb" strokeWidth="5" fill="none" />
-                  <circle
-                    cx="40" cy="40" r={radius}
-                    stroke={expired ? '#ef4444' : color}
-                    strokeWidth="5"
-                    fill="none"
-                    strokeDasharray={`${dash} ${circ}`}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dasharray 1s linear, stroke 1s' }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <Clock size={12} style={{ color: expired ? '#ef4444' : color }} />
-                  <span className="text-[16px] font-black tabular-nums leading-none mt-0.5" style={{ color: expired ? '#ef4444' : color }}>
-                    {mm}:{ss}
-                  </span>
+            <div className="flex-1 flex flex-col items-center justify-center gap-5 w-full">
+              <div className="text-center">
+                <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest mb-2">Thời gian thanh toán</p>
+                <div className="text-[40px] font-black tabular-nums tracking-tight leading-none drop-shadow-sm" style={{ color: expired ? '#ef4444' : color }}>
+                  {mm}:{ss}
                 </div>
               </div>
 
-              <div className="text-center">
-                <p className="text-[10px] text-gray-400 leading-snug">
-                  {expired ? 'Đã hết hạn' : <>QR hết hạn sau <span className="font-bold text-gray-600">{mm}:{ss}</span></>}
-                </p>
-              </div>
-
               {/* Polling status */}
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-full border border-gray-100 shadow-sm">
-                <Wifi size={10} className="text-emerald-500" />
-                <span className="text-[10px] text-gray-500 font-medium">Tự động xác nhận</span>
+              <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-700 rounded-sm border-2 border-blue-100 shadow-sm w-full justify-center">
+                <Loader2 size={18} className="animate-spin text-blue-600" />
+                <span className="text-[14px] font-bold">Đang chờ thanh toán...</span>
               </div>
 
               {/* PayOS link */}
@@ -236,9 +218,9 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
                   href={paymentData.paymentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[11px] font-bold text-[#00168D] hover:underline"
+                  className="flex items-center gap-1.5 text-[13px] font-bold text-[#00168D] hover:text-blue-600 transition-colors bg-slate-50 px-4 py-2 rounded-sm border border-slate-200 hover:border-[#00168D]/30 w-full justify-center"
                 >
-                  <ExternalLink size={11} />
+                  <ExternalLink size={14} />
                   Mở trang PayOS
                 </a>
               )}
@@ -246,22 +228,22 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
           </div>
 
           {/* ── BANK INFO TABLE ──────────────────────────────────────── */}
-          <div className="border border-gray-100 divide-y divide-gray-100 rounded-sm overflow-hidden">
+          <div className="bg-white border-2 border-slate-200 rounded-sm overflow-hidden shadow-sm">
             <InfoRow
-              icon={<Building2 size={13} className="text-[#00168D]" />}
+              icon={<Building2 size={16} className="text-slate-400" />}
               label="Ngân hàng"
               value={bankName}
               badge={bankCode}
             />
             <InfoRow
-              icon={<CreditCard size={13} className="text-[#00168D]" />}
+              icon={<CreditCard size={16} className="text-slate-400" />}
               label="Số tài khoản"
               value={accountNum}
               copyable
               onCopy={() => copy(accountNum, 'số tài khoản')}
             />
             <InfoRow
-              icon={<FileText size={13} className="text-[#00168D]" />}
+              icon={<FileText size={16} className="text-[#00168D]" />}
               label="Nội dung CK"
               value={content}
               copyable
@@ -269,42 +251,28 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
               onCopy={() => copy(content, 'nội dung chuyển khoản')}
             />
             <InfoRow
-              icon={<CreditCard size={13} className="text-emerald-600" />}
+              icon={<Banknote size={16} className="text-emerald-500" />}
               label="Số tiền"
               value={formatPrice(amount)}
               copyable
               onCopy={() => copy(String(amount), 'số tiền')}
-              valueClass="text-blue-700 text-[14px] font-black tabular-nums"
+              valueClass="text-blue-700 text-[18px] font-black tabular-nums"
             />
           </div>
 
           {/* ── AUTO-DETECT NOTICE ───────────────────────────────────── */}
-          <div className="flex items-start gap-2.5 p-3 bg-blue-50 border border-blue-100 rounded-sm">
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-            >
-              <Wifi size={14} className="text-blue-500 shrink-0 mt-0.5" />
-            </motion.div>
-            <p className="text-[11px] text-blue-700 leading-relaxed">
+          <div className="flex items-start gap-3 p-4 bg-amber-50 border-2 border-amber-200 rounded-sm shadow-sm">
+            <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-[13px] text-amber-900 leading-relaxed font-medium">
               Hệ thống <strong>tự động xác nhận</strong> sau khi nhận được chuyển khoản.
-              Vui lòng nhập <strong>đúng nội dung</strong> "{content}" và giữ trang này mở.
+              Vui lòng nhập <strong className="text-amber-900 font-black">đúng nội dung</strong> chuyển khoản để đơn hàng được duyệt tự động.
             </p>
-          </div>
-
-          {/* ── WAITING INDICATOR ───────────────────────────────────── */}
-          <div className="flex items-center justify-center gap-2 py-2">
-            <Loader2 size={14} className="animate-spin text-gray-400" />
-            <span className="text-[12px] text-gray-400">
-              Đang chờ thanh toán
-              {pollCount > 0 && <span className="text-gray-300"> · đã kiểm tra {pollCount} lần</span>}
-            </span>
           </div>
 
           {/* ── CLOSE BUTTON ────────────────────────────────────────── */}
           <button
             onClick={handleUserClose}
-            className="w-full py-2.5 border border-gray-200 text-gray-500 text-[13px] font-medium hover:bg-gray-50 transition-colors rounded-sm"
+            className="w-full py-4 bg-white border-2 border-slate-300 text-slate-600 text-[14px] font-bold uppercase tracking-widest hover:bg-slate-100 hover:text-slate-900 transition-colors rounded-sm shadow-sm"
           >
             Đóng & kiểm tra sau
           </button>
@@ -327,28 +295,28 @@ function InfoRow({ icon, label, value, badge, copyable, highlight, valueClass, o
 
   return (
     <div
-      className={`flex items-center justify-between px-3 py-2.5 gap-3 transition-colors
-        ${highlight ? 'bg-blue-50/50' : ''}
-        ${copyable ? 'cursor-pointer hover:bg-gray-50 group' : ''}`}
+      className={`flex items-center justify-between px-5 py-4 gap-4 transition-colors border-b border-slate-200 last:border-0
+        ${highlight ? 'bg-blue-50/60' : 'bg-transparent'}
+        ${copyable ? 'cursor-pointer hover:bg-slate-100 group' : ''}`}
       onClick={handleCopy}
     >
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-3 shrink-0">
         <span>{icon}</span>
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{label}</span>
+        <span className="text-[13px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
       </div>
       <div className="flex items-center gap-2 min-w-0">
         {badge && (
-          <span className="px-1.5 py-0.5 bg-[#00168D] text-white text-[10px] font-black rounded tracking-wider shrink-0">
+          <span className="px-2 py-1 bg-[#00168D] text-white text-[11px] font-black rounded-sm tracking-wider shrink-0">
             {badge}
           </span>
         )}
-        <span className={valueClass || `text-[13px] font-bold text-gray-900 truncate ${highlight ? 'text-[#00168D]' : ''}`}>
+        <span className={valueClass || `text-[15px] font-bold text-slate-800 truncate ${highlight ? 'text-[#00168D]' : ''}`}>
           {value}
         </span>
         {copyable && (
           copied
-            ? <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
-            : <Copy size={12} className="text-gray-300 group-hover:text-blue-500 shrink-0 transition-colors" />
+            ? <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+            : <Copy size={16} className="text-slate-300 group-hover:text-blue-600 shrink-0 transition-colors" />
         )}
       </div>
     </div>
