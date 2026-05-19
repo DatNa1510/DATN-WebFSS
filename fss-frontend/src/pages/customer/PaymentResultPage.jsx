@@ -84,26 +84,26 @@ export default function PaymentResultPage() {
         initial={{ scale: 0.95, opacity: 0 }} 
         animate={{ scale: 1, opacity: 1 }} 
         transition={{ type: 'spring', bounce: 0.4 }}
-        className="max-w-md w-full bg-white border border-gray-200 p-8 shadow-xl text-center"
+        className="max-w-lg w-full p-8 text-center"
       >
         <motion.div 
-          initial={{ scale: 0 }} 
-          animate={{ scale: 1 }} 
-          transition={{ delay: 0.2, type: 'spring', bounce: 0.6 }}
-          className={`w-20 h-20 rounded-full inline-flex items-center justify-center mb-6 ${isSuccess ? 'bg-green-50' : 'bg-red-50'}`}
+          initial={{ scale: 0, opacity: 0, rotate: -45 }} 
+          animate={{ scale: 1, opacity: 1, rotate: 0 }} 
+          transition={{ delay: 0.2, type: 'spring', bounce: 0.6, duration: 0.6 }}
+          className="w-20 h-20 inline-flex items-center justify-center mb-6"
         >
           {isSuccess ? (
-            <CheckCircle2 size={40} className="text-green-500" />
+            <CheckCircle2 size={72} className="text-green-500 drop-shadow-sm" />
           ) : (
-            <XCircle size={40} className="text-red-500" />
+            <XCircle size={72} className="text-red-500 drop-shadow-sm" />
           )}
         </motion.div>
 
-        <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-2">
+        <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-3">
           {isSuccess ? 'Thanh toán thành công!' : 'Thanh toán không thành công'}
         </h2>
         
-        <p className="text-gray-500 text-sm mb-8">
+        <p className="text-gray-500 text-base mb-8">
           {isSuccess 
             ? 'Cảm ơn bạn đã mua sắm tại FSS. Đơn hàng của bạn đang được xử lý.' 
             : (resultCode === '1006' || payosCancel === 'true'
