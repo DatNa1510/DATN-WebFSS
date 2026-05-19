@@ -353,22 +353,30 @@ export default function ProfilePage() {
                 <div className="flex flex-col items-center pt-8 pb-6 px-6 relative">
                   {/* Avatar */}
                   <div className="relative mb-4 group z-10">
-                    {/* Animated gradient ring */}
+                    {/* Sweeping Shimmer Border Container */}
                     <div
-                      className="absolute -inset-1 rounded-xs animate-spin"
+                      className="absolute -inset-[6px] rounded-xs overflow-hidden"
                       style={{
-                        background: 'linear-gradient(90deg, #00168d, #7c3aed, #e11d48, #00168d)',
-                        backgroundSize: '200%',
-                        animationDuration: '4s',
-                        opacity: 0.4,
+                        background: 'linear-gradient(135deg, #00168d, #7c3aed)',
                       }}
-                    />
-                    <div
-                      className="absolute -inset-1 rounded-xs"
-                      style={{
-                        background: 'linear-gradient(135deg, #00168d40, #7c3aed40)',
-                      }}
-                    />
+                    >
+                      {/* Sweeping Light Sheen */}
+                      <motion.div
+                        className="absolute top-[-50%] bottom-[-50%] w-12 bg-gradient-to-r from-transparent via-white to-transparent"
+                        style={{ transform: 'skewX(-25deg)' }}
+                        animate={{
+                          left: ['-50%', '150%'],
+                        }}
+                        transition={{
+                          duration: 1.6,
+                          repeat: Infinity,
+                          repeatDelay: 2.4, // 4-second total cycle (1.6s sweep + 2.4s pause)
+                          ease: 'easeInOut',
+                        }}
+                      />
+                    </div>
+                    {/* White backing border ring */}
+                    <div className="absolute -inset-[3px] rounded-xs bg-white z-0" />
                     <div className="relative w-[88px] h-[88px] rounded-xs overflow-hidden border-2 border-white shadow-2xl z-10">
                       <img
                         src={user?.avatar}
@@ -732,7 +740,7 @@ export default function ProfilePage() {
 
                           {/* Timeline */}
                           <div className="px-5 py-4">
-                              <div className="relative space-y-0">
+                              <div className="relative space-y-0 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
                                 {auditLogs.filter(l => l.actionType === 'PROFILE').length > 0 && (
                                   <div className="absolute left-[7px] top-3 bottom-3 w-px"
                                     style={{ background: 'linear-gradient(180deg, #00168d50, #e2e8f0, transparent)' }} />
@@ -997,8 +1005,8 @@ export default function ProfilePage() {
                       boxShadow: '0 8px 40px rgba(0,22,141,0.07)',
                     }}
                   >
-                    <div className="p-6 md:p-8">
-                      <div className="flex items-start gap-4 mb-8">
+                    <div className="p-4 md:p-5">
+                      <div className="flex items-start gap-4 mb-4">
                         <div className="w-1.5 h-10 rounded-none shrink-0 mt-0.5"
                           style={{ background: 'linear-gradient(180deg, #059669, #34d399)' }} />
                         <div>
@@ -1010,7 +1018,7 @@ export default function ProfilePage() {
                       <motion.div
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="grid gap-4 mb-5"
+                        className="grid gap-3 mb-3"
                       >
                         {addressLoading ? (
                           <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" /></div>
@@ -1018,23 +1026,26 @@ export default function ProfilePage() {
                           addresses.map(addr => (
                             <div
                               key={addr.id}
-                              className={`relative overflow-hidden rounded-xs p-6 group transition-all duration-300 hover:-translate-y-0.5 ${addr.isDefault ? 'border-emerald-200' : 'border-slate-200'}`}
+                              className={`relative overflow-hidden rounded-xs p-3 group transition-all duration-300 hover:-translate-y-0.5 ${addr.isDefault ? 'border-emerald-200' : 'border-slate-200'}`}
                               style={{
                                 background: addr.isDefault ? 'linear-gradient(135deg, rgba(5,150,105,0.04), rgba(255,255,255,0.95))' : 'rgba(255,255,255,0.95)',
                                 borderWidth: '2px',
                                 boxShadow: addr.isDefault ? '0 4px 20px rgba(5,150,105,0.08)' : 'none',
+                                padding: '12px',
                               }}
                             >
                               {addr.isDefault && <div className="absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #059669, transparent)' }} />}
-                              <div className="flex items-center gap-4 relative z-10">
+                              <div className="flex items-center gap-3 relative z-10" style={{ paddingLeft: '8px' }}>
                                 <div
-                                  className="w-9 h-9 rounded-xs flex items-center justify-center shrink-0 self-center"
-                                  style={addr.isDefault ? { background: 'linear-gradient(135deg, #059669, #34d399)', boxShadow: '0 4px 12px rgba(5,150,105,0.3)' } : { background: '#f1f5f9' }}
+                                  className="rounded-xs flex items-center justify-center shrink-0 self-center"
+                                  style={addr.isDefault 
+                                    ? { background: 'linear-gradient(135deg, #059669, #34d399)', boxShadow: '0 4px 12px rgba(5,150,105,0.3)', width: '36px', height: '36px' } 
+                                    : { background: '#f1f5f9', width: '36px', height: '36px' }}
                                 >
-                                  <MapPin size={15} className={addr.isDefault ? 'text-white' : 'text-slate-400'} strokeWidth={2.5} />
+                                  <MapPin size={16} className={addr.isDefault ? 'text-white' : 'text-slate-400'} strokeWidth={2.5} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2.5 mb-2">
+                                  <div className="flex items-center gap-2.5" style={{ marginBottom: '2px' }}>
                                     <h4 className="text-[14px] font-black text-slate-800">{addr.recipientName} - {addr.phone}</h4>
                                     {addr.isDefault && (
                                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider" style={{ background: 'rgba(5,150,105,0.1)', color: '#059669', border: '2px solid rgba(5,150,105,0.15)' }}>
@@ -1042,8 +1053,8 @@ export default function ProfilePage() {
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-[13.5px] text-slate-600 font-medium leading-relaxed">{addr.address}, {addr.district}, {addr.city}</p>
-                                  <div className="flex items-center gap-4 mt-4">
+                                  <p className="text-[13.5px] text-slate-600 font-medium leading-tight">{addr.address}, {addr.district}, {addr.city}</p>
+                                  <div className="flex items-center gap-3" style={{ marginTop: '4px' }}>
                                     <button onClick={() => { setAddressToEdit(addr); setIsAddressModalOpen(true); }} className="text-[11px] font-black uppercase tracking-wider transition-all" style={{ color: '#059669', borderBottom: '2px solid rgba(5,150,105,0.3)' }}>Chỉnh sửa</button>
                                     <button onClick={() => setAddressToDelete(addr)} className="text-[11px] font-black uppercase tracking-wider transition-all text-red-400" style={{ borderBottom: '2px solid rgba(239,68,68,0.25)' }}>Xoá</button>
                                   </div>
@@ -1055,8 +1066,8 @@ export default function ProfilePage() {
 
                         <button
                           onClick={() => { setAddressToEdit(null); setIsAddressModalOpen(true); }}
-                          className="w-full flex flex-col items-center justify-center gap-3 py-10 rounded-xs transition-all duration-300 group hover:-translate-y-0.5"
-                          style={{ border: '2px dashed rgba(226,232,240,0.9)', background: 'rgba(248,250,252,0.5)' }}
+                          className="w-full flex flex-col items-center justify-center gap-3 py-6 rounded-xs transition-all duration-300 group hover:-translate-y-0.5"
+                          style={{ border: '2px dashed rgba(226,232,240,0.9)', background: 'rgba(248,250,252,0.5)', paddingTop: '24px', paddingBottom: '24px' }}
                         >
                           <div className="w-11 h-11 rounded-none flex items-center justify-center transition-all duration-300 group-hover:scale-110" style={{ background: 'rgba(0,22,141,0.06)', border: '2px solid rgba(0,22,141,0.12)' }}>
                             <Plus size={18} className="text-primary" />
@@ -1535,7 +1546,7 @@ function PasswordSection() {
           </h3>
         </div>
         <div className="px-5 py-4">
-          <div className="relative space-y-0">
+          <div className="relative space-y-0 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
             {auditLogs.filter(l => l.actionType === 'SECURITY').length > 0 && (
               <div className="absolute left-[7px] top-3 bottom-3 w-px"
                 style={{ background: 'linear-gradient(180deg, #00168d50, #e2e8f0, transparent)' }} />
