@@ -1,68 +1,110 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Users, Package, Banknote, ArrowUpRight, ArrowDownRight, Download, BarChart3, Star, Clock } from 'lucide-react';
-import { stats, orders, products, revenueData, formatPrice, orderStatusMap } from '../../data/mockData';
+import { ShoppingBag, Users, Package, Banknote, ArrowUpRight, ArrowDownRight, Download, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { formatPrice } from '../../data/mockData';
+import { toast } from '../../store/toastStore';
 
-const statCards = [
-  {
-    label: 'Tổng đơn hàng',
-    value: stats.totalOrders.toLocaleString(),
-    icon: ShoppingBag,
-    change: '+12.5%',
-    up: true,
-    gradient: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-    glow: 'rgba(124,58,237,0.35)',
-    lightBg: 'rgba(124,58,237,0.08)',
-    textColor: '#7C3AED',
-  },
-  {
-    label: 'Khách hàng',
-    value: stats.totalCustomers.toLocaleString(),
-    icon: Users,
-    change: '+8.2%',
-    up: true,
-    gradient: 'linear-gradient(135deg, #0EA5E9, #0284C7)',
-    glow: 'rgba(14,165,233,0.35)',
-    lightBg: 'rgba(14,165,233,0.08)',
-    textColor: '#0EA5E9',
-  },
-  {
-    label: 'Sản phẩm',
-    value: stats.totalProducts.toLocaleString(),
-    icon: Package,
-    change: '-2.4%',
-    up: false,
-    gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
-    glow: 'rgba(245,158,11,0.35)',
-    lightBg: 'rgba(245,158,11,0.08)',
-    textColor: '#D97706',
-  },
-  {
-    label: 'Doanh thu',
-    value: '428.5M',
-    icon: Banknote,
-    change: '+15.4%',
-    up: true,
-    gradient: 'linear-gradient(135deg, #10B981, #059669)',
-    glow: 'rgba(16,185,129,0.35)',
-    lightBg: 'rgba(16,185,129,0.08)',
-    textColor: '#10B981',
-  },
-];
-
-const maxRevenue = Math.max(...revenueData.map((r) => r.revenue));
+const API = 'http://localhost:8080';
+const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
 
 const statusStyle = {
-  delivered: { bg: 'rgba(16,185,129,0.1)', color: '#059669', dot: '#10B981' },
-  shipping:  { bg: 'rgba(14,165,233,0.1)', color: '#0284C7', dot: '#0EA5E9' },
-  confirmed: { bg: 'rgba(124,58,237,0.1)', color: '#6D28D9', dot: '#7C3AED' },
-  processing:{ bg: 'rgba(245,158,11,0.1)', color: '#B45309', dot: '#F59E0B' },
-  packing:   { bg: 'rgba(245,158,11,0.1)', color: '#B45309', dot: '#F59E0B' },
-  pending:   { bg: 'rgba(100,116,139,0.1)', color: '#475569', dot: '#94A3B8' },
-  cancelled: { bg: 'rgba(239,68,68,0.1)', color: '#DC2626', dot: '#EF4444' },
+  DELIVERED: { bg: 'rgba(16,185,129,0.1)', color: '#059669', dot: '#10B981' },
+  SHIPPING:  { bg: 'rgba(14,165,233,0.1)', color: '#0284C7', dot: '#0EA5E9' },
+  CONFIRMED: { bg: 'rgba(124,58,237,0.1)', color: '#6D28D9', dot: '#7C3AED' },
+  PENDING:   { bg: 'rgba(100,116,139,0.1)', color: '#475569', dot: '#94A3B8' },
+  CANCELLED: { bg: 'rgba(239,68,68,0.1)', color: '#DC2626', dot: '#EF4444' },
 };
 
 export default function AdminDashboard() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch(`${API}/api/admin/dashboard`, {
+          headers: { Authorization: `Bearer ${getToken()}` }
+        });
+        if (!res.ok) throw new Error();
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        toast.error('Không thể tải dữ liệu thống kê!');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
+        <p style={{ color: '#64748B', fontWeight: 600 }}>Đang tải dữ liệu...</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
+        <p style={{ color: '#DC2626', fontWeight: 600 }}>Lỗi tải dữ liệu. Vui lòng kiểm tra lại Backend!</p>
+      </div>
+    );
+  }
+
+  const { stats, revenueData, topProducts, recentOrders } = data;
+
+  const statCards = [
+    {
+      label: 'Tổng đơn hàng',
+      value: stats.totalOrders.toLocaleString(),
+      icon: ShoppingBag,
+      change: '+0.0%',
+      up: true,
+      gradient: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+      glow: 'rgba(124,58,237,0.35)',
+      lightBg: 'rgba(124,58,237,0.08)',
+      textColor: '#7C3AED',
+    },
+    {
+      label: 'Khách hàng',
+      value: stats.totalCustomers.toLocaleString(),
+      icon: Users,
+      change: '+0.0%',
+      up: true,
+      gradient: 'linear-gradient(135deg, #0EA5E9, #0284C7)',
+      glow: 'rgba(14,165,233,0.35)',
+      lightBg: 'rgba(14,165,233,0.08)',
+      textColor: '#0EA5E9',
+    },
+    {
+      label: 'Sản phẩm',
+      value: stats.totalProducts.toLocaleString(),
+      icon: Package,
+      change: '+0.0%',
+      up: true,
+      gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
+      glow: 'rgba(245,158,11,0.35)',
+      lightBg: 'rgba(245,158,11,0.08)',
+      textColor: '#D97706',
+    },
+    {
+      label: 'Doanh thu',
+      value: formatPrice(stats.totalRevenue),
+      icon: Banknote,
+      change: '+0.0%',
+      up: true,
+      gradient: 'linear-gradient(135deg, #10B981, #059669)',
+      glow: 'rgba(16,185,129,0.35)',
+      lightBg: 'rgba(16,185,129,0.08)',
+      textColor: '#10B981',
+    },
+  ];
+
+  const maxRevenue = Math.max(...revenueData.map((r) => r.revenue), 1000000);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', paddingBottom: '40px' }}>
 
@@ -230,11 +272,11 @@ export default function AdminDashboard() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {products.sort((a, b) => b.sold - a.sold).slice(0, 4).map((p, i) => (
+            {topProducts.map((p, i) => (
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <img
-                    src={p.images[0]} alt={p.name}
+                    src={p.imagePath ? `${API}/images/${p.imagePath.split(',')[0]}` : ''} alt={p.productDisplayName}
                     style={{ width: '46px', height: '46px', borderRadius: '12px', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.07)' }}
                   />
                   {i === 0 && (
@@ -250,7 +292,7 @@ export default function AdminDashboard() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {p.name}
+                    {p.productDisplayName}
                   </p>
                   <p style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>
                     {formatPrice(p.price)} · <span style={{ color: '#7C3AED', fontWeight: 600 }}>{p.sold} đã bán</span>
@@ -312,9 +354,8 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {orders.slice(0, 5).map((order, idx) => {
-                const s = statusStyle[order.status] || statusStyle.pending;
-                const statusInfo = orderStatusMap[order.status];
+              {recentOrders.map((order, idx) => {
+                const s = statusStyle[order.status] || statusStyle.PENDING;
                 return (
                   <motion.tr
                     key={order.id}
@@ -334,11 +375,11 @@ export default function AdminDashboard() {
                           fontSize: '12px', fontWeight: 800, color: '#7C3AED',
                           flexShrink: 0,
                         }}>
-                          {order.customer.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                          {(order.userName || order.recipientName).split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <p style={{ fontSize: '13.5px', fontWeight: 700, color: '#1E293B' }}>{order.customer.name}</p>
-                          <p style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '1px' }}>{order.id}</p>
+                          <p style={{ fontSize: '13.5px', fontWeight: 700, color: '#1E293B' }}>{order.userName || order.recipientName}</p>
+                          <p style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '1px' }}>{order.orderCode}</p>
                         </div>
                       </div>
                     </td>
@@ -346,7 +387,7 @@ export default function AdminDashboard() {
                       {order.items.length < 10 ? `0${order.items.length}` : order.items.length} sản phẩm
                     </td>
                     <td style={{ padding: '14px 20px' }}>
-                      <p style={{ fontSize: '14px', fontWeight: 800, color: '#1E293B' }}>{formatPrice(order.total)}</p>
+                      <p style={{ fontSize: '14px', fontWeight: 800, color: '#1E293B' }}>{formatPrice(order.totalAmount)}</p>
                     </td>
                     <td style={{ padding: '14px 20px' }}>
                       <span style={{
@@ -355,7 +396,7 @@ export default function AdminDashboard() {
                         background: s.bg, fontSize: '11.5px', fontWeight: 700, color: s.color,
                       }}>
                         <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.dot, flexShrink: 0 }} />
-                        {statusInfo?.label || order.status}
+                        {order.statusLabel}
                       </span>
                     </td>
                     <td style={{ padding: '14px 20px' }}>

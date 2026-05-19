@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Edit2, Trash2, X, Check, AlertTriangle, TrendingUp, Star, ChevronLeft, ChevronRight, Filter, ArrowUpDown } from 'lucide-react';
-import { products as initialProducts, categories, formatPrice } from '../../data/mockData';
+import { Plus, Search, Edit2, Trash2, X, Check, AlertTriangle, TrendingUp, Star, ChevronLeft, ChevronRight, Filter, ArrowUpDown, Loader2 } from 'lucide-react';
+import { toast } from '../../store/toastStore';
+
+const API = 'http://localhost:8080';
+const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
+const formatPrice = (n) => n?.toLocaleString('vi-VN') ?? '0';
 
 const emptyForm = { name: '', price: '', originalPrice: '', category: 'ao-thun', description: '', stock: '' };
 
@@ -21,7 +25,11 @@ const labelStyle = {
 };
 
 export default function AdminProducts() {
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -29,40 +37,49 @@ export default function AdminProducts() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [focusedInput, setFocusedInput] = useState(null);
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const fetchProducts = useCallback(async (page = 0, q = '') => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page, limit: 20, search: q, sort: 'newest' });
+      const res = await fetch(`${API}/api/products?${params}`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setProducts(data.items || []);
+      setTotal(data.total || 0);
+      setTotalPages(data.totalPages || 1);
+      setCurrentPage(data.currentPage || 0);
+    } catch {
+      toast.error('Không thể tải danh sách sản phẩm!');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchProducts(0, ''); }, [fetchProducts]);
+
+  useEffect(() => {
+    const t = setTimeout(() => { fetchProducts(0, search); }, 500);
+    return () => clearTimeout(t);
+  }, [search, fetchProducts]);
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (editId) {
-      setProducts((prev) => prev.map((p) => p.id === editId ? { ...p, ...form, price: Number(form.price) } : p));
-      setEditId(null);
-    } else {
-      setProducts((prev) => [{
-        ...emptyForm, ...form,
-        id: Date.now(), price: Number(form.price),
-        originalPrice: Number(form.originalPrice) || Number(form.price),
-        images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80'],
-        sizes: ['S', 'M', 'L', 'XL'], colors: ['#00168d'], colorNames: ['Navy'],
-        rating: 0, reviewCount: 0, sold: 0, tags: [], discount: 0, isNew: true,
-        isBestSeller: false, stock: Number(form.stock) || 0,
-      }, ...prev]);
-    }
-    setForm(emptyForm);
+    toast.info('Tính năng đang phát triển, vui lòng thử lại sau!');
     setShowForm(false);
   };
 
   const handleEdit = (p) => {
-    setForm({ name: p.name, price: p.price, originalPrice: p.originalPrice, category: p.category, description: p.description, stock: p.stock });
+    setForm({ name: p.productDisplayName, price: p.price, originalPrice: p.originalPrice, category: p.masterCategory, description: '', stock: p.stock });
     setEditId(p.id);
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+  const handleDelete = () => {
+    toast.info('Tính năng đang phát triển, vui lòng thử lại sau!');
     setDeleteConfirm(null);
   };
 
@@ -115,10 +132,10 @@ export default function AdminProducts() {
       {/* ── KPI CARDS ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
         {[
-          { label: 'Tổng sản phẩm', value: '1,248', sub: '+12% tháng này', subColor: '#10B981', icon: '📦' },
-          { label: 'Sắp hết hàng', value: '24', sub: 'Cần nhập thêm', subColor: '#F59E0B', icon: '⚠️' },
-          { label: 'Doanh thu SP', value: '420.5M ₫', sub: 'Hiệu suất cao', subColor: '#7C3AED', icon: '💰' },
-          { label: 'Đánh giá TB', value: '4.8 ⭐', sub: 'Từ 850 lượt mua', subColor: '#64748B', icon: '🌟' },
+          { label: 'Tổng sản phẩm', value: total.toLocaleString(), sub: 'Trong hệ thống', subColor: '#10B981', icon: '📦' },
+          { label: 'Sắp hết hàng', value: products.filter(p => p.stock <= 10).length, sub: 'Cần nhập thêm', subColor: '#F59E0B', icon: '⚠️' },
+          { label: 'Trang hiện tại', value: `${currentPage + 1}/${totalPages}`, sub: '20 SP mỗi trang', subColor: '#7C3AED', icon: '📄' },
+          { label: 'Đánh giá TB', value: products.length ? (products.reduce((s,p)=>s+(p.rating||0),0)/products.length).toFixed(1)+' ⭐' : '—', sub: 'Trang này', subColor: '#64748B', icon: '🌟' },
         ].map((card, i) => (
           <motion.div
             key={card.label}
@@ -346,7 +363,7 @@ export default function AdminProducts() {
             ))}
           </div>
           <p style={{ fontSize: '12.5px', color: '#94A3B8', fontWeight: 500 }}>
-            {filtered.length} sản phẩm
+            {loading ? 'Đang tải...' : `${total} sản phẩm`}
           </p>
         </div>
 
@@ -364,11 +381,18 @@ export default function AdminProducts() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => {
+              {loading ? Array.from({length: 8}).map((_, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  {[260, 100, 80, 60, 120, 80].map((w, j) => (
+                    <td key={j} style={{ padding: '14px 20px' }}>
+                      <div style={{ height: '18px', width: `${w}px`, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', borderRadius: '6px', animation: 'pulse 1.5s infinite' }} />
+                    </td>
+                  ))}
+                </tr>
+              )) : products.map((p) => {
                 const stockColor = p.stock > 10 ? '#10B981' : p.stock > 0 ? '#F59E0B' : '#EF4444';
                 const stockBg = p.stock > 10 ? 'rgba(16,185,129,0.1)' : p.stock > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
-                const tagData = ['HOT', 'NEW', 'TRENDING', 'SALE', 'PREMIUM'];
-                const displayTags = p.tags?.length > 0 ? p.tags.slice(0, 2) : tagData.sort(() => 0.5 - Math.random()).slice(0, 2);
+                const displayTags = [p.masterCategory, p.subCategory].filter(Boolean).slice(0, 2);
 
                 return (
                   <motion.tr
@@ -393,24 +417,24 @@ export default function AdminProducts() {
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
                           <img
-                            src={p.images[0]} alt={p.name}
+                            src={p.imagePath ? `${API}/images/${p.imagePath}` : null} alt={p.productDisplayName}
                             style={{ maxWidth: '42px', maxHeight: '42px', objectFit: 'contain' }}
                             onError={e => { e.target.src = 'https://placehold.co/42x42/f8fafc/94a3b8?text=Img'; }}
                           />
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <p style={{ fontSize: '13.5px', fontWeight: 700, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
-                            {p.name}
+                            {p.productDisplayName}
                           </p>
                           <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>
-                            {categories.find(c => c.id === p.category)?.name || p.category}
+                            {p.subCategory || p.masterCategory}
                           </p>
                         </div>
                       </div>
                     </td>
                     <td style={{ padding: '14px 20px' }}>
                       <p style={{ fontSize: '13.5px', fontWeight: 800, color: '#1E293B', whiteSpace: 'nowrap' }}>
-                        ₫{p.price.toLocaleString()}
+                        ₫{formatPrice(p.price)}
                       </p>
                     </td>
                     <td style={{ padding: '14px 20px' }}>
@@ -424,7 +448,7 @@ export default function AdminProducts() {
                       </span>
                     </td>
                     <td style={{ padding: '14px 20px', fontSize: '13px', color: '#475569', fontWeight: 600 }}>
-                      {p.sold?.toLocaleString() || 120}
+                      {(p.sold ?? 0).toLocaleString()}
                     </td>
                     <td style={{ padding: '14px 20px' }}>
                       <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
@@ -459,7 +483,7 @@ export default function AdminProducts() {
                         {deleteConfirm === p.id ? (
                           <div style={{ display: 'flex', gap: '4px' }}>
                             <button
-                              onClick={() => handleDelete(p.id)}
+                              onClick={() => handleDelete()}
                               style={{
                                 width: '32px', height: '32px', borderRadius: '8px',
                                 background: '#EF4444', border: 'none',
@@ -503,53 +527,61 @@ export default function AdminProducts() {
               })}
             </tbody>
           </table>
-          {filtered.length === 0 && (
+          {!loading && products.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
               <p style={{ fontSize: '15px', color: '#94A3B8', fontWeight: 500 }}>Không tìm thấy sản phẩm nào.</p>
             </div>
           )}
         </div>
 
-        {filtered.length > 0 && (
+        {totalPages > 1 && (
           <div style={{
             padding: '14px 24px',
             borderTop: '1px solid rgba(0,0,0,0.05)',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             background: '#FAFAFA',
           }}>
-            <button style={{
-              display: 'flex', alignItems: 'center', gap: '5px',
-              padding: '7px 14px', borderRadius: '8px',
-              background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-              fontSize: '12.5px', fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'inherit',
-            }}>
+            <button
+              onClick={() => fetchProducts(currentPage - 1, search)}
+              disabled={currentPage === 0}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '7px 14px', borderRadius: '8px',
+                background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+                fontSize: '12.5px', fontWeight: 600, color: currentPage === 0 ? '#CBD5E1' : '#475569',
+                cursor: currentPage === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+              }}>
               <ChevronLeft size={16} /> Trước
             </button>
             <div style={{ display: 'flex', gap: '4px' }}>
-              {[1, 2, 3].map(n => (
-                <button key={n} style={{
-                  width: '34px', height: '34px', borderRadius: '8px',
-                  background: n === 1 ? 'linear-gradient(135deg, #7C3AED, #4F46E5)' : 'white',
-                  border: n === 1 ? 'none' : '1px solid rgba(0,0,0,0.09)',
-                  fontSize: '13px', fontWeight: 700,
-                  color: n === 1 ? 'white' : '#475569',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  boxShadow: n === 1 ? '0 2px 8px rgba(124,58,237,0.3)' : 'none',
-                }}>{n}</button>
-              ))}
-              <span style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: '13px' }}>...</span>
-              <button style={{
-                width: '34px', height: '34px', borderRadius: '8px',
-                background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-                fontSize: '13px', fontWeight: 700, color: '#475569', cursor: 'pointer', fontFamily: 'inherit',
-              }}>12</button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const pg = totalPages <= 5 ? i : Math.max(0, Math.min(currentPage - 2, totalPages - 5)) + i;
+                return (
+                  <button key={pg}
+                    onClick={() => fetchProducts(pg, search)}
+                    style={{
+                      width: '34px', height: '34px', borderRadius: '8px',
+                      background: pg === currentPage ? 'linear-gradient(135deg, #7C3AED, #4F46E5)' : 'white',
+                      border: pg === currentPage ? 'none' : '1px solid rgba(0,0,0,0.09)',
+                      fontSize: '13px', fontWeight: 700,
+                      color: pg === currentPage ? 'white' : '#475569',
+                      cursor: 'pointer', fontFamily: 'inherit',
+                      boxShadow: pg === currentPage ? '0 2px 8px rgba(124,58,237,0.3)' : 'none',
+                    }}>{pg + 1}</button>
+                );
+              })}
             </div>
-            <button style={{
-              display: 'flex', alignItems: 'center', gap: '5px',
-              padding: '7px 14px', borderRadius: '8px',
-              background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-              fontSize: '12.5px', fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'inherit',
-            }}>
+            <button
+              onClick={() => fetchProducts(currentPage + 1, search)}
+              disabled={currentPage >= totalPages - 1}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '7px 14px', borderRadius: '8px',
+                background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+                fontSize: '12.5px', fontWeight: 600,
+                color: currentPage >= totalPages - 1 ? '#CBD5E1' : '#475569',
+                cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+              }}>
               Sau <ChevronRight size={16} />
             </button>
           </div>

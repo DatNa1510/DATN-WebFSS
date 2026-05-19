@@ -1,33 +1,71 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronDown, Eye, Download, Package, ChevronLeft, ChevronRight } from 'lucide-react';
-import { orders as initialOrders, formatPrice, orderStatusMap } from '../../data/mockData';
+import { Search, ChevronDown, Eye, Download, Package, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { toast } from '../../store/toastStore';
 
-const statusOptions = ['all', 'pending', 'confirmed', 'packing', 'shipping', 'delivered', 'cancelled'];
+const API = 'http://localhost:8080';
+const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
+const fmt = (n) => n?.toLocaleString('vi-VN') ?? '0';
+
+const statusOptions = ['all', 'PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED'];
 
 const statusConfig = {
-  all:       { label: 'Tất cả',        bg: 'transparent',            color: '#475569', active: '#7C3AED', activeBg: 'linear-gradient(135deg,#7C3AED,#4F46E5)' },
-  pending:   { label: 'Chờ xác nhận',  bg: 'rgba(100,116,139,0.08)', color: '#475569', dot: '#94A3B8' },
-  confirmed: { label: 'Đã xác nhận',   bg: 'rgba(124,58,237,0.09)', color: '#6D28D9', dot: '#7C3AED' },
-  packing:   { label: 'Đang đóng gói', bg: 'rgba(245,158,11,0.09)', color: '#B45309', dot: '#F59E0B' },
-  shipping:  { label: 'Đang giao',     bg: 'rgba(14,165,233,0.09)', color: '#0284C7', dot: '#0EA5E9' },
-  delivered: { label: 'Đã giao',       bg: 'rgba(16,185,129,0.09)', color: '#047857', dot: '#10B981' },
-  cancelled: { label: 'Đã hủy',        bg: 'rgba(239,68,68,0.09)',  color: '#DC2626', dot: '#EF4444' },
+  all:       { label: 'Tất cả',        dot: null },
+  PENDING:   { label: 'Chờ xác nhận',  bg: 'rgba(100,116,139,0.08)', color: '#475569', dot: '#94A3B8' },
+  CONFIRMED: { label: 'Đã xác nhận',   bg: 'rgba(124,58,237,0.09)', color: '#6D28D9', dot: '#7C3AED' },
+  SHIPPING:  { label: 'Đang giao',     bg: 'rgba(14,165,233,0.09)', color: '#0284C7', dot: '#0EA5E9' },
+  DELIVERED: { label: 'Đã giao',       bg: 'rgba(16,185,129,0.09)', color: '#047857', dot: '#10B981' },
+  CANCELLED: { label: 'Đã hủy',        bg: 'rgba(239,68,68,0.09)',  color: '#DC2626', dot: '#EF4444' },
 };
 
 export default function AdminOrders() {
-  const [orders, setOrders] = useState(initialOrders);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [detailOrder, setDetailOrder] = useState(null);
+
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/api/orders/admin/all`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setOrders(data);
+    } catch {
+      toast.error('Không thể tải danh sách đƠn hàng!');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   const filtered = orders.filter((o) => {
-    const matchSearch = o.id.toLowerCase().includes(search.toLowerCase()) || o.customer.name.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchSearch = (o.orderCode || '').toLowerCase().includes(q)
+      || (o.recipientName || '').toLowerCase().includes(q)
+      || (o.userName || '').toLowerCase().includes(q)
+      || (o.userEmail || '').toLowerCase().includes(q);
     const matchStatus = filterStatus === 'all' || o.status === filterStatus;
     return matchSearch && matchStatus;
   });
 
-  const updateStatus = (id, newStatus) => {
-    setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: newStatus } : o));
+  const updateStatus = async (id, newStatus) => {
+    try {
+      const res = await fetch(`${API}/api/orders/admin/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error();
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+      toast.success('Cập nhật trạng thái thành công!');
+    } catch {
+      toast.error('Cập nhật thất bại!');
+    }
   };
 
   const counts = statusOptions.reduce((acc, s) => {
@@ -48,14 +86,16 @@ export default function AdminOrders() {
             Theo dõi và quản lý các giao dịch khách hàng trong hệ thống
           </p>
         </div>
-        <button style={{
-          display: 'flex', alignItems: 'center', gap: '7px',
-          padding: '9px 18px', borderRadius: '10px',
-          background: 'white', border: '1px solid rgba(0,0,0,0.1)',
-          fontSize: '13px', fontWeight: 600, color: '#374151',
-          cursor: 'pointer', fontFamily: 'inherit',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-        }}>
+        <button
+          onClick={() => toast.info('Đầy tính năng đang phát triển!')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '7px',
+            padding: '9px 18px', borderRadius: '10px',
+            background: 'white', border: '1px solid rgba(0,0,0,0.1)',
+            fontSize: '13px', fontWeight: 600, color: '#374151',
+            cursor: 'pointer', fontFamily: 'inherit',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          }}>
           <Download size={15} /> Xuất báo cáo
         </button>
       </div>
@@ -151,9 +191,18 @@ export default function AdminOrders() {
               </tr>
             </thead>
             <tbody>
+              {loading ? Array.from({length: 6}).map((_, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  {[200, 120, 180, 110, 130].map((w, j) => (
+                    <td key={j} style={{ padding: '16px 20px' }}>
+                      <div style={{ height: '16px', width: `${w}px`, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', borderRadius: '6px' }} />
+                    </td>
+                  ))}
+                </tr>
+              )) : (
               <AnimatePresence>
                 {filtered.map((order, idx) => {
-                  const cfg = statusConfig[order.status] || statusConfig.pending;
+                  const cfg = statusConfig[order.status] || statusConfig.PENDING;
                   return (
                     <motion.tr
                       key={order.id}
@@ -167,23 +216,24 @@ export default function AdminOrders() {
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
                       <td style={{ padding: '16px 20px' }}>
-                        <p style={{ fontSize: '13.5px', fontWeight: 800, color: '#7C3AED' }}>#{order.id}</p>
-                        <p style={{ fontSize: '13px', color: '#374151', fontWeight: 600, marginTop: '2px' }}>{order.customer.name}</p>
+                        <p style={{ fontSize: '13.5px', fontWeight: 800, color: '#7C3AED' }}>#{order.orderCode || order.id}</p>
+                        <p style={{ fontSize: '13px', color: '#374151', fontWeight: 600, marginTop: '2px' }}>{order.recipientName || order.userName}</p>
+                        <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '1px' }}>{order.userEmail}</p>
                       </td>
                       <td style={{ padding: '16px 20px' }}>
                         <p style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', fontFamily: 'monospace', letterSpacing: '0.02em' }}>
-                          {order.customer.phone}
+                          {order.recipientPhone}
                         </p>
                       </td>
                       <td style={{ padding: '16px 20px', maxWidth: '200px' }}>
-                        <p style={{ fontSize: '12.5px', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={order.address}>
-                          {order.address}
+                        <p style={{ fontSize: '12.5px', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={order.shippingAddress}>
+                          {order.shippingAddress}
                         </p>
                       </td>
                       <td style={{ padding: '16px 20px' }}>
-                        <p style={{ fontSize: '14px', fontWeight: 900, color: '#1E293B' }}>{formatPrice(order.total)}</p>
+                        <p style={{ fontSize: '14px', fontWeight: 900, color: '#1E293B' }}>₫{fmt(order.totalAmount)}</p>
                         <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>
-                          {order.paymentMethod}
+                          {order.paymentMethodLabel || order.paymentMethod}
                         </p>
                       </td>
                       <td style={{ padding: '16px 20px' }}>
@@ -213,12 +263,14 @@ export default function AdminOrders() {
                               color: cfg.color, opacity: 0.7,
                             }} />
                           </div>
-                          <button style={{
-                            width: '32px', height: '32px', borderRadius: '8px',
-                            background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', color: '#64748B', transition: 'all 0.2s',
-                          }}
+                          <button 
+                            onClick={() => setDetailOrder(order)}
+                            style={{
+                              width: '32px', height: '32px', borderRadius: '8px',
+                              background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              cursor: 'pointer', color: '#64748B', transition: 'all 0.2s',
+                            }}
                             onMouseEnter={e => { e.currentTarget.style.background = '#F8F4FF'; e.currentTarget.style.color = '#7C3AED'; }}
                             onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#64748B'; }}
                           >
@@ -229,11 +281,12 @@ export default function AdminOrders() {
                     </motion.tr>
                   );
                 })}
-              </AnimatePresence>
+                </AnimatePresence>
+              )}
             </tbody>
           </table>
 
-          {filtered.length === 0 && (
+          {!loading && filtered.length === 0 && (
             <div style={{ textAlign: 'center', padding: '70px 20px' }}>
               <Package size={48} style={{ color: '#E2E8F0', margin: '0 auto 16px' }} />
               <p style={{ fontSize: '15px', color: '#94A3B8', fontWeight: 600 }}>Không tìm thấy đơn hàng nào.</p>
@@ -249,7 +302,7 @@ export default function AdminOrders() {
             background: '#FAFAFA',
           }}>
             <p style={{ fontSize: '12.5px', color: '#64748B', fontWeight: 500 }}>
-              Hiển thị {filtered.length} đơn hàng
+              Hiển thị {filtered.length} / {orders.length} đơn hàng
             </p>
             <div style={{ display: 'flex', gap: '4px' }}>
               <button style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'white', border: '1px solid rgba(0,0,0,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}>
@@ -343,6 +396,43 @@ export default function AdminOrders() {
           </div>
         </div>
       </div>
+
+      {/* ── ORDER DETAIL MODAL ── */}
+      <AnimatePresence>
+        {detailOrder && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(15,15,35,0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+            onClick={e => e.target === e.currentTarget && setDetailOrder(null)}>
+            <motion.div initial={{ scale: 0.94, y: 20, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.94, y: 20, opacity: 0 }}
+              style={{ background: 'white', borderRadius: '20px', width: '100%', maxWidth: '540px', padding: '28px', boxShadow: '0 24px 80px rgba(0,0,0,0.25)', maxHeight: '85vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                <div>
+                  <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#1E1B4B' }}>ĐƠn #{detailOrder.orderCode}</h2>
+                  <p style={{ fontSize: '12.5px', color: '#94A3B8', marginTop: '3px' }}>{detailOrder.userEmail} &bull; {new Date(detailOrder.createdAt).toLocaleDateString('vi-VN')}</p>
+                </div>
+                <button onClick={() => setDetailOrder(null)} style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#F1F5F9', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}><X size={16}/></button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {(detailOrder.items || []).map((item, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#F8FAFC', borderRadius: '10px', gap: '12px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '13.5px', fontWeight: 700, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.productName}</p>
+                      <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>Size {item.size} &times; {item.quantity}</p>
+                    </div>
+                    <p style={{ fontSize: '13.5px', fontWeight: 800, color: '#7C3AED', whiteSpace: 'nowrap' }}>₫{fmt(item.subtotal)}</p>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748B' }}><span>Tạm tính</span><span>₫{fmt(detailOrder.subtotal)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748B' }}><span>Phí ship</span><span>₫{fmt(detailOrder.shippingFee)}</span></div>
+                {detailOrder.discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#10B981' }}><span>Giảm giá</span><span>-₫{fmt(detailOrder.discount)}</span></div>}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: 900, color: '#1E1B4B', marginTop: '4px' }}><span>Tổng cộng</span><span>₫{fmt(detailOrder.totalAmount)}</span></div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
