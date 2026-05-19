@@ -66,13 +66,8 @@ export default function BlogDetailPage() {
 
            {/* Content */}
            <article className="prose prose-slate prose-img:rounded-md max-w-none selection:bg-primary-100 selection:text-primary">
-              <p className="text-xl lg:text-2xl text-headline font-medium leading-relaxed italic border-l-4 border-primary pl-6 mb-10 text-slate-700">
-                "{post.excerpt}"
-              </p>
-              
               <div className="text-slate-600 text-[16px] leading-[1.8] space-y-6">
                 <p>Năm nay, thế giới thời trang đang chứng kiến một cuộc cách mạng lặng lẽ nhưng vô cùng mạnh mẽ. Những xu hướng thiết kế mang tính ứng dụng cao, đề cao chất liệu tự nhiên và trải nghiệm thoải mái cá nhân đang dần thay thế những món đồ hào nhoáng mang tính chạy theo trào lưu chớp nhoáng (fast-fashion).</p>
-                
                 <h3 className="text-2xl font-display font-bold text-headline mt-10 mb-4">Sức hút nguyên bản từ những điều cơ bản</h3>
                 <p>Không khó để bắt gặp trên các sàn diễn lớn từ Paris đến Milan hay qua những bộ hình thời trang đường phố (street style), các Fashionista đang lăng xê vô cùng tích cực những item có màu sắc trung tính nhã nhặn như kem, beige, xám, và các dải màu pastel nhẹ nhàng. Việc chuyển dịch tone màu này không chỉ tôn lên nét đẹp thanh lịch của người mặc mà còn giúp trang phục dễ dàng hòa hợp với mọi vóc dáng và độ tuổi.</p>
                 
@@ -87,7 +82,7 @@ export default function BlogDetailPage() {
                 
                 <div className="bg-primary-50 border-l-4 border-primary p-6 my-10 rounded-r-md">
                   <p className="font-bold text-primary-800 m-0 leading-relaxed">
-                    "Thời trang suy cho cùng chính là tấm gương phản chiếu nội tâm và thái độ sống của bạn. Một trang phục tuyệt vời là khi biểu tượng đó giúp bạn tự tin nhất và là chính mình nhất ở bất cứ đâu."
+                    Thời trang suy cho cùng chính là tấm gương phản chiếu nội tâm và thái độ sống của bạn. Một trang phục tuyệt vời là khi biểu tượng đó giúp bạn tự tin nhất và là chính mình nhất ở bất cứ đâu.
                   </p>
                 </div>
               </div>
