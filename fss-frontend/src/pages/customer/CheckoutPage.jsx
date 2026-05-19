@@ -147,32 +147,46 @@ export default function CheckoutPage() {
       {done ? (
         <div className="min-h-[80vh] flex items-center justify-center">
           <motion.div initial={{ scale: .9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', bounce: .4 }}
-            className="w-full max-w-md mx-4 border-2 border-slate-200 p-10 text-center bg-white shadow-xl">
+            className="w-full max-w-lg mx-4 p-10 text-center">
             {(pay === 'vietqr' || pay === 'momo') && !isPaid ? (
               <>
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: .2, type: 'spring', bounce: .6 }}
-                  className="w-16 h-16 rounded-full bg-amber-50 inline-flex items-center justify-center mb-4">
-                  <Clock size={36} className="text-amber-500" />
+                <motion.div 
+                  initial={{ scale: 0, opacity: 0, rotate: -45 }} 
+                  animate={{ scale: 1, opacity: 1, rotate: 0 }} 
+                  transition={{ delay: 0.2, type: 'spring', bounce: 0.6, duration: 0.6 }}
+                  className="w-20 h-20 inline-flex items-center justify-center mb-6"
+                >
+                  <Clock size={72} className="text-amber-500 drop-shadow-sm" />
                 </motion.div>
-                <h2 className="text-xl font-bold text-gray-800 mb-1">Đơn hàng đang chờ thanh toán!</h2>
-                <p className="text-gray-400 text-sm mb-6">Vui lòng hoàn tất thanh toán để FSS xử lý đơn hàng</p>
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-3">Đơn hàng đang chờ thanh toán!</h2>
+                <p className="text-gray-500 text-base mb-8">Vui lòng hoàn tất thanh toán để FSS xử lý đơn hàng</p>
               </>
             ) : (
               <>
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: .2, type: 'spring', bounce: .6 }}
-                  className="w-16 h-16 rounded-full bg-green-50 inline-flex items-center justify-center mb-4">
-                  <CheckCircle2 size={36} className="text-green-500" />
+                <motion.div 
+                  initial={{ scale: 0, opacity: 0, rotate: -45 }} 
+                  animate={{ scale: 1, opacity: 1, rotate: 0 }} 
+                  transition={{ delay: 0.2, type: 'spring', bounce: 0.6, duration: 0.6 }}
+                  className="w-20 h-20 inline-flex items-center justify-center mb-6"
+                >
+                  <CheckCircle2 size={72} className="text-green-500 drop-shadow-sm" />
                 </motion.div>
-                <h2 className="text-xl font-bold text-gray-800 mb-1">Đặt hàng thành công!</h2>
-                <p className="text-gray-400 text-sm mb-6">Cảm ơn bạn đã mua sắm tại FSS</p>
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-3">Đặt hàng thành công!</h2>
+                <p className="text-gray-500 text-base mb-8">Cảm ơn bạn đã mua sắm tại FSS</p>
               </>
             )}
-            <div className="text-left mb-6 space-y-3 p-4 border-2 border-slate-200">
-              <div className="flex justify-between"><span className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Mã đơn hàng</span><span className="font-mono font-bold text-blue-700">{done.orderCode}</span></div>
-              <div className="flex justify-between"><span className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Tổng tiền</span><span className="text-xl font-bold text-blue-700 tabular-nums">{formatPrice(done.totalAmount || total)}</span></div>
+            <div className="bg-gray-50 border border-gray-100 p-5 text-left mb-8 space-y-4">
+              <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Mã đơn hàng</span>
+                <span className="font-mono font-bold text-gray-900">{done.orderCode}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Tổng tiền</span>
+                <span className="text-lg font-black text-blue-700 tabular-nums">{formatPrice(done.totalAmount || total)}</span>
+              </div>
               {pay === 'vietqr' && (
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Thanh toán</span>
+                <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Thanh toán</span>
                   {isPaid
                     ? <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full"><CheckCircle2 size={12}/> Đã xác nhận</span>
                     : <span className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block"/> Chờ thanh toán</span>
@@ -180,14 +194,18 @@ export default function CheckoutPage() {
                 </div>
               )}
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {pay === 'vietqr' && paymentData?.qrCode && !isPaid && (
-                <button onClick={() => setIsPaymentModalOpen(true)} className="py-3 bg-blue-700 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-800 transition-all mb-2">
-                  {isPaymentModalOpen ? 'Đang mở QR...' : 'Xem mã QR thanh toán'}
+                <button onClick={() => setIsPaymentModalOpen(true)} className="w-full py-4 bg-[#00168D] text-white font-bold text-[14px] hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 mb-2">
+                  {isPaymentModalOpen ? 'Đang mở QR...' : 'XEM MÃ QR THANH TOÁN'}
                 </button>
               )}
-              <Link to="/profile" state={{ tab: 'orders' }} className="py-3 border-2 border-blue-700 text-blue-700 font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-50 transition-all">Xem đơn hàng</Link>
-              <button onClick={() => navigate('/')} className="py-3 text-gray-400 text-sm font-medium hover:text-gray-600 transition-all">Về trang chủ</button>
+              <Link to="/profile" state={{ tab: 'orders' }} className="w-full py-4 bg-[#00168D] text-white font-bold text-[14px] hover:bg-blue-800 transition-colors flex items-center justify-center gap-2">
+                XEM ĐƠN HÀNG CỦA TÔI <ChevronRight size={18} />
+              </Link>
+              <button onClick={() => navigate('/')} className="w-full py-4 bg-white border-2 border-gray-200 text-gray-700 font-bold text-[14px] hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                VỀ TRANG CHỦ
+              </button>
             </div>
           </motion.div>
         </div>
