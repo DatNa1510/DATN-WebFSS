@@ -80,7 +80,7 @@ export default function BlogPage() {
                   <span className="flex items-center gap-2"><Calendar size={14} className="text-primary" /> {featuredPost.date}</span>
                   <span className="flex items-center gap-2"><Clock size={14} className="text-primary" /> {featuredPost.readingTime}</span>
                 </div>
-                <h2 className="text-3xl lg:text-4xl font-bold font-display text-headline mb-6 group-hover:text-primary transition-colors leading-tight">
+                <h2 className="text-3xl lg:text-4xl font-semibold font-display text-slate-900 mb-6 group-hover:text-primary transition-colors leading-tight">
                   {featuredPost.title}
                 </h2>
                 <p className="text-muted-foreground text-lg mb-8 leading-relaxed line-clamp-3">
@@ -163,7 +163,7 @@ export default function BlogPage() {
                     <span className="w-1 h-1 bg-primary rounded-sm" />
                     <span>{post.readingTime} đọc</span>
                   </div>
-                  <h3 className="text-xl lg:text-2xl font-bold font-display text-headline mb-4 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+                  <h3 className="text-xl lg:text-2xl font-semibold font-display text-slate-900 mb-4 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
                     {post.title}
                   </h3>
                   <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mb-6">
