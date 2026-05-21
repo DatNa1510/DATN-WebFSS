@@ -108,6 +108,7 @@ public class OrderService {
                 .subtotal(subtotal)
                 .shippingFee(shippingFee)
                 .discount(discount)
+                .voucherCode(request.getVoucherCode())
                 .totalAmount(totalAmount)
                 .paymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "cod")
                 .recipientName(request.getRecipientName())
@@ -148,6 +149,11 @@ public class OrderService {
         }
 
         Order saved = orderRepository.save(order);
+
+        // Tăng số lần sử dụng của Voucher nếu có
+        if (request.getVoucherCode() != null && !request.getVoucherCode().isBlank()) {
+            voucherService.incrementUsedCount(request.getVoucherCode());
+        }
 
         // Xóa sản phẩm đã mua khỏi giỏ hàng
         for (CartItem ci : cartItems) {
@@ -235,6 +241,15 @@ public class OrderService {
 
         // Xóa hoàn toàn đơn hàng khỏi hệ thống theo yêu cầu của user
         orderRepository.delete(order);
+        
+        // Gửi thông báo hủy thanh toán
+        notificationService.createNotification(
+            user, 
+            "Hủy thanh toán", 
+            "Đơn hàng " + String.format("FSS-%06d", orderId) + " đã bị hủy do chưa hoàn tất thanh toán.", 
+            NotificationType.WARNING
+        );
+        
         log.info("Order {} deleted from system due to failed/cancelled payment (stock restored)", orderId);
 
         return Map.of("deleted", true, "orderId", orderId);
@@ -308,10 +323,13 @@ public class OrderService {
                 .id(order.getId())
                 .orderCode(String.format("FSS-%06d", order.getId()))
                 .status(order.getStatus())
-                .statusLabel(STATUS_LABELS.getOrDefault(order.getStatus(), order.getStatus().name()))
+                .statusLabel(order.getStatus() != null ? STATUS_LABELS.getOrDefault(order.getStatus(), order.getStatus().name()) : "Không xác định")
+                .userEmail(order.getUser() != null ? order.getUser().getEmail() : null)
+                .userName(order.getUser() != null ? order.getUser().getFullName() : null)
                 .subtotal(order.getSubtotal())
                 .shippingFee(order.getShippingFee())
                 .discount(order.getDiscount() != null ? order.getDiscount() : BigDecimal.ZERO)
+                .voucherCode(order.getVoucherCode())
                 .totalAmount(order.getTotalAmount())
                 .paymentMethod(order.getPaymentMethod())
                 .paymentMethodLabel(PAYMENT_LABELS.getOrDefault(order.getPaymentMethod(), order.getPaymentMethod()))
@@ -322,5 +340,28 @@ public class OrderService {
                 .items(itemResponses)
                 .createdAt(order.getCreatedAt())
                 .build();
+    }
+
+    // ─── ADMIN: LẤY TẤT CẢ ĐƠN HÀNG ─────────────────────────────────────
+    @Transactional
+    public List<OrderResponse> getAllOrdersForAdmin() {
+        return orderRepository.findAllByOrderByCreatedAtDesc()
+                .stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    // ─── ADMIN: CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG ──────────────────────────────
+    @Transactional
+    public OrderResponse updateOrderStatus(Long orderId, String statusStr) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đƠn hàng #" + orderId));
+        try {
+            OrderStatus newStatus = OrderStatus.valueOf(statusStr.toUpperCase());
+            order.setStatus(newStatus);
+            Order saved = orderRepository.save(order);
+            log.info("Admin updated order {} status to {}", orderId, newStatus);
+            return mapToResponse(saved);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Trạng thái không hợp lệ: " + statusStr);
+        }
     }
 }

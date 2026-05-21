@@ -132,7 +132,7 @@ public class VietQRPaymentService implements PaymentService {
         item.setPrice(amount);
         item.setQuantity(1);
 
-        long expiredAtUnix = (System.currentTimeMillis() + 5L * 60 * 1000) / 1000;
+        long expiredAtUnix = (System.currentTimeMillis() + 15L * 60 * 1000) / 1000;
 
         // Build request body
         PayOSRequest req = new PayOSRequest();
@@ -173,7 +173,7 @@ public class VietQRPaymentService implements PaymentService {
         String accountName   = resolve(d.getAccountName(),   shopAccountName);
         String bankCode      = resolve(d.getBin(),           shopBankCode);
 
-        long expiresAt = System.currentTimeMillis() + 5L * 60 * 1000;
+        long expiresAt = System.currentTimeMillis() + 15L * 60 * 1000;
 
         log.info("PayOS QR created for order {} | bank={} | acct={}", orderCode, bankCode, accountNumber);
 

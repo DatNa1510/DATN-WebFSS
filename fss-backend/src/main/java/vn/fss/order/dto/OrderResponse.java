@@ -16,9 +16,14 @@ public class OrderResponse {
     private OrderStatus status;
     private String statusLabel;
 
+    // Thông tin người đặt hàng (dùng cho Admin)
+    private String userEmail;
+    private String userName;
+
     private BigDecimal subtotal;
     private BigDecimal shippingFee;
     private BigDecimal discount;
+    private String voucherCode;
     private BigDecimal totalAmount;
 
     private String paymentMethod;

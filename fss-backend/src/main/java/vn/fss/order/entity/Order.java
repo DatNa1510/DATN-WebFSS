@@ -60,6 +60,9 @@ public class Order {
     @Column(length = 500)
     private String note;
 
+    @Column(name = "voucher_code", length = 50)
+    private String voucherCode;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
