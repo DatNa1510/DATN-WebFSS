@@ -151,9 +151,9 @@ export default function VoucherModal({ isOpen, onClose, onSelect, currentSubtota
           className="relative w-full max-w-md bg-white rounded-[2px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-gray-100">
-            <h3 className="text-[18px] font-bold text-gray-900">Chọn mã giảm giá</h3>
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all">
+          <div className="flex items-center justify-between p-5 bg-[#00168D] border-b border-gray-100">
+            <h3 className="text-[18px] font-bold text-white">Chọn mã giảm giá</h3>
+            <button onClick={onClose} className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-[2px] transition-all">
               <X size={20} />
             </button>
           </div>
