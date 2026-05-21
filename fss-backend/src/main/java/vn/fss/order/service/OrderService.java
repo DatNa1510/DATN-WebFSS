@@ -177,6 +177,21 @@ public class OrderService {
             );
         }
 
+        // Tạo thông báo cho các quản trị viên (Admin)
+        try {
+            List<User> admins = userRepository.findByRole(User.Role.ADMIN);
+            for (User admin : admins) {
+                notificationService.createNotification(
+                        admin,
+                        "Đơn hàng mới",
+                        "Đơn hàng mới FSS-" + String.format("%06d", saved.getId()) + " đã được đặt bởi " + user.getFullName() + ".",
+                        NotificationType.INFO
+                );
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi tạo thông báo cho Admin: ", e);
+        }
+
         return mapToResponse(saved);
     }
 

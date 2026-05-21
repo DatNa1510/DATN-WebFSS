@@ -4,10 +4,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import vn.fss.auth.entity.User;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+
+    // Tìm kiếm tất cả user có role cụ thể
+    List<User> findByRole(User.Role role);
 
     // Tìm kiếm user bằng email (cho đăng nhập)
     Optional<User> findByEmail(String email);
