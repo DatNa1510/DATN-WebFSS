@@ -1,13 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Edit2, Trash2, X, Check, AlertTriangle, TrendingUp, Star, ChevronLeft, ChevronRight, Filter, ArrowUpDown, Loader2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Check, AlertTriangle, TrendingUp, Star, ChevronLeft, ChevronRight, Filter, ArrowUpDown, Loader2, History } from 'lucide-react';
 import { toast } from '../../store/toastStore';
+import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
 
 const API = 'http://localhost:8080';
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
 const formatPrice = (n) => n?.toLocaleString('vi-VN') ?? '0';
 
-const emptyForm = { name: '', price: '', originalPrice: '', category: 'ao-thun', description: '', stock: '' };
+const getImageUrl = (path) => {
+  if (!path) return null;
+  const firstImage = path.split(',')[0].trim();
+  if (firstImage.startsWith('http')) return firstImage;
+  if (firstImage.startsWith('/')) return `${API}${firstImage}`;
+  return `${API}/images/${firstImage}`;
+};
+
+const categories = [
+  { id: 'all', name: 'Tất cả' },
+  { id: 'Apparel', name: 'Quần áo (Apparel)' },
+  { id: 'Footwear', name: 'Giày dép (Footwear)' },
+  { id: 'Accessories', name: 'Phụ kiện (Accessories)' },
+];
+
+const emptyForm = { name: '', price: '', originalPrice: '', category: 'Apparel', subCategory: '', description: '', stock: '', images: '' };
 
 const inputStyle = {
   width: '100%', padding: '11px 14px',
@@ -34,13 +50,18 @@ export default function AdminProducts() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
+  const [originalImages, setOriginalImages] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [focusedInput, setFocusedInput] = useState(null);
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [sortType, setSortType] = useState('newest');
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [isLogsOpen, setIsLogsOpen] = useState(false);
 
-  const fetchProducts = useCallback(async (page = 0, q = '') => {
+  const fetchProducts = useCallback(async (page = 0, q = '', cat = 'all', s = 'newest') => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page, limit: 20, search: q, sort: 'newest' });
+      const params = new URLSearchParams({ page, limit: 20, search: q, category: cat, sort: s });
       const res = await fetch(`${API}/api/products?${params}`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
@@ -57,30 +78,113 @@ export default function AdminProducts() {
     }
   }, []);
 
-  useEffect(() => { fetchProducts(0, ''); }, [fetchProducts]);
+  useEffect(() => { fetchProducts(0, '', 'all', 'newest'); }, [fetchProducts]);
 
   useEffect(() => {
-    const t = setTimeout(() => { fetchProducts(0, search); }, 500);
+    const t = setTimeout(() => { fetchProducts(0, search, filterCategory, sortType); }, 500);
     return () => clearTimeout(t);
-  }, [search, fetchProducts]);
+  }, [search, filterCategory, sortType, fetchProducts]);
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleFileChange = async (e) => {
+    const files = e.target.files;
+    if (!files.length) return;
+    
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append('files', files[i]);
+    }
+    
+    setUploadingFiles(true);
+    try {
+      const res = await fetch(`${API}/api/upload/images`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi tải ảnh');
+      
+      const uploadedNames = data.images.join(',');
+      setForm(f => ({ ...f, images: f.images ? `${f.images},${uploadedNames}` : uploadedNames }));
+      toast.success('Tải ảnh lên thành công!');
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setUploadingFiles(false);
+      e.target.value = ''; // Reset file input
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    toast.info('Tính năng đang phát triển, vui lòng thử lại sau!');
-    setShowForm(false);
+    if (!form.name || !form.price) {
+      return toast.error('Vui lòng nhập tên và giá sản phẩm');
+    }
+
+    const payload = {
+      productDisplayName: form.name,
+      price: Number(form.price),
+      originalPrice: form.originalPrice ? Number(form.originalPrice) : null,
+      masterCategory: form.category,
+      subCategory: form.subCategory,
+      stock: form.stock ? Number(form.stock) : 50,
+      imagePath: form.images || '',
+      gender: 'Unisex',
+      usage: 'Casual',
+    };
+
+    try {
+      const url = editId ? `${API}/api/products/${editId}` : `${API}/api/products`;
+      const method = editId ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi lưu sản phẩm');
+      
+      toast.success(data.message || 'Lưu thành công!');
+      setShowForm(false);
+      setForm(emptyForm);
+      setEditId(null);
+      fetchProducts(currentPage, search, filterCategory, sortType);
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   const handleEdit = (p) => {
-    setForm({ name: p.productDisplayName, price: p.price, originalPrice: p.originalPrice, category: p.masterCategory, description: '', stock: p.stock });
+    setEditId(p.id);
+    setForm({ name: p.productDisplayName, price: p.price, originalPrice: p.originalPrice, category: p.masterCategory, subCategory: p.subCategory || '', description: '', stock: p.stock, images: p.imagePath || '' });
+    setOriginalImages(p.imagePath || '');
     setEditId(p.id);
     setShowForm(true);
   };
 
-  const handleDelete = () => {
-    toast.info('Tính năng đang phát triển, vui lòng thử lại sau!');
-    setDeleteConfirm(null);
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    try {
+      const res = await fetch(`${API}/api/products/${deleteConfirm}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi xóa sản phẩm');
+      
+      toast.success(data.message || 'Xóa thành công!');
+      setDeleteConfirm(null);
+      fetchProducts(currentPage, search, filterCategory, sortType);
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
   return (
@@ -93,7 +197,7 @@ export default function AdminProducts() {
             Danh sách sản phẩm
           </h1>
           <p style={{ fontSize: '13.5px', color: '#64748B', marginTop: '6px', fontWeight: 500 }}>
-            Quản lý kho hàng và thông tin sản phẩm của bạn
+            Quản lý kho hàng và thông tin sản phẩm trong hệ thống
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -111,8 +215,23 @@ export default function AdminProducts() {
                 outline: 'none', fontFamily: 'inherit', width: '240px',
                 boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
               }}
+              onFocus={e => { e.target.style.borderColor = 'rgba(124,58,237,0.4)'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.08)'; }}
+              onBlur={e => { e.target.style.borderColor = 'rgba(0,0,0,0.09)'; e.target.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'; }}
             />
           </div>
+          <button
+            onClick={() => setIsLogsOpen(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '7px',
+              padding: '10px 16px', borderRadius: '10px',
+              background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+              fontSize: '13px', fontWeight: 700, color: '#475569',
+              cursor: 'pointer', fontFamily: 'inherit',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)', whiteSpace: 'nowrap',
+            }}
+          >
+            <History size={15} strokeWidth={2.5} /> Lịch sử
+          </button>
           <button
             onClick={() => { setShowForm(true); setForm(emptyForm); setEditId(null); }}
             style={{
@@ -280,6 +399,20 @@ export default function AdminProducts() {
                     </select>
                   </div>
                   <div>
+                    <label style={labelStyle}>Phân loại chi tiết (Tag 2)</label>
+                    <input
+                      name="subCategory" value={form.subCategory || ''} onChange={handleChange}
+                      placeholder="VD: Áo thun, Váy, Đồng hồ..."
+                      style={{
+                        ...inputStyle,
+                        borderColor: focusedInput === 'subCategory' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                        boxShadow: focusedInput === 'subCategory' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
+                      }}
+                      onFocus={() => setFocusedInput('subCategory')}
+                      onBlur={() => setFocusedInput(null)}
+                    />
+                  </div>
+                  <div>
                     <label style={labelStyle}>Tồn kho</label>
                     <input
                       name="stock" type="number" value={form.stock} onChange={handleChange}
@@ -292,6 +425,72 @@ export default function AdminProducts() {
                       onFocus={() => setFocusedInput('stock')}
                       onBlur={() => setFocusedInput(null)}
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '7px' }}>
+                    <label style={{ ...labelStyle, marginBottom: 0 }}>Ảnh sản phẩm</label>
+                    {editId && form.images !== originalImages && (
+                      <button
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, images: originalImages }))}
+                        style={{
+                          fontSize: '11px', color: '#7C3AED', background: 'none', border: 'none',
+                          cursor: 'pointer', fontWeight: 700, padding: 0
+                        }}
+                      >
+                        Khôi phục ảnh gốc
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="file" multiple accept="image/*"
+                        onChange={handleFileChange}
+                        disabled={uploadingFiles}
+                        style={{
+                          flex: 1, padding: '8px 14px',
+                          background: '#F8FAFF', border: '1.5px dashed rgba(0,0,0,0.2)',
+                          borderRadius: '10px', fontSize: '13px', color: '#64748B',
+                          cursor: 'pointer'
+                        }}
+                      />
+                      <div style={{ fontSize: '12px', color: '#94A3B8', whiteSpace: 'nowrap' }}>
+                        {uploadingFiles ? 'Đang tải...' : (form.images ? `${form.images.split(',').filter(Boolean).length} ảnh` : 'Chưa có ảnh')}
+                      </div>
+                    </div>
+                    {form.images && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                        {form.images.split(',').filter(Boolean).map((img, idx) => (
+                          <div key={idx} style={{ position: 'relative' }}>
+                            <img 
+                              src={getImageUrl(img)} 
+                              alt={`preview-${idx}`} 
+                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }}
+                              onError={e => { e.target.src = 'https://placehold.co/48x48/f8fafc/94a3b8?text=Img'; }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newImages = form.images.split(',').filter(Boolean).filter((_, i) => i !== idx).join(',');
+                                setForm({ ...form, images: newImages });
+                              }}
+                              style={{
+                                position: 'absolute', top: '-6px', right: '-6px',
+                                width: '18px', height: '18px', borderRadius: '50%',
+                                background: '#EF4444', color: 'white', border: '2px solid white',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', fontSize: '10px', fontWeight: 'bold'
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -346,50 +545,84 @@ export default function AdminProducts() {
           background: '#FAFAFA',
         }}>
           <div style={{ display: 'flex', gap: '8px' }}>
-            {[
-              { icon: Filter, label: 'Lọc: Tất cả' },
-              { icon: ArrowUpDown, label: 'Sắp xếp: Mới nhất' },
-            ].map(({ icon: Icon, label }) => (
-              <button key={label} style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '7px 14px', borderRadius: '8px',
-                background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-                fontSize: '12px', fontWeight: 600, color: '#475569',
-                cursor: 'pointer', fontFamily: 'inherit',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-              }}>
-                <Icon size={13} /> {label}
-              </button>
-            ))}
+            <div style={{ position: 'relative' }}>
+              <Filter size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#475569', pointerEvents: 'none' }} />
+              <select 
+                value={filterCategory} 
+                onChange={e => setFilterCategory(e.target.value)}
+                style={{
+                  appearance: 'none', padding: '7px 28px 7px 28px', borderRadius: '8px',
+                  background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+                  fontSize: '12px', fontWeight: 600, color: '#475569',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                }}
+              >
+                {categories.map(c => <option key={c.id} value={c.id}>Lọc: {c.name}</option>)}
+              </select>
+            </div>
+            
+            <div style={{ position: 'relative' }}>
+              <ArrowUpDown size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#475569', pointerEvents: 'none' }} />
+              <select 
+                value={sortType} 
+                onChange={e => setSortType(e.target.value)}
+                style={{
+                  appearance: 'none', padding: '7px 28px 7px 28px', borderRadius: '8px',
+                  background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+                  fontSize: '12px', fontWeight: 600, color: '#475569',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                }}
+              >
+                <option value="newest">Sắp xếp: Mới nhất</option>
+                <option value="price-asc">Giá: Thấp đến Cao</option>
+                <option value="price-desc">Giá: Cao đến Thấp</option>
+                <option value="best-seller">Bán chạy nhất</option>
+                <option value="rating">Đánh giá tốt</option>
+              </select>
+            </div>
           </div>
           <p style={{ fontSize: '12.5px', color: '#94A3B8', fontWeight: 500 }}>
             {loading ? 'Đang tải...' : `${total} sản phẩm`}
           </p>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', maxHeight: 'calc(100vh - 140px)', minHeight: '650px', overflowY: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
               <tr style={{ background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 {['Sản phẩm', 'Giá', 'Tồn kho', 'Đã bán', 'Tags', 'Thao tác'].map(h => (
                   <th key={h} style={{
                     textAlign: 'left', padding: '13px 20px',
                     fontSize: '11px', fontWeight: 700, color: '#94A3B8',
                     letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+                    background: '#FAFAFA', // Đảm bảo background không bị trong suốt khi cuộn
+                    boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.05)'
                   }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {loading ? Array.from({length: 8}).map((_, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                  {[260, 100, 80, 60, 120, 80].map((w, j) => (
-                    <td key={j} style={{ padding: '14px 20px' }}>
-                      <div style={{ height: '18px', width: `${w}px`, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', borderRadius: '6px', animation: 'pulse 1.5s infinite' }} />
-                    </td>
-                  ))}
+              {loading ? (
+                <tr>
+                  <td colSpan="6" style={{ padding: '80px 0', textAlign: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        style={{
+                          width: '40px', height: '40px',
+                          border: '4px solid rgba(124,58,237,0.1)',
+                          borderTopColor: '#7C3AED',
+                          borderRadius: '50%',
+                        }}
+                      />
+                      <p style={{ fontSize: '14px', color: '#94A3B8', fontWeight: 600 }}>Đang tải danh sách sản phẩm...</p>
+                    </div>
+                  </td>
                 </tr>
-              )) : products.map((p) => {
+              ) : products.map((p, idx) => {
                 const stockColor = p.stock > 10 ? '#10B981' : p.stock > 0 ? '#F59E0B' : '#EF4444';
                 const stockBg = p.stock > 10 ? 'rgba(16,185,129,0.1)' : p.stock > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
                 const displayTags = [p.masterCategory, p.subCategory].filter(Boolean).slice(0, 2);
@@ -397,7 +630,9 @@ export default function AdminProducts() {
                 return (
                   <motion.tr
                     key={p.id}
-                    layout
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(idx * 0.04, 0.4) }}
                     style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', transition: 'background 0.15s' }}
                     onMouseEnter={e => {
                       e.currentTarget.style.background = '#FDFDFF';
@@ -417,7 +652,7 @@ export default function AdminProducts() {
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
                           <img
-                            src={p.imagePath ? `${API}/images/${p.imagePath}` : null} alt={p.productDisplayName}
+                            src={getImageUrl(p.imagePath)} alt={p.productDisplayName}
                             style={{ maxWidth: '42px', maxHeight: '42px', objectFit: 'contain' }}
                             onError={e => { e.target.src = 'https://placehold.co/42x42/f8fafc/94a3b8?text=Img'; }}
                           />
@@ -587,6 +822,13 @@ export default function AdminProducts() {
           </div>
         )}
       </div>
+
+      <AdminLogsDrawer
+        isOpen={isLogsOpen}
+        onClose={() => setIsLogsOpen(false)}
+        targetType="PRODUCT"
+        title="Lịch sử Quản lý Sản phẩm"
+      />
     </div>
   );
 }

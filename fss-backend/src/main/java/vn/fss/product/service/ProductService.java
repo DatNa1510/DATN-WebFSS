@@ -58,4 +58,59 @@ public class ProductService {
     public Optional<Product> getProductById(Long id) {
         return productRepository.findById(id);
     }
+
+    public Product createProduct(Product product) {
+        Long maxId = productRepository.findMaxId();
+        Long newId = (maxId != null) ? maxId + 1 : 1L;
+        product.setId(newId);
+        
+        // Ensure defaults are set for non-null fields
+        if (product.getStock() == null) product.setStock(50);
+        if (product.getInitialStock() == null) product.setInitialStock(product.getStock());
+        if (product.getSold() == null) product.setSold(0);
+        if (product.getRating() == null) product.setRating(new BigDecimal("4.5"));
+        if (product.getReviewCount() == null) product.setReviewCount(0);
+        if (product.getIsNew() == null) product.setIsNew(true);
+        if (product.getIsBestSeller() == null) product.setIsBestSeller(false);
+        if (product.getImagePath() == null || product.getImagePath().isEmpty()) {
+            product.setImagePath(newId + ".jpg"); // Default image path
+        }
+
+        return productRepository.save(product);
+    }
+
+    public Product updateProduct(Long id, Product productDetails) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm có ID: " + id));
+
+        // Update fields (only the ones that are provided/mutable by admin)
+        if (productDetails.getProductDisplayName() != null) {
+            product.setProductDisplayName(productDetails.getProductDisplayName());
+        }
+        if (productDetails.getMasterCategory() != null) {
+            product.setMasterCategory(productDetails.getMasterCategory());
+        }
+        if (productDetails.getPrice() != null) {
+            product.setPrice(productDetails.getPrice());
+        }
+        if (productDetails.getOriginalPrice() != null) {
+            product.setOriginalPrice(productDetails.getOriginalPrice());
+        }
+        if (productDetails.getStock() != null) {
+            product.setStock(productDetails.getStock());
+        }
+        if (productDetails.getSubCategory() != null) {
+            product.setSubCategory(productDetails.getSubCategory());
+        }
+        
+        // Can add more fields if needed
+
+        return productRepository.save(product);
+    }
+
+    public void deleteProduct(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm có ID: " + id));
+        productRepository.delete(product);
+    }
 }
