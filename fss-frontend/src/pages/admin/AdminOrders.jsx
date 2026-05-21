@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronDown, Eye, Download, Package, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Search, ChevronDown, Eye, Package, ChevronLeft, ChevronRight, X, History } from 'lucide-react';
 import { toast } from '../../store/toastStore';
+import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
 
 const API = 'http://localhost:8080';
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
@@ -24,6 +25,7 @@ export default function AdminOrders() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [detailOrder, setDetailOrder] = useState(null);
+  const [isLogsOpen, setIsLogsOpen] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -35,7 +37,7 @@ export default function AdminOrders() {
       const data = await res.json();
       setOrders(data);
     } catch {
-      toast.error('Không thể tải danh sách đƠn hàng!');
+      toast.error('Không thể tải danh sách đơn hàng!');
     } finally {
       setLoading(false);
     }
@@ -45,10 +47,10 @@ export default function AdminOrders() {
 
   const filtered = orders.filter((o) => {
     const q = search.toLowerCase();
-    const matchSearch = (o.orderCode || '').toLowerCase().includes(q)
-      || (o.recipientName || '').toLowerCase().includes(q)
-      || (o.userName || '').toLowerCase().includes(q)
-      || (o.userEmail || '').toLowerCase().includes(q);
+    const matchSearch = String(o.orderCode || o.id || '').toLowerCase().includes(q)
+      || String(o.recipientName || '').toLowerCase().includes(q)
+      || String(o.userName || '').toLowerCase().includes(q)
+      || String(o.userEmail || '').toLowerCase().includes(q);
     const matchStatus = filterStatus === 'all' || o.status === filterStatus;
     return matchSearch && matchStatus;
   });
@@ -73,6 +75,34 @@ export default function AdminOrders() {
     return acc;
   }, {});
 
+  // Compute real stats from `orders` array
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
+  const thisMonthOrders = orders.filter(o => {
+    if (!o.createdAt) return false;
+    const d = new Date(o.createdAt);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  });
+
+  const totalThisMonth = thisMonthOrders.length;
+  const revenueThisMonth = thisMonthOrders.filter(o => o.status === 'DELIVERED').reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  const cancelledThisMonth = thisMonthOrders.filter(o => o.status === 'CANCELLED').length;
+  const completedThisMonth = thisMonthOrders.filter(o => o.status === 'DELIVERED').length;
+  const completionRate = totalThisMonth === 0 ? '0.0' : ((completedThisMonth / totalThisMonth) * 100).toFixed(1);
+
+  const formatCompact = (num) => {
+    if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+    if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+    if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+    return fmt(num);
+  };
+
+  const pendingCount = orders.filter(o => o.status === 'PENDING').length;
+  const confirmedCount = orders.filter(o => o.status === 'CONFIRMED').length;
+  const shippingCount = orders.filter(o => o.status === 'SHIPPING').length;
+  const activeOrdersCount = Math.max(1, pendingCount + confirmedCount + shippingCount);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '40px' }}>
 
@@ -87,16 +117,17 @@ export default function AdminOrders() {
           </p>
         </div>
         <button
-          onClick={() => toast.info('Đầy tính năng đang phát triển!')}
+          onClick={() => setIsLogsOpen(true)}
           style={{
             display: 'flex', alignItems: 'center', gap: '7px',
-            padding: '9px 18px', borderRadius: '10px',
-            background: 'white', border: '1px solid rgba(0,0,0,0.1)',
-            fontSize: '13px', fontWeight: 600, color: '#374151',
+            padding: '10px 16px', borderRadius: '10px',
+            background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+            fontSize: '13px', fontWeight: 700, color: '#475569',
             cursor: 'pointer', fontFamily: 'inherit',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-          }}>
-          <Download size={15} /> Xuất báo cáo
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)', whiteSpace: 'nowrap',
+          }}
+        >
+          <History size={15} strokeWidth={2.5} /> Lịch sử
         </button>
       </div>
 
@@ -177,40 +208,49 @@ export default function AdminOrders() {
         boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
         overflow: 'hidden',
       }}>
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', maxHeight: 'calc(100vh - 140px)', minHeight: '650px', overflowY: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
               <tr style={{ background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 {['Mã đơn / Khách hàng', 'Số điện thoại', 'Địa chỉ giao hàng', 'Tổng tiền', 'Trạng thái'].map(h => (
                   <th key={h} style={{
                     textAlign: 'left', padding: '13px 20px',
                     fontSize: '11px', fontWeight: 700, color: '#94A3B8',
                     letterSpacing: '0.06em', textTransform: 'uppercase',
+                    background: '#FAFAFA', // Đảm bảo background không bị trong suốt khi cuộn
+                    boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.05)' // Thay borderBottom bằng boxShadow để dính cùng sticky
                   }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {loading ? Array.from({length: 6}).map((_, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                  {[200, 120, 180, 110, 130].map((w, j) => (
-                    <td key={j} style={{ padding: '16px 20px' }}>
-                      <div style={{ height: '16px', width: `${w}px`, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', borderRadius: '6px' }} />
-                    </td>
-                  ))}
+              {loading ? (
+                <tr>
+                  <td colSpan="5" style={{ padding: '80px 0', textAlign: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        style={{
+                          width: '40px', height: '40px',
+                          border: '4px solid rgba(124,58,237,0.1)',
+                          borderTopColor: '#7C3AED',
+                          borderRadius: '50%',
+                        }}
+                      />
+                      <p style={{ fontSize: '14px', color: '#94A3B8', fontWeight: 600 }}>Đang tải danh sách đơn hàng...</p>
+                    </div>
+                  </td>
                 </tr>
-              )) : (
-              <AnimatePresence>
-                {filtered.map((order, idx) => {
+              ) : (
+                filtered.map((order, idx) => {
                   const cfg = statusConfig[order.status] || statusConfig.PENDING;
                   return (
                     <motion.tr
                       key={order.id}
-                      layout
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                      transition={{ delay: idx * 0.04 }}
+                      transition={{ delay: Math.min(idx * 0.04, 0.4) }} // Limit delay to avoid long wait
                       style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', transition: 'background 0.15s' }}
                       onMouseEnter={e => e.currentTarget.style.background = '#FDFDFF'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -280,8 +320,7 @@ export default function AdminOrders() {
                       </td>
                     </motion.tr>
                   );
-                })}
-                </AnimatePresence>
+                })
               )}
             </tbody>
           </table>
@@ -342,13 +381,13 @@ export default function AdminOrders() {
               Thống kê tháng này
             </p>
             <p style={{ fontSize: '36px', fontWeight: 900, color: 'white', letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '24px' }}>
-              1,240 <span style={{ fontSize: '22px', fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>Đơn hàng</span>
+              {fmt(totalThisMonth)} <span style={{ fontSize: '22px', fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>Đơn hàng</span>
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
               {[
-                { label: 'Doanh thu dự kiến', value: '124.5M ₫', color: '#A78BFA' },
-                { label: 'Tỉ lệ hoàn thành', value: '94.2%', color: '#34D399' },
-                { label: 'Đơn hủy/trả', value: '12', color: '#F87171' },
+                { label: 'Doanh thu (Đã giao)', value: `${formatCompact(revenueThisMonth)} ₫`, color: '#A78BFA' },
+                { label: 'Tỉ lệ hoàn thành', value: `${completionRate}%`, color: '#34D399' },
+                { label: 'Đơn hủy/trả', value: fmt(cancelledThisMonth), color: '#F87171' },
               ].map(stat => (
                 <div key={stat.label}>
                   <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, marginBottom: '6px' }}>{stat.label}</p>
@@ -374,9 +413,9 @@ export default function AdminOrders() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {[
-              { label: 'Đã lấy hàng', current: 45, total: 60, pct: 75 },
-              { label: 'Bàn giao bưu tá', current: 28, total: 60, pct: 45 },
-              { label: 'Đang vận chuyển', current: 18, total: 30, pct: 60 },
+              { label: 'Chờ xác nhận', current: pendingCount, total: activeOrdersCount, pct: (pendingCount / activeOrdersCount) * 100 },
+              { label: 'Đã xác nhận', current: confirmedCount, total: activeOrdersCount, pct: (confirmedCount / activeOrdersCount) * 100 },
+              { label: 'Đang giao hàng', current: shippingCount, total: activeOrdersCount, pct: (shippingCount / activeOrdersCount) * 100 },
             ].map(item => (
               <div key={item.label}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -407,7 +446,7 @@ export default function AdminOrders() {
               style={{ background: 'white', borderRadius: '20px', width: '100%', maxWidth: '540px', padding: '28px', boxShadow: '0 24px 80px rgba(0,0,0,0.25)', maxHeight: '85vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                 <div>
-                  <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#1E1B4B' }}>ĐƠn #{detailOrder.orderCode}</h2>
+                  <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#1E1B4B' }}>ĐƠN #{detailOrder.orderCode}</h2>
                   <p style={{ fontSize: '12.5px', color: '#94A3B8', marginTop: '3px' }}>{detailOrder.userEmail} &bull; {new Date(detailOrder.createdAt).toLocaleDateString('vi-VN')}</p>
                 </div>
                 <button onClick={() => setDetailOrder(null)} style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#F1F5F9', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}><X size={16}/></button>
@@ -434,6 +473,12 @@ export default function AdminOrders() {
         )}
       </AnimatePresence>
 
+      <AdminLogsDrawer
+        isOpen={isLogsOpen}
+        onClose={() => setIsLogsOpen(false)}
+        targetType="ORDER"
+        title="Lịch sử Quản lý Đơn hàng"
+      />
     </div>
   );
 }
