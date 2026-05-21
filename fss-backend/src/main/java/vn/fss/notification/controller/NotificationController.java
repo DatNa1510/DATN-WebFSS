@@ -33,7 +33,7 @@ public class NotificationController {
                 search, 
                 type, 
                 read, 
-                PageRequest.of(page, limit)
+                PageRequest.of(page, limit, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"))
         );
 
         Map<String, Object> response = new HashMap<>();
