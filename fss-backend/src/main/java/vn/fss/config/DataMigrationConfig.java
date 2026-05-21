@@ -14,6 +14,22 @@ import java.math.RoundingMode;
 public class DataMigrationConfig {
 
     @Bean
+    public CommandLineRunner migrateSchema(JdbcTemplate jdbcTemplate) {
+        return args -> {
+            log.info("Đang kiểm tra và cập nhật Schema Database...");
+            try {
+                // Thêm các cột mới vào bảng users nếu chưa có
+                jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE");
+                jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS deletion_reason VARCHAR(255)");
+                jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS lock_reason VARCHAR(255)");
+                log.info("Cập nhật Schema Database thành công.");
+            } catch (Exception e) {
+                log.error("Lỗi cập nhật Schema Database: {}", e.getMessage());
+            }
+        };
+    }
+
+    @Bean
     public CommandLineRunner migrateAvatars(JdbcTemplate jdbcTemplate) {
         return args -> {
             log.info("Đang đồng bộ Avatar mặc định cho Khách hàng...");

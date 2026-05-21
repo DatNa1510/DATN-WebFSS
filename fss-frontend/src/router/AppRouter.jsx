@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 
@@ -7,6 +8,7 @@ import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import AdminLayout from '../components/layout/AdminLayout';
 import ScrollToTop from '../components/layout/ScrollToTop';
+import TawkTo from '../components/ui/TawkTo';
 
 // Auth
 import LoginPage from '../pages/auth/LoginPage';
@@ -34,6 +36,7 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminProducts from '../pages/admin/AdminProducts';
 import AdminOrders from '../pages/admin/AdminOrders';
 import AdminAccounts from '../pages/admin/AdminAccounts';
+import AdminVouchers from '../pages/admin/AdminVouchers';
 
 // Cart Drawer
 import CartDrawer from '../components/ui/CartDrawer';
@@ -67,6 +70,37 @@ function CustomerLayout() {
   );
 }
 
+// TawkTo chat - ẩn trên trang admin
+function TawkWrapper() {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
+  
+  React.useEffect(() => {
+    if (isAdmin) {
+      document.body.classList.add('hide-tawk');
+    } else {
+      document.body.classList.remove('hide-tawk');
+    }
+    return () => document.body.classList.remove('hide-tawk');
+  }, [isAdmin]);
+
+  return (
+    <>
+      <style>{`
+        body.hide-tawk iframe[title*="chat"], 
+        body.hide-tawk iframe[src*="tawk.to"], 
+        body.hide-tawk .tawk-widget-wrapper {
+          display: none !important;
+          opacity: 0 !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
+        }
+      `}</style>
+      <TawkTo hide={isAdmin} />
+    </>
+  );
+}
+
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -86,6 +120,7 @@ export default function AppRouter() {
             <Route path="products" element={<AdminProducts />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="accounts" element={<AdminAccounts />} />
+            <Route path="vouchers" element={<AdminVouchers />} />
           </Route>
         </Route>
 
@@ -115,6 +150,7 @@ export default function AppRouter() {
         {/* 404 fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <TawkWrapper />
     </BrowserRouter>
   );
 }

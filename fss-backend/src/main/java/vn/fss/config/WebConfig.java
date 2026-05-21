@@ -13,5 +13,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/fashion-dataset/images/**")
                 .addResourceLocations("file:D:/DATN/Web_FSS/fashion-dataset/images/")
                 .setCachePeriod(3600); // Cache 1 giờ
+
+        // Frontend gọi /images/{id}.jpg - map tới cùng thư mục ảnh
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("file:D:/DATN/Web_FSS/fashion-dataset/images/")
+                .setCachePeriod(3600);
     }
 }

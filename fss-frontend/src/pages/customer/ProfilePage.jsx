@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LogOut, ChevronRight, Package, MapPin, Heart, User,
+  LogOut, ChevronRight, ChevronDown, Package, MapPin, Heart, User,
   ArrowUpRight, Camera, Ruler, Lock, Eye, EyeOff, Box,
   Shield, Clock, Sparkles, Plus, Check, X, Star, Bell, Trash2,
   TrendingUp, ShoppingBag, CreditCard, AlertCircle
@@ -198,6 +198,7 @@ export default function ProfilePage() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
   const [addressToDelete, setAddressToDelete] = useState(null);
+  const [showProfileHistory, setShowProfileHistory] = useState(false);
   // Tải toàn bộ dữ liệu ngay khi vào trang để Sidebar có số liệu chính xác
   useEffect(() => {
     if (isAuthenticated) {
@@ -352,12 +353,15 @@ export default function ProfilePage() {
 
                 <div className="flex flex-col items-center pt-8 pb-6 px-6 relative">
                   {/* Avatar */}
-                  <div className="relative mb-4 group z-10">
+                  <div className="relative mb-14 group z-10" style={{ paddingBottom: '4px' }}>
                     {/* Sweeping Shimmer Border Container */}
                     <div
-                      className="absolute -inset-[6px] rounded-xs overflow-hidden"
+                      className="absolute -inset-[6px] rounded-xs overflow-hidden pointer-events-none"
                       style={{
                         background: 'linear-gradient(135deg, #00168d, #7c3aed)',
+                        top: '-6px',
+                        bottom: 'auto',
+                        height: '100px',
                       }}
                     >
                       {/* Sweeping Light Sheen */}
@@ -376,7 +380,7 @@ export default function ProfilePage() {
                       />
                     </div>
                     {/* White backing border ring */}
-                    <div className="absolute -inset-[3px] rounded-xs bg-white z-0" />
+                    <div className="absolute -inset-[3px] rounded-xs bg-white z-0" style={{ top: '-3px', bottom: 'auto', height: '94px' }} />
                     <div className="relative w-[88px] h-[88px] rounded-xs overflow-hidden border-2 border-white shadow-2xl z-10">
                       <img
                         src={user?.avatar}
@@ -400,10 +404,10 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Name */}
-                  <h2 className="text-[16px] font-black text-slate-800 tracking-tight mb-1 text-center">
+                  <h2 className="text-[16px] font-black text-slate-800 tracking-tight mb-1 text-center relative z-20">
                     {user?.name}
                   </h2>
-                  <p className="text-[11px] text-slate-400 font-medium mb-3">{user?.email}</p>
+                  <p className="text-[11px] text-slate-400 font-medium mb-3 relative z-20">{user?.email}</p>
 
                   {/* Member badge */}
                   <div
@@ -724,59 +728,80 @@ export default function ProfilePage() {
                         >
                           {/* Header */}
                           <div
-                            className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100/60"
+                            onClick={() => setShowProfileHistory(!showProfileHistory)}
+                            className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100/60 cursor-pointer select-none"
                             style={{ background: 'linear-gradient(90deg, rgba(0,22,141,0.04), transparent)' }}
                           >
-                            <div
-                              className="w-7 h-7 rounded-xs flex items-center justify-center"
-                              style={{ background: 'linear-gradient(135deg, rgba(0,22,141,0.12), rgba(124,58,237,0.08))' }}
-                            >
-                              <Clock size={13} className="text-primary" />
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-7 h-7 rounded-xs flex items-center justify-center"
+                                style={{ background: 'linear-gradient(135deg, rgba(0,22,141,0.12), rgba(124,58,237,0.08))' }}
+                              >
+                                <Clock size={13} className="text-primary" />
+                              </div>
+                              <h3 className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase">
+                                Lịch sử chỉnh sửa hồ sơ
+                              </h3>
                             </div>
-                            <h3 className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase">
-                              Lịch sử chỉnh sửa hồ sơ
-                            </h3>
+                            <ChevronDown
+                              size={15}
+                              className={`text-slate-400 transition-transform duration-300 ${
+                                showProfileHistory ? 'rotate-180' : ''
+                              }`}
+                            />
                           </div>
 
                           {/* Timeline */}
-                          <div className="px-5 py-4">
-                              <div className="relative space-y-0 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
-                                {auditLogs.filter(l => l.actionType === 'PROFILE').length > 0 && (
-                                  <div className="absolute left-[7px] top-3 bottom-3 w-px"
-                                    style={{ background: 'linear-gradient(180deg, #00168d50, #e2e8f0, transparent)' }} />
-                                )}
-                                {auditLogs.filter(l => l.actionType === 'PROFILE').length === 0 && (
-                                  <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-                                    <Clock size={24} className="mb-2 opacity-20" />
-                                    <p className="text-sm font-medium">Chưa có dữ liệu lịch sử</p>
-                                  </div>
-                                )}
-                              {auditLogs.filter(l => l.actionType === 'PROFILE').map((log, idx) => (
-                                <div key={log.id} className="flex items-start gap-4 py-3.5 group cursor-default">
-                                  <div className="relative z-10 mt-1.5 shrink-0">
-                                    <div
-                                      className="w-3.5 h-3.5 rounded-full border-2 transition-all duration-300"
-                                      style={idx === 0
-                                        ? { background: '#00168d', borderColor: 'rgba(0,22,141,0.3)', boxShadow: '0 0 8px rgba(0,22,141,0.3)' }
-                                        : { background: 'white', borderColor: '#cbd5e1' }
-                                      }
-                                    />
-                                  </div>
-                                  <div className="flex-1 flex items-center justify-between -mt-0.5">
-                                    <div>
-                                      <p className="text-[13px] font-bold text-slate-700 group-hover:text-primary transition-colors">
-                                        {log.actionTitle}
-                                      </p>
-                                      <p className="text-[11px] text-slate-400 mt-0.5">{log.actionDetail}</p>
-                                    </div>
-                                    <span className="text-[11px] font-semibold text-slate-400 ml-4 shrink-0 tabular-nums">
-                                      {new Date(log.createdAt).toLocaleString('vi-VN')}
-                                    </span>
+                          <AnimatePresence initial={false}>
+                            {showProfileHistory && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                className="overflow-hidden"
+                              >
+                                <div className="px-5 py-4">
+                                  <div className="relative space-y-0 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {auditLogs.filter(l => l.actionType === 'PROFILE').length > 0 && (
+                                      <div className="absolute left-[7px] top-3 bottom-3 w-px"
+                                        style={{ background: 'linear-gradient(180deg, #00168d50, #e2e8f0, transparent)' }} />
+                                    )}
+                                    {auditLogs.filter(l => l.actionType === 'PROFILE').length === 0 && (
+                                      <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                                        <Clock size={24} className="mb-2 opacity-20" />
+                                        <p className="text-sm font-medium">Chưa có dữ liệu lịch sử</p>
+                                      </div>
+                                    )}
+                                    {auditLogs.filter(l => l.actionType === 'PROFILE').map((log, idx) => (
+                                      <div key={log.id} className="flex items-start gap-4 py-3.5 group cursor-default">
+                                        <div className="relative z-10 mt-1.5 shrink-0">
+                                          <div
+                                            className="w-3.5 h-3.5 rounded-full border-2 transition-all duration-300"
+                                            style={idx === 0
+                                              ? { background: '#00168d', borderColor: 'rgba(0,22,141,0.3)', boxShadow: '0 0 8px rgba(0,22,141,0.3)' }
+                                              : { background: 'white', borderColor: '#cbd5e1' }
+                                            }
+                                          />
+                                        </div>
+                                        <div className="flex-1 flex items-center justify-between -mt-0.5">
+                                          <div>
+                                            <p className="text-[13px] font-bold text-slate-700 group-hover:text-primary transition-colors">
+                                              {log.actionTitle}
+                                            </p>
+                                            <p className="text-[11px] text-slate-400 mt-0.5">{log.actionDetail}</p>
+                                          </div>
+                                          <span className="text-[11px] font-semibold text-slate-400 ml-4 shrink-0 tabular-nums">
+                                            {new Date(log.createdAt).toLocaleString('vi-VN')}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
                                 </div>
-                              ))}
-                            </div>
-                          </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </motion.div>
                     )}
@@ -825,7 +850,7 @@ export default function ProfilePage() {
                         variants={staggerContainer}
                         initial="hidden"
                         animate="visible"
-                        className="space-y-4"
+                        className="space-y-4 max-h-[650px] overflow-y-auto pr-2 custom-scrollbar"
                       >
                         {/* Loading */}
                         {ordersLoading && orders.length === 0 && (
@@ -1018,7 +1043,7 @@ export default function ProfilePage() {
                       <motion.div
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="grid gap-3 mb-3"
+                        className="grid gap-3 mb-3 max-h-[550px] overflow-y-auto pr-2 custom-scrollbar"
                       >
                         {addressLoading ? (
                           <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" /></div>
@@ -1120,7 +1145,7 @@ export default function ProfilePage() {
                             <p className="text-[12px] text-slate-400 mt-0.5">Các sản phẩm bạn đã lưu</p>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[650px] overflow-y-auto pr-2 custom-scrollbar">
                           {wishlist.map(item => (
                             <div key={item.id} className="group relative bg-white border border-slate-200 p-3 flex flex-col gap-3 hover:border-rose-200 transition-all">
                               <button onClick={() => toggleWishlist(item.productId)} className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-rose-500 hover:bg-rose-50 hover:scale-110 transition-all backdrop-blur-sm shadow-sm">
@@ -1346,6 +1371,7 @@ function PasswordSection() {
   const [error, setError] = useState('');
   const [strength, setStrength] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSecurityHistory, setShowSecurityHistory] = useState(false);
 
   const calcStrength = (pw) => {
     let s = 0;
@@ -1532,55 +1558,76 @@ function PasswordSection() {
         }}
       >
         <div
-          className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100/60"
+          onClick={() => setShowSecurityHistory(!showSecurityHistory)}
+          className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100/60 cursor-pointer select-none"
           style={{ background: 'linear-gradient(90deg, rgba(0,22,141,0.04), transparent)' }}
         >
-          <div
-            className="w-7 h-7 rounded-xs flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, rgba(0,22,141,0.12), rgba(124,58,237,0.08))' }}
-          >
-            <Shield size={13} className="text-primary" />
+          <div className="flex items-center gap-3">
+            <div
+              className="w-7 h-7 rounded-xs flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, rgba(0,22,141,0.12), rgba(124,58,237,0.08))' }}
+            >
+              <Shield size={13} className="text-primary" />
+            </div>
+            <h3 className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase">
+              Lịch sử bảo mật
+            </h3>
           </div>
-          <h3 className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase">
-            Lịch sử bảo mật
-          </h3>
+          <ChevronDown
+            size={15}
+            className={`text-slate-400 transition-transform duration-300 ${
+              showSecurityHistory ? 'rotate-180' : ''
+            }`}
+          />
         </div>
-        <div className="px-5 py-4">
-          <div className="relative space-y-0 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
-            {auditLogs.filter(l => l.actionType === 'SECURITY').length > 0 && (
-              <div className="absolute left-[7px] top-3 bottom-3 w-px"
-                style={{ background: 'linear-gradient(180deg, #00168d50, #e2e8f0, transparent)' }} />
-            )}
-            {auditLogs.filter(l => l.actionType === 'SECURITY').length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-                <Shield size={24} className="mb-2 opacity-20" />
-                <p className="text-sm font-medium">Chưa có dữ liệu bảo mật</p>
-              </div>
-            )}
-            {auditLogs.filter(l => l.actionType === 'SECURITY').map((log, idx) => (
-              <div key={log.id} className="flex items-start gap-4 py-3.5 group cursor-default">
-                <div className="relative z-10 mt-1.5 shrink-0">
-                  <div
-                    className="w-3.5 h-3.5 rounded-full border-2 transition-all"
-                    style={idx === 0
-                      ? { background: '#00168d', borderColor: 'rgba(0,22,141,0.3)', boxShadow: '0 0 8px rgba(0,22,141,0.3)' }
-                      : { background: 'white', borderColor: '#cbd5e1' }
-                    }
-                  />
+        <AnimatePresence initial={false}>
+          {showSecurityHistory && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <div className="px-5 py-4">
+                <div className="relative space-y-0 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
+                  {auditLogs.filter(l => l.actionType === 'SECURITY').length > 0 && (
+                    <div className="absolute left-[7px] top-3 bottom-3 w-px"
+                      style={{ background: 'linear-gradient(180deg, #00168d50, #e2e8f0, transparent)' }} />
+                  )}
+                  {auditLogs.filter(l => l.actionType === 'SECURITY').length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                      <Shield size={24} className="mb-2 opacity-20" />
+                      <p className="text-sm font-medium">Chưa có dữ liệu bảo mật</p>
+                    </div>
+                  )}
+                  {auditLogs.filter(l => l.actionType === 'SECURITY').map((log, idx) => (
+                    <div key={log.id} className="flex items-start gap-4 py-3.5 group cursor-default">
+                      <div className="relative z-10 mt-1.5 shrink-0">
+                        <div
+                          className="w-3.5 h-3.5 rounded-full border-2 transition-all"
+                          style={idx === 0
+                            ? { background: '#00168d', borderColor: 'rgba(0,22,141,0.3)', boxShadow: '0 0 8px rgba(0,22,141,0.3)' }
+                            : { background: 'white', borderColor: '#cbd5e1' }
+                          }
+                        />
+                      </div>
+                      <div className="flex-1 flex items-center justify-between -mt-0.5">
+                        <div>
+                          <p className="text-[13px] font-bold text-slate-700 group-hover:text-primary transition-colors">{log.actionTitle}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{log.actionDetail}</p>
+                        </div>
+                        <span className="text-[11px] font-semibold text-slate-400 ml-4 shrink-0 tabular-nums">
+                          {new Date(log.createdAt).toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex-1 flex items-center justify-between -mt-0.5">
-                  <div>
-                    <p className="text-[13px] font-bold text-slate-700 group-hover:text-primary transition-colors">{log.actionTitle}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">{log.actionDetail}</p>
-                  </div>
-                  <span className="text-[11px] font-semibold text-slate-400 ml-4 shrink-0 tabular-nums">
-                    {new Date(log.createdAt).toLocaleString('vi-VN')}
-                  </span>
-                </div>
               </div>
-            ))}
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

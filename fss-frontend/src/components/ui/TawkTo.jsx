@@ -17,12 +17,12 @@ import useAuthStore from '../../store/authStore';
 const TAWK_PROPERTY_ID = '6a082e619a5e021c33f4b56f';
 const TAWK_WIDGET_ID   = '1jonvach7';
 
-export default function TawkTo() {
+export default function TawkTo({ hide = false }) {
   const { user } = useAuthStore();
 
   useEffect(() => {
-    // Tránh inject script 2 lần
-    if (document.getElementById('tawkto-script')) return;
+    // Tránh inject script 2 lần, và không inject nếu đang cần ẩn
+    if (hide || document.getElementById('tawkto-script')) return;
 
     window.Tawk_API = window.Tawk_API || {};
     window.Tawk_LoadStart = new Date();
@@ -34,12 +34,31 @@ export default function TawkTo() {
     script.charset = 'UTF-8';
     script.setAttribute('crossorigin', '*');
     document.body.appendChild(script);
+  }, [hide]);
 
-    return () => {
-      const el = document.getElementById('tawkto-script');
-      if (el) el.remove();
+  // Ẩn/hiện widget tùy vào prop hide
+  useEffect(() => {
+    const applyVisibility = () => {
+      if (window.Tawk_API) {
+        if (hide) {
+          if (typeof window.Tawk_API.hideWidget === 'function') window.Tawk_API.hideWidget();
+        } else {
+          if (typeof window.Tawk_API.showWidget === 'function') window.Tawk_API.showWidget();
+        }
+      }
     };
-  }, []);
+
+    if (window.Tawk_API?.hideWidget) {
+      applyVisibility();
+    } else {
+      window.Tawk_API = window.Tawk_API || {};
+      const prevOnLoad = window.Tawk_API.onLoad;
+      window.Tawk_API.onLoad = function () {
+        if (prevOnLoad) prevOnLoad();
+        applyVisibility();
+      };
+    }
+  }, [hide]);
 
   // Tự động gắn thông tin user đã đăng nhập vào cửa sổ chat
   useEffect(() => {

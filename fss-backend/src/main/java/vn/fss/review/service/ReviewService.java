@@ -69,15 +69,15 @@ public class ReviewService {
             throw new IllegalStateException("Bạn đã đánh giá sản phẩm này rồi");
         }
 
-        // Cho phép bình luận khi đơn hàng đang vận chuyển (SHIPPING) hoặc đã giao (DELIVERED)
+        // Chỉ cho phép bình luận khi đơn hàng đã giao (DELIVERED)
         boolean verifiedPurchase = orderRepository.existsByUserAndProductIdAndStatusIn(
                 user,
                 req.getProductId(),
-                List.of(OrderStatus.SHIPPING, OrderStatus.DELIVERED)
+                List.of(OrderStatus.DELIVERED)
         );
 
         if (!verifiedPurchase) {
-            throw new IllegalStateException("Bạn chỉ có thể đánh giá sản phẩm sau khi đơn hàng được xác nhận đang giao.");
+            throw new IllegalStateException("Bạn chỉ có thể đánh giá sản phẩm sau khi đơn hàng đã được giao thành công.");
         }
 
         // Lưu review
