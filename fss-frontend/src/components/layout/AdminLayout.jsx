@@ -1,23 +1,35 @@
+import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
-  LogOut, ChevronRight, Bell, Search,
+  LogOut, ChevronRight, Bell, Search, X, Check,
   Zap, TrendingUp, Activity
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import useNotificationStore from '../../store/notificationStore';
 
 const adminNavItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin', desc: 'Tổng quan hệ thống' },
   { icon: Package, label: 'Sản phẩm', path: '/admin/products', desc: 'Quản lý kho hàng' },
   { icon: ShoppingCart, label: 'Đơn hàng', path: '/admin/orders', desc: 'Theo dõi giao dịch' },
-  { icon: Users, label: 'Tài khoản', path: '/admin/accounts', desc: 'Phân quyền người dùng' },
+  { icon: Users, label: 'Tài khoản', path: '/admin/accounts', desc: 'Quản lý người dùng' },
+  { icon: Zap, label: 'Voucher', path: '/admin/vouchers', desc: 'Quản lý mã giảm giá' },
 ];
 
 export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotificationStore();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notificationItems = Array.isArray(notifications) ? notifications : (notifications?.items || []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(() => fetchNotifications(), 30000); // Refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -310,6 +322,12 @@ export default function AdminLayout() {
                 boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
                 transition: 'all 0.2s',
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  toast.info('Tính năng tìm kiếm tổng hợp đang phát triển. Vui lòng sử dụng tìm kiếm bên trong từng trang.');
+                  e.target.value = '';
+                }
+              }}
               onFocus={e => {
                 e.target.style.borderColor = 'rgba(124,58,237,0.4)';
                 e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.08)';
@@ -346,14 +364,16 @@ export default function AdminLayout() {
             </Link>
 
             {/* Notification bell */}
-            <button style={{
-              position: 'relative', width: '52px', height: '52px',
-              borderRadius: '14px', border: '1px solid rgba(0,0,0,0.08)',
-              background: 'white', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-              color: '#64748B', transition: 'all 0.2s',
-            }}
+            <button
+              onClick={() => setNotifOpen(!notifOpen)}
+              style={{
+                position: 'relative', width: '52px', height: '52px',
+                borderRadius: '14px', border: '1px solid rgba(0,0,0,0.08)',
+                background: 'white', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                color: '#64748B', transition: 'all 0.2s',
+              }}
               onMouseEnter={e => {
                 e.currentTarget.style.background = '#F8F4FF';
                 e.currentTarget.style.color = '#7C3AED';
@@ -366,29 +386,114 @@ export default function AdminLayout() {
               }}
             >
               <Bell size={22} strokeWidth={2} />
-              <span style={{
-                position: 'absolute', top: '14px', right: '14px',
-                width: '10px', height: '10px',
-                background: '#EF4444', borderRadius: '50%',
-                border: '2px solid white',
-              }} />
+              {unreadCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: '12px', right: '12px',
+                  width: '12px', height: '12px',
+                  background: '#EF4444', borderRadius: '50%',
+                  border: '2px solid white',
+                }} />
+              )}
             </button>
+
+            <AnimatePresence>
+              {notifOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  style={{
+                    position: 'absolute', top: '70px', right: '16px',
+                    width: '360px', maxWidth: 'calc(100vw - 32px)',
+                    background: 'white', borderRadius: '20px',
+                    boxShadow: '0 25px 60px rgba(0,0,0,0.16)',
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    zIndex: 50,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <p style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#111827' }}>Thông báo</p>
+                        <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>{unreadCount} thông báo chưa đọc</p>
+                      </div>
+                      <button
+                        onClick={() => setNotifOpen(false)}
+                        style={{
+                          width: '34px', height: '34px', borderRadius: '10px',
+                          background: 'rgba(241,245,249,0.9)', border: 'none',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#6B7280'
+                        }}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                    {notificationItems.length === 0 ? (
+                      <div style={{ padding: '32px 20px', textAlign: 'center', color: '#9CA3AF' }}>
+                        Không có thông báo nào
+                      </div>
+                    ) : notificationItems.slice(0, 6).map((notification) => (
+                      <button
+                        key={notification.id}
+                        onClick={() => {
+                          if (!notification.read) markAsRead(notification.id);
+                        }}
+                        style={{
+                          width: '100%', textAlign: 'left', padding: '14px 20px',
+                          background: notification.read ? 'white' : 'rgba(124,58,237,0.06)',
+                          border: 'none', borderBottom: '1px solid rgba(0,0,0,0.04)',
+                          cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: '12px'
+                        }}
+                      >
+                        <div style={{
+                          width: '10px', height: '10px', borderRadius: '50%',
+                          background: notification.read ? '#E5E7EB' : '#7C3AED',
+                          marginTop: '6px', flexShrink: 0
+                        }} />
+                        <div style={{ flex: 1 }}>
+                          <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#111827' }}>
+                            {notification.title}
+                          </p>
+                          <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#6B7280', lineHeight: 1.6 }}>
+                            {notification.message}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      markAllAsRead();
+                    }}
+                    style={{
+                      width: '100%', padding: '14px 20px', borderRadius: '0 0 20px 20px',
+                      background: '#F8F4FF', border: 'none', fontWeight: 700,
+                      color: '#7C3AED', cursor: 'pointer'
+                    }}
+                  >
+                    Đánh dấu đã đọc tất cả
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </header>
 
         {/* ── PAGE CONTENT ── */}
-        <AnimatePresence mode="wait">
-          <motion.main
-            key={location.pathname}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            style={{ flex: 1, padding: '32px', overflowX: 'hidden' }}
-          >
-            <Outlet />
-          </motion.main>
-        </AnimatePresence>
+        <motion.main
+          key={location.pathname}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          style={{ flex: 1, padding: '32px', overflowX: 'hidden' }}
+        >
+          <Outlet />
+        </motion.main>
       </div>
     </div>
   );

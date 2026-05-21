@@ -28,7 +28,9 @@ export default function ProductCard({ product }) {
   const imageUrl = product.imagePath
     ? (product.imagePath.startsWith('http')
         ? product.imagePath
-        : `http://localhost:8080${product.imagePath}`)
+        : product.imagePath.startsWith('/')
+          ? `http://localhost:8080${product.imagePath}`
+          : `http://localhost:8080/images/${product.imagePath}`)
     : (product.images?.[imgIdx] || FALLBACK);
   const sizes = product.sizes || ['S', 'M', 'L', 'XL'];
   const colorNames = product.colorNames || [translate(product.baseColour) || 'Mặc định'];

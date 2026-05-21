@@ -133,7 +133,7 @@ export default function HomePage() {
                       className="absolute inset-0"
                     >
                       <img
-                        src={heroProduct.imagePath ? `http://localhost:8080${heroProduct.imagePath}` : (heroProduct.images?.[0] || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=60')}
+                        src={heroProduct.imagePath ? (heroProduct.imagePath.startsWith('http') ? heroProduct.imagePath : heroProduct.imagePath.startsWith('/') ? `http://localhost:8080${heroProduct.imagePath}` : `http://localhost:8080/images/${heroProduct.imagePath}`) : (heroProduct.images?.[0] || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=60')}
                         alt={heroProduct.productDisplayName || heroProduct.name}
                         className="w-full h-full object-cover object-top"
                       />

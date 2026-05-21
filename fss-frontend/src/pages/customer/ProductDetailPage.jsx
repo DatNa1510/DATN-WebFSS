@@ -84,7 +84,12 @@ export default function ProductDetailPage() {
       images = raw.images;
     } else if (raw.imagePath) {
       // Backend trả về imagePath, có thể là nhiều ảnh phân cách bằng dấu phẩy
-      images = raw.imagePath.split(',').map(p => p.trim().startsWith('http') ? p.trim() : `${BASE}${p.trim()}`);
+      images = raw.imagePath.split(',').map(p => {
+        const trimmed = p.trim();
+        if (trimmed.startsWith('http')) return trimmed;
+        if (trimmed.startsWith('/')) return `${BASE}${trimmed}`;
+        return `${BASE}/images/${trimmed}`;
+      });
     } else {
       images = ['https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&q=80'];
     }
