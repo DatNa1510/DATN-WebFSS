@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Shield, User, ChevronLeft, ChevronRight, Users, Lock, ShieldAlert, Loader2 } from 'lucide-react';
+import { Search, Shield, User, ChevronLeft, ChevronRight, Users, Lock, ShieldAlert, Loader2, Trash2, History } from 'lucide-react';
 import { toast } from '../../store/toastStore';
+import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
 
 const API = 'http://localhost:8080';
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
@@ -18,6 +19,10 @@ export default function AdminAccounts() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [confirmLock, setConfirmLock] = useState(null); // id of user to lock/unlock
+  const [lockReason, setLockReason] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(null); // id of user to delete
+  const [deleteReason, setDeleteReason] = useState('');
+  const [isLogsOpen, setIsLogsOpen] = useState(false);
 
   const fetchUsers = useCallback(async (p = 0, q = search, r = filterRole, s = filterStatus) => {
     setLoading(true);
@@ -42,28 +47,62 @@ export default function AdminAccounts() {
 
   useEffect(() => { fetchUsers(0, '', 'ALL', 'ALL'); }, [fetchUsers]);
 
-  // Debounced search
+  // Reset page when filters change
+  useEffect(() => { setPage(0); }, [search, filterRole, filterStatus]);
+
+  // Debounced fetch
   useEffect(() => {
-    const t = setTimeout(() => { fetchUsers(0, search, filterRole, filterStatus); }, 500);
+    const t = setTimeout(() => { fetchUsers(page, search, filterRole, filterStatus); }, 500);
     return () => clearTimeout(t);
-  }, [search, filterRole, filterStatus, fetchUsers]);
+  }, [page, search, filterRole, filterStatus, fetchUsers]);
 
   const toggleStatus = async (id, currentStatus) => {
+    if (currentStatus && !lockReason.trim()) {
+      toast.error('Vui lòng nhập lý do khóa tài khoản!');
+      return;
+    }
     try {
       const res = await fetch(`${API}/api/admin/users/${id}/toggle-status`, {
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({ reason: lockReason })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Lỗi hệ thống');
+      }
+      const data = await res.json();
+      toast.success(data.message);
+      setUsers(prev => prev.map(u => u.id === id ? data.user : u));
+      fetchUsers(page, search, filterRole, filterStatus);
+    } catch (err) {
+      toast.error(err.message || 'Không thể cập nhật trạng thái tài khoản!');
+    }
+    setConfirmLock(null);
+    setLockReason('');
+  };
+
+  const deleteUser = async (id) => {
+    if (!deleteReason.trim()) {
+      toast.error('Vui lòng nhập lý do xóa tài khoản!');
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/api/admin/users/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({ reason: deleteReason })
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
       toast.success(data.message);
       setUsers(prev => prev.map(u => u.id === id ? data.user : u));
-      // Refresh stats quietly
       fetchUsers(page, search, filterRole, filterStatus);
     } catch {
-      toast.error('Không thể cập nhật trạng thái tài khoản!');
+      toast.error('Không thể xóa tài khoản!');
     }
-    setConfirmLock(null);
+    setConfirmDelete(null);
+    setDeleteReason('');
   };
 
   return (
@@ -76,10 +115,22 @@ export default function AdminAccounts() {
             Quản lý người dùng
           </h1>
           <p style={{ fontSize: '13.5px', color: '#64748B', marginTop: '6px', fontWeight: 500 }}>
-            Phân quyền, theo dõi trạng thái và lịch sử hoạt động của hệ thống
+            Theo dõi trạng thái, khóa và xóa tài khoản
           </p>
         </div>
-
+        <button
+          onClick={() => setIsLogsOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '7px',
+            padding: '10px 16px', borderRadius: '10px',
+            background: 'white', border: '1px solid rgba(0,0,0,0.09)',
+            fontSize: '13px', fontWeight: 700, color: '#475569',
+            cursor: 'pointer', fontFamily: 'inherit',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)', whiteSpace: 'nowrap',
+          }}
+        >
+          <History size={15} strokeWidth={2.5} /> Lịch sử
+        </button>
       </div>
 
       {/* ── FILTER BAR ── */}
@@ -151,6 +202,7 @@ export default function AdminAccounts() {
             <option value="ALL">Tất cả trạng thái</option>
             <option value="ACTIVE">Hoạt động</option>
             <option value="LOCKED">Đã khóa</option>
+            <option value="DELETED">Đã xóa</option>
           </select>
           <div style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#7C3AED', fontSize: '10px' }}>▼</div>
         </div>
@@ -167,35 +219,46 @@ export default function AdminAccounts() {
         boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
         overflow: 'hidden',
       }}>
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', maxHeight: 'calc(100vh - 140px)', minHeight: '650px', overflowY: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
               <tr style={{ background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 {['Người dùng', 'Vai trò', 'Trạng thái', 'Ngày tạo', 'Thao tác'].map(h => (
                   <th key={h} style={{
                     textAlign: 'left', padding: '14px 20px',
                     fontSize: '11px', fontWeight: 700, color: '#94A3B8',
                     letterSpacing: '0.07em', textTransform: 'uppercase',
+                    background: '#FAFAFA', // Đảm bảo background không bị trong suốt khi cuộn
+                    boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.05)'
                   }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {loading ? Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                  {[250, 100, 100, 120, 100].map((w, j) => (
-                    <td key={j} style={{ padding: '14px 20px' }}>
-                      <div style={{ height: '16px', width: `${w}px`, background: 'linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)', borderRadius: '6px' }} />
-                    </td>
-                  ))}
+              {loading ? (
+                <tr>
+                  <td colSpan="5" style={{ padding: '80px 0', textAlign: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        style={{
+                          width: '40px', height: '40px',
+                          border: '4px solid rgba(124,58,237,0.1)',
+                          borderTopColor: '#7C3AED',
+                          borderRadius: '50%',
+                        }}
+                      />
+                      <p style={{ fontSize: '14px', color: '#94A3B8', fontWeight: 600 }}>Đang tải danh sách thành viên...</p>
+                    </div>
+                  </td>
                 </tr>
-              )) : users.map((u, idx) => (
+              ) : users.map((u, idx) => (
                 <motion.tr
                   key={u.id}
-                  layout
-                  initial={{ opacity: 0, y: 6 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.04 }}
+                  transition={{ delay: Math.min(idx * 0.04, 0.4) }}
                   style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', transition: 'background 0.15s' }}
                   onMouseEnter={e => {
                     e.currentTarget.style.background = '#FDFDFF';
@@ -210,14 +273,15 @@ export default function AdminAccounts() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{ position: 'relative', flexShrink: 0 }}>
                         <img
-                          src={u.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName)}&background=7C3AED&color=fff`}
+                          src={u.avatarUrl ? (u.avatarUrl.startsWith('http') ? u.avatarUrl : `${API}/images/${u.avatarUrl}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName)}&background=7C3AED&color=fff`}
                           alt={u.fullName}
                           style={{ width: '42px', height: '42px', borderRadius: '12px', objectFit: 'cover', border: '2px solid rgba(124,58,237,0.1)' }}
+                          onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName)}&background=7C3AED&color=fff`; }}
                         />
                         <div style={{
                           position: 'absolute', bottom: '-2px', right: '-2px',
                           width: '11px', height: '11px', borderRadius: '50%',
-                          background: u.isEnabled ? '#10B981' : '#EF4444',
+                          background: u.isDeleted ? '#94A3B8' : (u.isEnabled ? '#10B981' : '#EF4444'),
                           border: '2px solid white',
                         }} />
                       </div>
@@ -252,15 +316,15 @@ export default function AdminAccounts() {
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: '5px',
                       padding: '5px 12px', borderRadius: '8px',
-                      background: u.isEnabled ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.09)',
-                      color: u.isEnabled ? '#047857' : '#DC2626',
+                      background: u.isDeleted ? 'rgba(100,116,139,0.08)' : (u.isEnabled ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.09)'),
+                      color: u.isDeleted ? '#64748B' : (u.isEnabled ? '#047857' : '#DC2626'),
                       fontSize: '11.5px', fontWeight: 700,
                     }}>
                       <span style={{
                         width: '6px', height: '6px', borderRadius: '50%',
-                        background: u.isEnabled ? '#10B981' : '#EF4444',
+                        background: u.isDeleted ? '#94A3B8' : (u.isEnabled ? '#10B981' : '#EF4444'),
                       }} />
-                      {u.isEnabled ? 'Hoạt động' : 'Đã khóa'}
+                      {u.isDeleted ? 'Đã xóa' : (u.isEnabled ? 'Hoạt động' : 'Đã khóa')}
                     </span>
                   </td>
                   <td style={{ padding: '14px 20px' }}>
@@ -268,48 +332,42 @@ export default function AdminAccounts() {
                       {new Date(u.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                     </p>
                   </td>
-                  <td style={{ padding: '14px 20px', position: 'relative' }}>
-                    <button
-                      onClick={() => setConfirmLock(confirmLock === u.id ? null : u.id)}
-                      className="user-action"
-                      disabled={u.role === 'ADMIN'}
-                      style={{
-                        opacity: u.role === 'ADMIN' ? 0.3 : 0, transition: 'opacity 0.2s',
-                        padding: '6px 14px', borderRadius: '8px',
-                        background: u.isEnabled ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)', 
-                        border: 'none',
-                        fontSize: '12.5px', fontWeight: 700, 
-                        color: u.isEnabled ? '#EF4444' : '#10B981',
-                        cursor: u.role === 'ADMIN' ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-                      }}
-                    >
-                      {u.isEnabled ? 'Khóa' : 'Mở khóa'}
-                    </button>
-                    
-                    {/* Confirm Dialog */}
-                    <AnimatePresence>
-                      {confirmLock === u.id && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                  <td style={{ padding: '14px 20px' }}>
+                    <div className="user-action" style={{ display: 'flex', gap: '6px', opacity: 0, transition: 'opacity 0.2s' }}>
+                      {/* Nút Khóa / Mở khóa */}
+                      {!u.isDeleted && u.role !== 'ADMIN' && (
+                        <button
+                          onClick={() => { setConfirmLock(confirmLock === u.id ? null : u.id); setConfirmDelete(null); setLockReason(''); }}
                           style={{
-                            position: 'absolute', right: '100%', top: '50%', transform: 'translateY(-50%)',
-                            marginRight: '12px', background: 'white', borderRadius: '12px',
-                            padding: '16px', width: '240px', boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-                            border: '1px solid rgba(0,0,0,0.08)', zIndex: 10,
+                            padding: '5px 12px', borderRadius: '8px',
+                            background: u.isEnabled ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)',
+                            border: 'none', fontSize: '12px', fontWeight: 700,
+                            color: u.isEnabled ? '#EF4444' : '#10B981',
+                            cursor: 'pointer', fontFamily: 'inherit',
                           }}
                         >
-                          <p style={{ fontSize: '13px', color: '#1E293B', fontWeight: 600, marginBottom: '12px', lineHeight: 1.4 }}>
-                            Bạn có chắc muốn {u.isEnabled ? 'khóa' : 'mở khóa'} tài khoản <span style={{ color: '#7C3AED' }}>{u.email}</span>?
-                          </p>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={() => setConfirmLock(null)} style={{ flex: 1, padding: '7px', borderRadius: '8px', background: '#F1F5F9', border: 'none', fontSize: '12px', fontWeight: 700, color: '#64748B', cursor: 'pointer' }}>Hủy</button>
-                            <button onClick={() => toggleStatus(u.id, u.isEnabled)} style={{ flex: 1, padding: '7px', borderRadius: '8px', background: u.isEnabled ? '#EF4444' : '#10B981', border: 'none', fontSize: '12px', fontWeight: 700, color: 'white', cursor: 'pointer' }}>Xác nhận</button>
-                          </div>
-                        </motion.div>
+                          {u.isEnabled ? 'Khóa' : 'Mở khóa'}
+                        </button>
                       )}
-                    </AnimatePresence>
+                      {/* Nút Xóa */}
+                      {!u.isDeleted && u.role !== 'ADMIN' && (
+                        <button
+                          onClick={() => { setConfirmDelete(confirmDelete === u.id ? null : u.id); setConfirmLock(null); setDeleteReason(''); }}
+                          style={{
+                            padding: '5px 10px', borderRadius: '8px',
+                            background: 'rgba(100,116,139,0.06)',
+                            border: 'none', fontSize: '12px', fontWeight: 700,
+                            color: '#64748B', cursor: 'pointer', fontFamily: 'inherit',
+                            display: 'flex', alignItems: 'center', gap: '4px',
+                          }}
+                        >
+                          <Trash2 size={12} /> Xóa
+                        </button>
+                      )}
+                      {u.isDeleted && (
+                        <span style={{ fontSize: '11px', color: '#94A3B8', fontStyle: 'italic' }}>Đã bị xóa</span>
+                      )}
+                    </div>
                   </td>
                 </motion.tr>
               ))}
@@ -385,14 +443,14 @@ export default function AdminAccounts() {
             changeColor: '#F59E0B',
           },
           {
-            icon: <ShieldAlert size={20} color="white" strokeWidth={2.5} />,
-            gradient: 'linear-gradient(135deg, #4F46E5, #3730A3)',
-            glow: 'rgba(79,70,229,0.3)',
-            lightBg: '#EEF2FF',
-            value: stats.admins.toLocaleString(),
-            label: 'Quản trị viên hệ thống',
-            change: 'Bảo mật',
-            changeColor: '#7C3AED',
+            icon: <Trash2 size={20} color="white" strokeWidth={2.5} />,
+            gradient: 'linear-gradient(135deg, #DC2626, #991B1B)',
+            glow: 'rgba(220,38,38,0.3)',
+            lightBg: '#FEF2F2',
+            value: (stats.deleted || 0).toLocaleString(),
+            label: 'Tài khoản đã xoá',
+            change: 'Đã xóa',
+            changeColor: '#DC2626',
           },
         ].map((card) => (
           <motion.div
@@ -437,6 +495,196 @@ export default function AdminAccounts() {
         ))}
       </div>
 
+      {/* ── MODAL KHÓA TÀI KHOẢN ── */}
+      <AnimatePresence>
+        {confirmLock && (() => {
+          const u = users.find(x => x.id === confirmLock);
+          if (!u) return null;
+          return (
+            <motion.div
+              key="lock-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { setConfirmLock(null); setLockReason(''); }}
+              style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+                backdropFilter: 'blur(4px)',
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  background: 'white', borderRadius: '20px', padding: '28px',
+                  width: '420px', maxWidth: '90vw',
+                  boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{
+                    width: '44px', height: '44px', borderRadius: '14px',
+                    background: u.isEnabled ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Lock size={20} color={u.isEnabled ? '#EF4444' : '#10B981'} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1E1B4B' }}>
+                      {u.isEnabled ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                    </h3>
+                    <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>{u.email}</p>
+                  </div>
+                </div>
+
+                {u.isEnabled ? (
+                  <>
+                    <p style={{ fontSize: '13px', color: '#475569', marginBottom: '12px', lineHeight: 1.5 }}>
+                      Vui lòng nhập lý do khóa tài khoản. Lý do này sẽ được hiển thị cho người dùng khi họ cố gắng đăng nhập.
+                    </p>
+                    <textarea
+                      value={lockReason}
+                      onChange={e => setLockReason(e.target.value)}
+                      placeholder="Nhập lý do khóa tài khoản..."
+                      rows={3}
+                      style={{
+                        width: '100%', padding: '12px 14px', borderRadius: '10px',
+                        border: '1.5px solid rgba(124,58,237,0.15)', background: '#F8F7FF',
+                        fontSize: '13px', color: '#374151', outline: 'none',
+                        fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box',
+                      }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.4)'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(124,58,237,0.15)'}
+                    />
+                  </>
+                ) : (
+                  <p style={{ fontSize: '13px', color: '#475569', marginBottom: '12px', lineHeight: 1.5 }}>
+                    Bạn có chắc chắn muốn mở khóa tài khoản <strong style={{ color: '#7C3AED' }}>{u.fullName}</strong>?
+                    Người dùng sẽ có thể đăng nhập trở lại bình thường.
+                  </p>
+                )}
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                  <button
+                    onClick={() => { setConfirmLock(null); setLockReason(''); }}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: '10px',
+                      background: '#F1F5F9', border: 'none', fontSize: '13px',
+                      fontWeight: 700, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >Hủy</button>
+                  <button
+                    onClick={() => toggleStatus(u.id, u.isEnabled)}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: '10px',
+                      background: u.isEnabled ? '#EF4444' : '#10B981', border: 'none',
+                      fontSize: '13px', fontWeight: 700, color: 'white',
+                      cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >{u.isEnabled ? 'Xác nhận khóa' : 'Mở khóa ngay'}</button>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
+      {/* ── MODAL XÓA TÀI KHOẢN ── */}
+      <AnimatePresence>
+        {confirmDelete && (() => {
+          const u = users.find(x => x.id === confirmDelete);
+          if (!u) return null;
+          return (
+            <motion.div
+              key="delete-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { setConfirmDelete(null); setDeleteReason(''); }}
+              style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+                backdropFilter: 'blur(4px)',
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  background: 'white', borderRadius: '20px', padding: '28px',
+                  width: '420px', maxWidth: '90vw',
+                  boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{
+                    width: '44px', height: '44px', borderRadius: '14px',
+                    background: 'rgba(239,68,68,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Trash2 size={20} color="#EF4444" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1E1B4B' }}>Xóa tài khoản</h3>
+                    <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>{u.email}</p>
+                  </div>
+                </div>
+
+                <p style={{ fontSize: '13px', color: '#475569', marginBottom: '12px', lineHeight: 1.5 }}>
+                  Hành động này sẽ vô hiệu hóa tài khoản <strong style={{ color: '#DC2626' }}>{u.fullName}</strong>.
+                  Vui lòng nhập lý do xóa. Lý do sẽ được hiển thị cho người dùng khi cố đăng nhập.
+                </p>
+                <textarea
+                  value={deleteReason}
+                  onChange={e => setDeleteReason(e.target.value)}
+                  placeholder="Nhập lý do xóa tài khoản..."
+                  rows={3}
+                  style={{
+                    width: '100%', padding: '12px 14px', borderRadius: '10px',
+                    border: '1.5px solid rgba(239,68,68,0.15)', background: '#FFF5F5',
+                    fontSize: '13px', color: '#374151', outline: 'none',
+                    fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box',
+                  }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(239,68,68,0.4)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(239,68,68,0.15)'}
+                />
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                  <button
+                    onClick={() => { setConfirmDelete(null); setDeleteReason(''); }}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: '10px',
+                      background: '#F1F5F9', border: 'none', fontSize: '13px',
+                      fontWeight: 700, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >Hủy</button>
+                  <button
+                    onClick={() => deleteUser(u.id)}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: '10px',
+                      background: '#EF4444', border: 'none',
+                      fontSize: '13px', fontWeight: 700, color: 'white',
+                      cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >Xác nhận xóa</button>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
+      <AdminLogsDrawer
+        isOpen={isLogsOpen}
+        onClose={() => setIsLogsOpen(false)}
+        targetType="ACCOUNT"
+        title="Lịch sử Quản lý Tài khoản"
+      />
     </div>
   );
 }
