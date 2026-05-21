@@ -374,6 +374,45 @@ public class OrderService {
             order.setStatus(newStatus);
             Order saved = orderRepository.save(order);
             log.info("Admin updated order {} status to {}", orderId, newStatus);
+            
+            // Gửi thông báo cho khách hàng
+            try {
+                String title = "";
+                String message = "";
+                NotificationType type = NotificationType.INFO;
+
+                switch (newStatus) {
+                    case CONFIRMED:
+                        title = "Đơn hàng đã được xác nhận";
+                        message = "Đơn hàng FSS-" + String.format("%06d", saved.getId()) + " đã được xác nhận và đang được chuẩn bị.";
+                        type = NotificationType.SUCCESS;
+                        break;
+                    case SHIPPING:
+                        title = "Đơn hàng đang giao";
+                        message = "Đơn hàng FSS-" + String.format("%06d", saved.getId()) + " đang được vận chuyển.";
+                        type = NotificationType.INFO;
+                        break;
+                    case DELIVERED:
+                        title = "Đơn hàng đã giao thành công";
+                        message = "Đơn hàng FSS-" + String.format("%06d", saved.getId()) + " đã giao thành công. Cảm ơn bạn đã mua sắm tại FSS!";
+                        type = NotificationType.SUCCESS;
+                        break;
+                    case CANCELLED:
+                        title = "Đơn hàng đã bị hủy";
+                        message = "Đơn hàng FSS-" + String.format("%06d", saved.getId()) + " đã bị hủy bởi quản trị viên.";
+                        type = NotificationType.WARNING;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (!title.isEmpty() && saved.getUser() != null) {
+                    notificationService.createNotification(saved.getUser(), title, message, type);
+                }
+            } catch (Exception e) {
+                log.error("Lỗi khi gửi thông báo cập nhật trạng thái đơn hàng cho khách hàng: ", e);
+            }
+
             return mapToResponse(saved);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Trạng thái không hợp lệ: " + statusStr);
