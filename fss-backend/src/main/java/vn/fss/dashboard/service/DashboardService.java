@@ -23,9 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class DashboardService {
 
     private final OrderRepository orderRepository;
@@ -75,9 +78,13 @@ public class DashboardService {
         }
         
         for (Object[] row : rawRevenue) {
-            int month = ((Number) row[0]).intValue();
-            BigDecimal rev = (BigDecimal) row[1];
-            revenueData.get(month - 1).setRevenue(rev);
+            if (row != null && row.length >= 2 && row[0] != null) {
+                int month = ((Number) row[0]).intValue();
+                BigDecimal rev = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+                if (month >= 1 && month <= 12) {
+                    revenueData.get(month - 1).setRevenue(rev);
+                }
+            }
         }
 
         // 3. Top Products
@@ -115,7 +122,7 @@ public class DashboardService {
                 .id(order.getId())
                 .orderCode(String.format("FSS-%06d", order.getId()))
                 .status(order.getStatus())
-                .statusLabel(STATUS_LABELS.getOrDefault(order.getStatus(), order.getStatus().name()))
+                .statusLabel(order.getStatus() != null ? STATUS_LABELS.getOrDefault(order.getStatus(), order.getStatus().name()) : "Không xác định")
                 .userEmail(order.getUser() != null ? order.getUser().getEmail() : null)
                 .userName(order.getUser() != null ? order.getUser().getFullName() : null)
                 .subtotal(order.getSubtotal())
