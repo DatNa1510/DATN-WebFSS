@@ -94,6 +94,17 @@ public class User implements Principal {
     @Column(name = "lock_time")
     private Instant lockTime;
 
+    // ── Status Reasons ─────────────────────────────────────────
+    @Column(name = "is_deleted", columnDefinition = "boolean default false")
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @Column(name = "deletion_reason", columnDefinition = "TEXT")
+    private String deletionReason;
+
+    @Column(name = "lock_reason", columnDefinition = "TEXT")
+    private String lockReason;
+
     // ── Timestamps ─────────────────────────────────────────────
 
     @CreationTimestamp

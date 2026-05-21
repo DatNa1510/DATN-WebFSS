@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/payment/momo-callback").permitAll()
                 .requestMatchers("/api/payment/vietqr-callback").permitAll()
                 .requestMatchers("/fashion-dataset/**").permitAll()
+                .requestMatchers("/images/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 // Mọi request còn lại đều cần JWT (bao gồm /api/auth/profile, /api/orders, /api/cart)
                 .anyRequest().authenticated()

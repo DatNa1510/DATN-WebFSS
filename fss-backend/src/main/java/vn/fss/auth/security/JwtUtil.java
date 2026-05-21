@@ -38,11 +38,17 @@ public class JwtUtil {
         claims.put("role", user.getRole().name());
         claims.put("name", user.getFullName());
 
+        // Nếu là Admin, cấp phiên đăng nhập kéo dài 10 năm (coi như mãi mãi)
+        long expirationMs = jwtExpirationMs;
+        if (User.Role.ADMIN.equals(user.getRole())) {
+            expirationMs = 1000L * 60 * 60 * 24 * 365 * 10; // 10 năm
+        }
+
         return Jwts.builder()
                 .claims(claims)
                 .subject(user.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }

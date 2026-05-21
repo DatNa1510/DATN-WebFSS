@@ -6,7 +6,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import vn.fss.adminlog.service.AdminLogService;
 import vn.fss.auth.dto.UserSummaryResponse;
 import vn.fss.auth.entity.User;
 import vn.fss.auth.repository.UserRepository;
@@ -22,6 +24,7 @@ import java.util.List;
 public class AdminUserController {
 
     private final UserRepository userRepository;
+    private final AdminLogService adminLogService;
 
     @GetMapping
     public ResponseEntity<?> getUsers(
@@ -44,9 +47,11 @@ public class AdminUserController {
                 .collect(Collectors.toList());
 
         // Get total stats (quick way)
-        long totalUsers = userRepository.count();
-        long lockedUsers = userRepository.findAll().stream().filter(u -> !u.getIsEnabled()).count();
-        long adminUsers = userRepository.findAll().stream().filter(u -> u.getRole() == User.Role.ADMIN).count();
+        List<User> allUsers = userRepository.findAll();
+        long totalUsers = allUsers.size();
+        long lockedUsers = allUsers.stream().filter(u -> !u.getIsEnabled()).count();
+        long adminUsers = allUsers.stream().filter(u -> u.getRole() == User.Role.ADMIN).count();
+        long deletedUsers = allUsers.stream().filter(u -> Boolean.TRUE.equals(u.getIsDeleted())).count();
 
         return ResponseEntity.ok(Map.of(
                 "items", items,
@@ -56,29 +61,63 @@ public class AdminUserController {
                 "stats", Map.of(
                         "total", totalUsers,
                         "locked", lockedUsers,
-                        "admins", adminUsers
+                        "admins", adminUsers,
+                        "deleted", deletedUsers
                 )
         ));
     }
 
     @PatchMapping("/{id}/toggle-status")
-    public ResponseEntity<?> toggleUserStatus(@PathVariable Long id) {
+    public ResponseEntity<?> toggleUserStatus(Authentication auth, @PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng #" + id));
 
-        // Không cho phép tự khóa chính mình (cần check Principal, nhưng tạm thời block admin khóa admin cho an toàn)
-        // if (user.getRole() == User.Role.ADMIN) {
-        //    return ResponseEntity.badRequest().body(Map.of("error", "Không thể khóa tài khoản quản trị viên"));
-        // }
+        // Nếu tài khoản đã bị xóa thì không cho phép toggle
+        if (Boolean.TRUE.equals(user.getIsDeleted())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Tài khoản này đã bị xóa"));
+        }
 
         user.setIsEnabled(!user.getIsEnabled());
         if (user.getIsEnabled()) {
             user.setFailedAttempts(0); // reset failed attempts khi mở khóa
+            user.setLockReason(null);
+        } else {
+            if (body != null && body.containsKey("reason")) {
+                user.setLockReason(body.get("reason"));
+            }
         }
         User saved = userRepository.save(user);
 
+        adminLogService.log(
+            auth.getName(), auth.getName(), saved.getIsEnabled() ? "UNLOCK" : "LOCK", "ACCOUNT",
+            id, saved.getEmail(),
+            (saved.getIsEnabled() ? "Mở khóa" : "Khóa") + " tài khoản " + saved.getEmail() +
+            (saved.getIsEnabled() ? "" : " | Lý do: " + saved.getLockReason())
+        );
+
         return ResponseEntity.ok(Map.of(
                 "message", saved.getIsEnabled() ? "Đã mở khóa tài khoản" : "Đã khóa tài khoản",
+                "user", mapToResponse(saved)
+        ));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(Authentication auth, @PathVariable Long id, @RequestBody Map<String, String> body) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng #" + id));
+
+        user.setIsDeleted(true);
+        user.setDeletionReason(body.getOrDefault("reason", ""));
+        User saved = userRepository.save(user);
+
+        adminLogService.log(
+            auth.getName(), auth.getName(), "DELETE", "ACCOUNT",
+            id, saved.getEmail(),
+            "Xóa tài khoản " + saved.getEmail() + " | Lý do: " + saved.getDeletionReason()
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Đã xóa tài khoản",
                 "user", mapToResponse(saved)
         ));
     }
@@ -92,6 +131,9 @@ public class AdminUserController {
                 .avatarUrl(user.getAvatarUrl())
                 .role(user.getRole())
                 .isEnabled(user.getIsEnabled())
+                .isDeleted(user.getIsDeleted())
+                .deletionReason(user.getDeletionReason())
+                .lockReason(user.getLockReason())
                 .failedAttempts(user.getFailedAttempts())
                 .createdAt(user.getCreatedAt())
                 .build();

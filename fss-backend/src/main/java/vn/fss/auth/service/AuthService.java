@@ -120,7 +120,15 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Email hoặc mật khẩu không đúng"));
 
-        // Kiểm tra tài khoản có đang bị khóa không? (khóa 15 phút)
+        // Kiểm tra tài khoản bị xóa
+        if (Boolean.TRUE.equals(user.getIsDeleted())) {
+            String reason = user.getDeletionReason() != null && !user.getDeletionReason().isBlank() 
+                            ? user.getDeletionReason() 
+                            : "Vi phạm chính sách hệ thống";
+            throw new RuntimeException("Tài khoản của bạn đã bị xóa. Lý do: " + reason);
+        }
+
+        // Kiểm tra tài khoản có đang bị khóa không? (khóa 15 phút do sai mật khẩu)
         if (user.getLockTime() != null) {
             if (user.getLockTime().plus(15, ChronoUnit.MINUTES).isAfter(Instant.now())) {
                 long minutesLeft = ChronoUnit.MINUTES.between(Instant.now(), user.getLockTime().plus(15, ChronoUnit.MINUTES));
@@ -146,6 +154,9 @@ public class AuthService {
         }
 
         if (!user.getIsEnabled()) {
+            if (user.getLockReason() != null && !user.getLockReason().isBlank()) {
+                throw new RuntimeException("Tài khoản của bạn đã bị khóa. Lý do: " + user.getLockReason());
+            }
             throw new RuntimeException("Vui lòng xác thực email trước khi đăng nhập");
         }
 

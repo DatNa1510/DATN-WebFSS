@@ -20,4 +20,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Tìm kiếm user bằng reset password token
     Optional<User> findByResetPasswordToken(String token);
+
+    // Đếm số lượng user theo role
+    long countByRole(User.Role role);
+
+    // Admin: Tìm kiếm user theo role, name/email với pagination
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE " +
+            "(:role = 'ALL' OR CAST(u.role AS string) = :role) AND " +
+            "(:status = 'ALL' OR " +
+            "(:status = 'ACTIVE' AND u.isEnabled = true AND (u.isDeleted = false OR u.isDeleted IS NULL)) OR " +
+            "(:status = 'LOCKED' AND u.isEnabled = false AND (u.isDeleted = false OR u.isDeleted IS NULL)) OR " +
+            "(:status = 'DELETED' AND u.isDeleted = true)) AND " +
+            "(LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))")
+    org.springframework.data.domain.Page<User> findUsersByFilters(
+            @org.springframework.data.repository.query.Param("role") String role,
+            @org.springframework.data.repository.query.Param("status") String status,
+            @org.springframework.data.repository.query.Param("search") String search,
+            org.springframework.data.domain.Pageable pageable);
 }
