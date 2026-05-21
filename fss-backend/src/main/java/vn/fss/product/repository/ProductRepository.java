@@ -24,4 +24,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("minPrice") java.math.BigDecimal minPrice,
             @Param("maxPrice") java.math.BigDecimal maxPrice,
             Pageable pageable);
+
+    @Query("SELECT p FROM Product p ORDER BY p.sold DESC")
+    Page<Product> findTopProductsBySold(Pageable pageable);
+
+    @Query("SELECT MAX(p.id) FROM Product p")
+    Long findMaxId();
 }
