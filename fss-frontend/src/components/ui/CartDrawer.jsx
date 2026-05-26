@@ -6,7 +6,7 @@ import { formatPrice } from '../../data/mockData';
 import useAuthStore from '../../store/authStore';
 
 export default function CartDrawer() {
-  const { items, isOpen, closeCart, removeItem, updateQty } = useCartStore();
+  const { items, isOpen, closeCart, removeItem, updateQty, selectAll } = useCartStore();
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
   const safeItems = items || [];
@@ -137,7 +137,10 @@ export default function CartDrawer() {
                   <Link
                     to="/checkout"
                     id="drawer-checkout-btn"
-                    onClick={closeCart}
+                    onClick={() => {
+                      selectAll();
+                      closeCart();
+                    }}
                     className="flex justify-center w-full px-6 py-4 bg-primary text-white text-[13px] font-black uppercase tracking-wider rounded-sm hover:bg-primary-700 transition-colors shadow-lg shadow-primary/20 hover:scale-[1.01]"
                   >
                     Thanh toán ngay <ArrowRight size={16} strokeWidth={2.5} className="ml-2" />

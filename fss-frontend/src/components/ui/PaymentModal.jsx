@@ -151,7 +151,7 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
             </div>
             {/* Header text */}
             <div className="flex flex-col justify-center px-6 py-5">
-              <h3 className="text-[20px] font-black text-[#00168D] tracking-tight uppercase leading-none pb-1.5 pt-1">
+              <h3 className="text-[20px] font-bold text-[#00168D] uppercase leading-relaxed pt-3 mb-1">
                 Chuyển khoản VietQR
               </h3>
               <p className="text-[13px] text-slate-500 font-medium">Quét mã QR qua ứng dụng ngân hàng</p>
@@ -306,7 +306,7 @@ function InfoRow({ icon, label, value, badge, copyable, highlight, valueClass, o
       </div>
       <div className="flex items-center gap-2 min-w-0">
         {badge && (
-          <span className="px-2 py-1 bg-[#00168D] text-white text-[11px] font-black rounded-sm tracking-wider shrink-0">
+          <span className="px-2 py-1 bg-[#00168D] text-white text-[11px] font-black rounded-[2px] tracking-wider shrink-0">
             {badge}
           </span>
         )}
