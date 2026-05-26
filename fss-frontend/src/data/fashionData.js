@@ -17,6 +17,10 @@ export const VN_DICT = {
   'Apparel': 'Quần áo',
   'Footwear': 'Giày dép',
   'Accessories': 'Phụ kiện',
+  'Personal Care': 'Chăm sóc cá nhân',
+  'Sporting Goods': 'Đồ thể thao',
+  'Home': 'Đồ gia dụng',
+  'Free Items': 'Quà tặng',
   'Topwear': 'Trang phục trên',
   'Bottomwear': 'Trang phục dưới',
   'Innerwear': 'Đồ lót',
@@ -39,6 +43,14 @@ export const VN_DICT = {
   'Makeup': 'Trang điểm',
   'Skin Care': 'Chăm sóc da',
   'Bath and Body': 'Tắm & Toàn thân',
+  'Sports Gear': 'Dụng cụ thể thao',
+  'Sports Shoes': 'Giày thể thao',
+  'Sports Apparel': 'Quần áo thể thao',
+  'Home Decor': 'Trang trí nhà cửa',
+  'Bedding': 'Chăn ga gối nệm',
+  'Kitchenware': 'Dụng cụ nhà bếp',
+  'Gifts': 'Quà tặng kèm',
+  'Samples': 'Mẫu thử',
   
   // Articles
   'Tshirts': 'Áo thun',
@@ -225,10 +237,14 @@ export function translateName(product) {
 
 // ─── MAP CATEGORY SANG TIẾNG VIỆT ─────────────────────
 export const CATEGORY_MAP = {
-  all        : { label: 'Tất cả',    slug: 'all',         color: '#00168d' },
-  Apparel    : { label: 'Quần áo',   slug: 'Apparel',     color: '#7c3aed' },
-  Footwear   : { label: 'Giày dép',  slug: 'Footwear',    color: '#0891b2' },
-  Accessories: { label: 'Phụ kiện',  slug: 'Accessories', color: '#d97706' },
+  all          : { label: 'Tất cả',             slug: 'all',           color: '#00168d' },
+  Apparel      : { label: 'Quần áo',            slug: 'Apparel',       color: '#7c3aed' },
+  Footwear     : { label: 'Giày dép',           slug: 'Footwear',      color: '#0891b2' },
+  Accessories  : { label: 'Phụ kiện',           slug: 'Accessories',   color: '#d97706' },
+  'Personal Care': { label: 'Chăm sóc cá nhân', slug: 'Personal Care', color: '#10b981' },
+  'Sporting Goods': { label: 'Đồ thể thao',     slug: 'Sporting Goods', color: '#ef4444' },
+  'Home'       : { label: 'Đồ gia dụng',        slug: 'Home',          color: '#8b5cf6' },
+  'Free Items' : { label: 'Quà tặng',           slug: 'Free Items',    color: '#64748b' },
 };
 
 export const GENDER_MAP = {

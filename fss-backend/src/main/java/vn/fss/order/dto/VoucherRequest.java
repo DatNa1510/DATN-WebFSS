@@ -1,5 +1,6 @@
 package vn.fss.order.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import vn.fss.order.entity.VoucherType;
 
@@ -15,5 +16,6 @@ public class VoucherRequest {
     private BigDecimal maxDiscount;
     private LocalDate expiryDate;
     private int usageLimit;
+    @JsonProperty("isActive")
     private boolean isActive;
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RefreshCw, Plus, Edit2, Trash2, Tag, Percent, Banknote, Calendar, Zap, AlertCircle, History } from 'lucide-react';
+import { RefreshCw, Plus, Edit2, Trash2, Tag, Percent, Banknote, Calendar, Zap, AlertCircle, History, Search, X } from 'lucide-react';
 import { toast } from '../../store/toastStore';
 import { formatPrice } from '../../data/mockData';
 import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
@@ -11,6 +11,7 @@ const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'
 export default function AdminVouchers() {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState(null);
@@ -102,6 +103,10 @@ export default function AdminVouchers() {
     }
   };
 
+  const filtered = vouchers.filter(v =>
+    v.code.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '40px' }}>
       {/* ── HEADER ── */}
@@ -151,6 +156,47 @@ export default function AdminVouchers() {
         </div>
       </div>
 
+      {/* ── SEARCH BAR ── */}
+      <div style={{
+        background: 'white', borderRadius: '16px', padding: '12px 16px',
+        border: '1px solid rgba(0,0,0,0.06)',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+      }}>
+        <div style={{ position: 'relative', flex: 1, maxWidth: '320px' }}>
+          <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+          <input
+            type="text"
+            placeholder="Tìm mã Voucher..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%', height: '40px',
+              paddingLeft: '36px', paddingRight: search ? '36px' : '14px',
+              background: '#F8F7FF', border: '1.5px solid rgba(124,58,237,0.1)',
+              borderRadius: '10px', fontSize: '13px', color: '#374151',
+              outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
+            }}
+            onFocus={e => { e.target.style.borderColor = 'rgba(124,58,237,0.4)'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.08)'; }}
+            onBlur={e => { e.target.style.borderColor = 'rgba(124,58,237,0.1)'; e.target.style.boxShadow = 'none'; }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              style={{
+                position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex',
+              }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <p style={{ fontSize: '12.5px', color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>
+          {filtered.length} / {vouchers.length} voucher
+        </p>
+      </div>
+
       {/* ── TABLE ── */}
       <div style={{ background: 'white', borderRadius: '18px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
         <div style={{ background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)', padding: '13px 24px', display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr 100px', gap: '16px' }}>
@@ -165,13 +211,15 @@ export default function AdminVouchers() {
               <div key={i} style={{ height: '60px', background: 'linear-gradient(90deg,#f8fafc 25%,#f1f5f9 50%,#f8fafc 75%)', borderRadius: '8px', marginBottom: '8px' }} />
             ))}
           </div>
-        ) : vouchers.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px' }}>
             <Tag size={48} style={{ color: '#E2E8F0', margin: '0 auto 16px' }} />
-            <p style={{ fontSize: '15px', color: '#94A3B8', fontWeight: 600 }}>Chưa có mã giảm giá nào.</p>
+            <p style={{ fontSize: '15px', color: '#94A3B8', fontWeight: 600 }}>
+              {search ? `Không tìm thấy voucher "${search}"` : 'Chưa có mã giảm giá nào.'}
+            </p>
           </div>
         ) : (
-          vouchers.map((v) => {
+          filtered.map((v) => {
             const isExpired = new Date(v.expiryDate) < new Date();
             const isMaxUsed = v.usedCount >= v.usageLimit;
             const statusColor = !v.isActive ? '#64748B' : (isExpired || isMaxUsed) ? '#EF4444' : '#10B981';
