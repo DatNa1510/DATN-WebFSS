@@ -3,75 +3,50 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Tag, Search, CheckCircle2 } from 'lucide-react';
 import { formatPrice } from '../../data/mockData';
 
-// Mock data for vouchers
-const VOUCHERS = [
-  {
-    id: 'v1',
-    code: 'FSSWELCOME',
-    title: 'Giảm 10%',
-    desc: 'Cho đơn hàng đầu tiên',
-    minOrder: 0,
-    maxDiscount: 50000,
-    exp: '31/12/2026',
-    type: 'percent',
-    value: 0.1
-  },
-  {
-    id: 'v2',
-    code: 'FREESHIP50',
-    title: 'Giảm 35.000đ',
-    desc: 'Phí vận chuyển cho đơn từ 500.000đ',
-    minOrder: 500000,
-    maxDiscount: 35000,
-    exp: '30/06/2026',
-    type: 'fixed',
-    value: 35000
-  },
-  {
-    id: 'v3',
-    code: 'SUMMER24',
-    title: 'Giảm 100.000đ',
-    desc: 'Áp dụng cho đơn hàng từ 1.500.000đ',
-    minOrder: 1500000,
-    maxDiscount: 100000,
-    exp: '15/05/2026',
-    type: 'fixed',
-    value: 100000
-  },
-  {
-    id: 'v4',
-    code: 'FSSVIP',
-    title: 'Giảm 20%',
-    desc: 'Ưu đãi đặc quyền cho khách hàng VIP',
-    minOrder: 2000000,
-    maxDiscount: 500000,
-    exp: '31/12/2026',
-    type: 'percent',
-    value: 0.2
-  },
-  {
-    id: 'v5',
-    code: 'TET2026',
-    title: 'Giảm 50.000đ',
-    desc: 'Mừng năm mới, áp dụng mọi đơn hàng',
-    minOrder: 0,
-    maxDiscount: 50000,
-    exp: '15/02/2026',
-    type: 'fixed',
-    value: 50000
-  }
-];
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+};
 
 export default function VoucherModal({ isOpen, onClose, onSelect, currentSubtotal, selectedVoucher }) {
   const [inputCode, setInputCode] = useState('');
+  const [vouchers, setVouchers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      fetch('http://localhost:8080/api/vouchers/active')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            const mapped = data.map(v => ({
+              id: v.id,
+              code: v.code,
+              title: v.type === 'PERCENT' ? `Giảm ${v.value * 100}%` : `Giảm ${formatPrice(v.value)}`,
+              desc: v.minOrder > 0 ? `Cho đơn từ ${formatPrice(v.minOrder)}` : 'Áp dụng mọi đơn hàng',
+              minOrder: v.minOrder || 0,
+              maxDiscount: v.maxDiscount || Infinity,
+              exp: formatDate(v.expiryDate),
+              type: v.type === 'PERCENT' ? 'percent' : 'fixed',
+              value: v.value
+            }));
+            setVouchers(mapped);
+          }
+        })
+        .catch(err => console.error('Lỗi khi tải voucher:', err))
+        .finally(() => setLoading(false));
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const validVouchers = VOUCHERS.filter(v => currentSubtotal >= v.minOrder);
-  const invalidVouchers = VOUCHERS.filter(v => currentSubtotal < v.minOrder);
+  const validVouchers = vouchers.filter(v => currentSubtotal >= v.minOrder);
+  const invalidVouchers = vouchers.filter(v => currentSubtotal < v.minOrder);
 
   const handleApplyInput = () => {
-    const found = VOUCHERS.find(v => v.code === inputCode.toUpperCase());
+    const found = vouchers.find(v => v.code === inputCode.trim().toUpperCase());
     if (found) {
       if (currentSubtotal >= found.minOrder) {
         onSelect(found);
@@ -80,7 +55,7 @@ export default function VoucherModal({ isOpen, onClose, onSelect, currentSubtota
         alert(`Đơn hàng chưa đạt tối thiểu ${formatPrice(found.minOrder)} để áp dụng mã này.`);
       }
     } else {
-      alert('Mã giảm giá không hợp lệ hoặc đã hết hạn.');
+      alert('Mã giảm giá không hợp lệ, đã hết hạn hoặc đã hết lượt sử dụng.');
     }
   };
 
@@ -185,8 +160,25 @@ export default function VoucherModal({ isOpen, onClose, onSelect, currentSubtota
               </button>
             </div>
 
+            {/* Loading State */}
+            {loading && (
+              <div className="flex flex-col items-center justify-center py-10 opacity-70">
+                <div className="w-8 h-8 border-4 border-[#00168D] border-t-transparent rounded-full animate-spin mb-3"></div>
+                <p className="text-[13px] font-bold text-gray-500 uppercase tracking-widest">Đang tải mã giảm giá...</p>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loading && vouchers.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-10 opacity-70">
+                <Tag size={48} className="text-gray-300 mb-4 stroke-1" />
+                <p className="text-[14px] font-bold text-gray-500 uppercase tracking-widest text-center">Chưa có mã giảm giá</p>
+                <p className="text-[13px] text-gray-400 mt-1.5 text-center px-4">Hiện tại cửa hàng chưa có chương trình khuyến mãi nào.</p>
+              </div>
+            )}
+
             {/* Valid Vouchers */}
-            {validVouchers.length > 0 && (
+            {!loading && validVouchers.length > 0 && (
               <div className="mb-6">
                 <h4 className="text-[13px] font-bold text-gray-900 uppercase tracking-wide mb-3">Mã đủ điều kiện</h4>
                 <div className="space-y-3">
@@ -198,7 +190,7 @@ export default function VoucherModal({ isOpen, onClose, onSelect, currentSubtota
             )}
 
             {/* Invalid Vouchers */}
-            {invalidVouchers.length > 0 && (
+            {!loading && invalidVouchers.length > 0 && (
               <div>
                 <h4 className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-3">Chưa đủ điều kiện</h4>
                 <div className="space-y-3">

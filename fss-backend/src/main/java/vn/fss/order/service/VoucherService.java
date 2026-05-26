@@ -82,6 +82,18 @@ public class VoucherService {
         });
     }
 
+    // ── PUBLIC / CUSTOMER ───────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<VoucherResponse> getActiveVouchers() {
+        return voucherRepository.findAll().stream()
+                .filter(Voucher::isActive)
+                .filter(v -> !LocalDate.now().isAfter(v.getExpiryDate()))
+                .filter(v -> v.getUsedCount() < v.getUsageLimit())
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     // ── ADMIN ───────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)

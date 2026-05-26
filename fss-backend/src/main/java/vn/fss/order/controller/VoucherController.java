@@ -41,6 +41,11 @@ public class VoucherController {
         }
     }
 
+    @GetMapping("/active")
+    public ResponseEntity<List<VoucherResponse>> getActiveVouchers() {
+        return ResponseEntity.ok(voucherService.getActiveVouchers());
+    }
+
     // ── ADMIN ───────────────────────────────────────────────────────────────
 
     @GetMapping("/admin")
