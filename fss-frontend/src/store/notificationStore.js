@@ -19,19 +19,8 @@ const useNotificationStore = create((set, get) => ({
       const newNotifications = Array.isArray(data) ? data : (data.items || []);
       const oldNotifications = Array.isArray(get().notifications) ? get().notifications : [];
 
-      // Nếu có thông báo mới (chưa từng thấy trước đây và chưa đọc)
-      if (oldNotifications.length > 0) {
-        const reallyNew = newNotifications.filter(
-          nn => !nn.read && !oldNotifications.some(on => on.id === nn.id)
-        );
-        
-        reallyNew.forEach(n => {
-          if (n.type === 'SUCCESS') toast.success(n.message);
-          else if (n.type === 'ERROR') toast.error(n.message);
-          else if (n.type === 'WARNING') toast.warning(n.message);
-          else toast.info(n.message);
-        });
-      }
+      // Chỉ cập nhật danh sách thông báo mới vào state (không tự động nhảy popup toast nữa)
+      // Thông báo mới sẽ chỉ được báo qua số lượng unreadCount trên quả chuông.
 
       set({ notifications: newNotifications });
       get().fetchUnreadCount();

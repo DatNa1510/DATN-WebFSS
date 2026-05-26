@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Edit2, Trash2, X, Check, AlertTriangle, TrendingUp, Star, ChevronLeft, ChevronRight, Filter, ArrowUpDown, Loader2, History } from 'lucide-react';
 import { toast } from '../../store/toastStore';
 import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
+import { translate } from '../../data/fashionData';
 
 const API = 'http://localhost:8080';
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
@@ -21,9 +22,110 @@ const categories = [
   { id: 'Apparel', name: 'Quần áo (Apparel)' },
   { id: 'Footwear', name: 'Giày dép (Footwear)' },
   { id: 'Accessories', name: 'Phụ kiện (Accessories)' },
+  { id: 'Personal Care', name: 'Mỹ phẩm / Chăm sóc cá nhân (Personal Care)' },
+  { id: 'Sporting Goods', name: 'Đồ thể thao (Sporting Goods)' },
+  { id: 'Home', name: 'Đồ gia dụng (Home)' },
+  { id: 'Free Items', name: 'Quà tặng (Free Items)' },
 ];
 
-const emptyForm = { name: '', price: '', originalPrice: '', category: 'Apparel', subCategory: '', description: '', stock: '', images: '' };
+const subCategoriesMap = {
+  Apparel: [
+    { id: 'Topwear', name: 'Trang phục trên (Topwear)' },
+    { id: 'Bottomwear', name: 'Trang phục dưới (Bottomwear)' },
+    { id: 'Innerwear', name: 'Đồ lót (Innerwear)' },
+    { id: 'Dress', name: 'Váy đầm (Dress)' },
+    { id: 'Loungewear and Nightwear', name: 'Đồ mặc nhà & Đồ ngủ (Loungewear/Nightwear)' },
+    { id: 'Saree', name: 'Trang phục Saree' },
+    { id: 'Socks', name: 'Vớ & Tất (Socks)' },
+  ],
+  Footwear: [
+    { id: 'Shoes', name: 'Giày (Shoes)' },
+    { id: 'Flip Flops', name: 'Dép xỏ ngón (Flip Flops)' },
+    { id: 'Sandal', name: 'Sandal / Xăng-đan' },
+    { id: 'Socks', name: 'Vớ & Tất (Socks)' },
+  ],
+  Accessories: [
+    { id: 'Watches', name: 'Đồng hồ (Watches)' },
+    { id: 'Bags', name: 'Túi xách (Bags)' },
+    { id: 'Belts', name: 'Thắt lưng (Belts)' },
+    { id: 'Jewellery', name: 'Trang sức (Jewellery)' },
+    { id: 'Eyewear', name: 'Mắt kính (Eyewear)' },
+    { id: 'Fragrance', name: 'Nước hoa (Fragrance)' },
+    { id: 'Wallets', name: 'Ví & Bóp (Wallets)' },
+    { id: 'Headwear', name: 'Mũ & Nón (Headwear)' },
+    { id: 'Socks', name: 'Vớ & Tất (Socks)' },
+  ],
+  'Personal Care': [
+    { id: 'Lips', name: 'Son môi (Lips)' },
+    { id: 'Nails', name: 'Sơn móng tay (Nails)' },
+    { id: 'Makeup', name: 'Trang điểm (Makeup)' },
+    { id: 'Skin Care', name: 'Chăm sóc da (Skin Care)' },
+    { id: 'Bath and Body', name: 'Tắm & Toàn thân (Bath and Body)' },
+    { id: 'Fragrance', name: 'Nước hoa (Fragrance)' },
+  ],
+  'Sporting Goods': [
+    { id: 'Sports Gear', name: 'Dụng cụ thể thao (Sports Gear)' },
+    { id: 'Sports Shoes', name: 'Giày thể thao (Sports Shoes)' },
+    { id: 'Sports Apparel', name: 'Quần áo thể thao (Sports Apparel)' }
+  ],
+  Home: [
+    { id: 'Home Decor', name: 'Trang trí nhà cửa (Home Decor)' },
+    { id: 'Bedding', name: 'Chăn ga gối nệm (Bedding)' },
+    { id: 'Kitchenware', name: 'Dụng cụ nhà bếp (Kitchenware)' }
+  ],
+  'Free Items': [
+    { id: 'Gifts', name: 'Quà tặng kèm (Gifts)' },
+    { id: 'Samples', name: 'Mẫu thử (Samples)' }
+  ]
+};
+
+const articleTypesMap = {
+  Apparel: [
+    { id: 'Tshirts', name: 'Áo thun (Tshirts)' },
+    { id: 'Shirts', name: 'Áo sơ mi (Shirts)' },
+    { id: 'Jackets', name: 'Áo khoác (Jackets)' },
+    { id: 'Sweaters', name: 'Áo len (Sweaters)' },
+    { id: 'Sweatshirts', name: 'Áo nỉ (Sweatshirts)' },
+    { id: 'Shorts', name: 'Quần short (Shorts)' },
+    { id: 'Jeans', name: 'Quần Jeans (Jeans)' },
+    { id: 'Trousers', name: 'Quần dài (Trousers)' },
+    { id: 'Kurtas', name: 'Áo Kurta (Kurtas)' },
+    { id: 'Tops', name: 'Áo kiểu (Tops)' },
+    { id: 'Skirts', name: 'Chân váy (Skirts)' },
+    { id: 'Leggings', name: 'Quần Legging (Leggings)' },
+    { id: 'Track Pants', name: 'Quần thể thao dài (Track Pants)' }
+  ],
+  Footwear: [
+    { id: 'Sports Shoes', name: 'Giày thể thao (Sports Shoes)' },
+    { id: 'Casual Shoes', name: 'Giày thời trang (Casual Shoes)' },
+    { id: 'Formal Shoes', name: 'Giày tây (Formal Shoes)' },
+    { id: 'Sandals', name: 'Sandal / Xăng-đan (Sandals)' },
+    { id: 'Heels', name: 'Giày cao gót (Heels)' },
+    { id: 'Flats', name: 'Giày đế bằng (Flats)' },
+    { id: 'Flip Flops', name: 'Dép xỏ ngón (Flip Flops)' }
+  ],
+  Accessories: [
+    { id: 'Watches', name: 'Đồng hồ đeo tay (Watches)' },
+    { id: 'Sunglasses', name: 'Kính mát (Sunglasses)' },
+    { id: 'Handbags', name: 'Túi xách tay (Handbags)' },
+    { id: 'Backpacks', name: 'Balo (Backpacks)' },
+    { id: 'Wallets', name: 'Ví & Bóp (Wallets)' },
+    { id: 'Belts', name: 'Thắt lưng (Belts)' },
+    { id: 'Ring', name: 'Nhẫn (Ring)' },
+    { id: 'Earrings', name: 'Hoa tai (Earrings)' },
+    { id: 'Necklaces', name: 'Vòng cổ (Necklaces)' },
+    { id: 'Caps', name: 'Mũ lưỡi trai (Caps)' },
+    { id: 'Socks', name: 'Vớ & Tất (Socks)' }
+  ],
+  'Personal Care': [
+    { id: 'Perfume', name: 'Nước hoa (Perfume)' },
+    { id: 'Deodorant', name: 'Lăn khử mùi (Deodorant)' },
+    { id: 'Lips', name: 'Son môi (Lips)' },
+    { id: 'Nail Polish', name: 'Sơn móng tay (Nail Polish)' }
+  ]
+};
+
+const emptyForm = { name: '', price: '', originalPrice: '', category: 'Apparel', subCategory: '', articleType: '', gender: 'Unisex', description: '', stock: '', images: '' };
 
 const inputStyle = {
   width: '100%', padding: '11px 14px',
@@ -57,6 +159,8 @@ export default function AdminProducts() {
   const [sortType, setSortType] = useState('newest');
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
+  const [isCustomSubCategory, setIsCustomSubCategory] = useState(false);
+  const [isCustomArticleType, setIsCustomArticleType] = useState(false);
 
   const fetchProducts = useCallback(async (page = 0, q = '', cat = 'all', s = 'newest') => {
     setLoading(true);
@@ -85,7 +189,19 @@ export default function AdminProducts() {
     return () => clearTimeout(t);
   }, [search, filterCategory, sortType, fetchProducts]);
 
-  const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => {
+      const nextForm = { ...f, [name]: value };
+      if (name === 'category') {
+        nextForm.subCategory = '';
+        nextForm.articleType = '';
+        setIsCustomSubCategory(false);
+        setIsCustomArticleType(false);
+      }
+      return nextForm;
+    });
+  };
 
   const handleFileChange = async (e) => {
     const files = e.target.files;
@@ -129,9 +245,10 @@ export default function AdminProducts() {
       originalPrice: form.originalPrice ? Number(form.originalPrice) : null,
       masterCategory: form.category,
       subCategory: form.subCategory,
+      articleType: form.articleType || '',
       stock: form.stock ? Number(form.stock) : 50,
       imagePath: form.images || '',
-      gender: 'Unisex',
+      gender: form.gender || 'Unisex',
       usage: 'Casual',
     };
 
@@ -151,10 +268,14 @@ export default function AdminProducts() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Lỗi lưu sản phẩm');
       
-      toast.success(data.message || 'Lưu thành công!');
+      if (window.location.pathname.startsWith('/admin')) {
+        toast.success(data.message || 'Lưu thành công!');
+      }
       setShowForm(false);
       setForm(emptyForm);
       setEditId(null);
+      setIsCustomSubCategory(false);
+      setIsCustomArticleType(false);
       fetchProducts(currentPage, search, filterCategory, sortType);
     } catch (error) {
       toast.error(error.message);
@@ -163,9 +284,26 @@ export default function AdminProducts() {
 
   const handleEdit = (p) => {
     setEditId(p.id);
-    setForm({ name: p.productDisplayName, price: p.price, originalPrice: p.originalPrice, category: p.masterCategory, subCategory: p.subCategory || '', description: '', stock: p.stock, images: p.imagePath || '' });
+    const subCat = p.subCategory || '';
+    const artType = p.articleType || '';
+    const currentCategory = p.masterCategory || 'Apparel';
+    const isPredefinedSub = subCategoriesMap[currentCategory]?.some(sc => sc.id === subCat);
+    const isPredefinedArt = articleTypesMap[currentCategory]?.some(at => at.id === artType);
+    setIsCustomSubCategory(!isPredefinedSub && subCat !== '');
+    setIsCustomArticleType(!isPredefinedArt && artType !== '');
+    setForm({
+      name: p.productDisplayName,
+      price: p.price,
+      originalPrice: p.originalPrice,
+      category: currentCategory,
+      subCategory: subCat,
+      articleType: artType,
+      gender: p.gender || 'Unisex',
+      description: '',
+      stock: p.stock,
+      images: p.imagePath || ''
+    });
     setOriginalImages(p.imagePath || '');
-    setEditId(p.id);
     setShowForm(true);
   };
 
@@ -179,7 +317,9 @@ export default function AdminProducts() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Lỗi xóa sản phẩm');
       
-      toast.success(data.message || 'Xóa thành công!');
+      if (window.location.pathname.startsWith('/admin')) {
+        toast.success(data.message || 'Xóa thành công!');
+      }
       setDeleteConfirm(null);
       fetchProducts(currentPage, search, filterCategory, sortType);
     } catch (error) {
@@ -233,7 +373,7 @@ export default function AdminProducts() {
             <History size={15} strokeWidth={2.5} /> Lịch sử
           </button>
           <button
-            onClick={() => { setShowForm(true); setForm(emptyForm); setEditId(null); }}
+            onClick={() => { setShowForm(true); setForm(emptyForm); setEditId(null); setIsCustomSubCategory(false); setIsCustomArticleType(false); }}
             style={{
               display: 'flex', alignItems: 'center', gap: '7px',
               padding: '10px 20px', borderRadius: '10px',
@@ -339,7 +479,6 @@ export default function AdminProducts() {
                   <label style={labelStyle}>Tên sản phẩm *</label>
                   <input
                     name="name" required value={form.name} onChange={handleChange}
-                    placeholder="VD: Áo Polo Premium Navy"
                     style={{
                       ...inputStyle,
                       borderColor: focusedInput === 'name' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
@@ -355,7 +494,6 @@ export default function AdminProducts() {
                     <label style={labelStyle}>Giá bán (₫) *</label>
                     <input
                       name="price" type="number" required value={form.price} onChange={handleChange}
-                      placeholder="325000"
                       style={{
                         ...inputStyle,
                         borderColor: focusedInput === 'price' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
@@ -369,7 +507,6 @@ export default function AdminProducts() {
                     <label style={labelStyle}>Giá gốc (₫)</label>
                     <input
                       name="originalPrice" type="number" value={form.originalPrice} onChange={handleChange}
-                      placeholder="450000"
                       style={{
                         ...inputStyle,
                         borderColor: focusedInput === 'originalPrice' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
@@ -381,6 +518,7 @@ export default function AdminProducts() {
                   </div>
                 </div>
 
+                {/* Danh mục & Phân loại chi tiết (Tag 2) */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={labelStyle}>Danh mục</label>
@@ -400,23 +538,130 @@ export default function AdminProducts() {
                   </div>
                   <div>
                     <label style={labelStyle}>Phân loại chi tiết (Tag 2)</label>
-                    <input
-                      name="subCategory" value={form.subCategory || ''} onChange={handleChange}
-                      placeholder="VD: Áo thun, Váy, Đồng hồ..."
-                      style={{
-                        ...inputStyle,
-                        borderColor: focusedInput === 'subCategory' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                        boxShadow: focusedInput === 'subCategory' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
+                    <select
+                      value={isCustomSubCategory ? 'custom' : (form.subCategory || '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setIsCustomSubCategory(true);
+                          setForm(f => ({ ...f, subCategory: '' }));
+                        } else {
+                          setIsCustomSubCategory(false);
+                          setForm(f => ({ ...f, subCategory: val }));
+                        }
                       }}
-                      onFocus={() => setFocusedInput('subCategory')}
+                      style={{
+                        ...inputStyle, appearance: 'none', cursor: 'pointer',
+                        borderColor: focusedInput === 'subCategorySelect' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                      }}
+                      onFocus={() => setFocusedInput('subCategorySelect')}
                       onBlur={() => setFocusedInput(null)}
-                    />
+                    >
+                      <option value="">-- Chọn phân loại chi tiết --</option>
+                      {(subCategoriesMap[form.category] || []).map((sc) => (
+                        <option key={sc.id} value={sc.id}>{sc.name}</option>
+                      ))}
+                      <option value="custom">Khác (Nhập thủ công)...</option>
+                    </select>
+                    {isCustomSubCategory && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{ marginTop: '8px' }}
+                      >
+                        <input
+                          name="subCategory"
+                          value={form.subCategory || ''}
+                          onChange={handleChange}
+                          placeholder="Nhập phân loại chi tiết khác..."
+                          style={{
+                            ...inputStyle,
+                            borderColor: focusedInput === 'subCategoryCustom' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                            boxShadow: focusedInput === 'subCategoryCustom' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
+                          }}
+                          onFocus={() => setFocusedInput('subCategoryCustom')}
+                          onBlur={() => setFocusedInput(null)}
+                        />
+                      </motion.div>
+                    )}
                   </div>
+                </div>
+
+                {/* Đối tượng sử dụng & Chi tiết sản phẩm */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={labelStyle}>Đối tượng sử dụng *</label>
+                    <select
+                      name="gender" value={form.gender} onChange={handleChange}
+                      style={{
+                        ...inputStyle, appearance: 'none', cursor: 'pointer',
+                        borderColor: focusedInput === 'gender' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                      }}
+                      onFocus={() => setFocusedInput('gender')}
+                      onBlur={() => setFocusedInput(null)}
+                    >
+                      <option value="Men">Nam (Men)</option>
+                      <option value="Women">Nữ (Women)</option>
+                      <option value="Unisex">Cả Nam & Nữ (Unisex)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Chi tiết sản phẩm (Article Type)</label>
+                    <select
+                      value={isCustomArticleType ? 'custom' : (form.articleType || '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setIsCustomArticleType(true);
+                          setForm(f => ({ ...f, articleType: '' }));
+                        } else {
+                          setIsCustomArticleType(false);
+                          setForm(f => ({ ...f, articleType: val }));
+                        }
+                      }}
+                      style={{
+                        ...inputStyle, appearance: 'none', cursor: 'pointer',
+                        borderColor: focusedInput === 'articleTypeSelect' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                      }}
+                      onFocus={() => setFocusedInput('articleTypeSelect')}
+                      onBlur={() => setFocusedInput(null)}
+                    >
+                      <option value="">-- Chọn chi tiết sản phẩm --</option>
+                      {(articleTypesMap[form.category] || []).map((at) => (
+                        <option key={at.id} value={at.id}>{at.name}</option>
+                      ))}
+                      <option value="custom">Khác (Nhập thủ công)...</option>
+                    </select>
+                    {isCustomArticleType && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{ marginTop: '8px' }}
+                      >
+                        <input
+                          name="articleType"
+                          value={form.articleType || ''}
+                          onChange={handleChange}
+                          placeholder="Nhập chi tiết sản phẩm khác..."
+                          style={{
+                            ...inputStyle,
+                            borderColor: focusedInput === 'articleTypeCustom' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
+                            boxShadow: focusedInput === 'articleTypeCustom' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
+                          }}
+                          onFocus={() => setFocusedInput('articleTypeCustom')}
+                          onBlur={() => setFocusedInput(null)}
+                        />
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tồn kho */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={labelStyle}>Tồn kho</label>
                     <input
                       name="stock" type="number" value={form.stock} onChange={handleChange}
-                      placeholder="85"
                       style={{
                         ...inputStyle,
                         borderColor: focusedInput === 'stock' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
@@ -625,7 +870,7 @@ export default function AdminProducts() {
               ) : products.map((p, idx) => {
                 const stockColor = p.stock > 10 ? '#10B981' : p.stock > 0 ? '#F59E0B' : '#EF4444';
                 const stockBg = p.stock > 10 ? 'rgba(16,185,129,0.1)' : p.stock > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
-                const displayTags = [p.masterCategory, p.subCategory].filter(Boolean).slice(0, 2);
+                const displayTags = [translate(p.masterCategory), translate(p.subCategory)].filter(Boolean).slice(0, 2);
 
                 return (
                   <motion.tr
@@ -662,7 +907,7 @@ export default function AdminProducts() {
                             {p.productDisplayName}
                           </p>
                           <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>
-                            {p.subCategory || p.masterCategory}
+                            {translate(p.subCategory) || translate(p.masterCategory)}
                           </p>
                         </div>
                       </div>

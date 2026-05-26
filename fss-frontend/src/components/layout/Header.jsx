@@ -34,14 +34,14 @@ export default function Header() {
   const totalItems = items?.reduce((sum, i) => sum + i.qty, 0) || 0;
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.role !== 'admin') {
       fetchCart();
       fetchNotifications();
       // Polling notifications every 30s
       const interval = setInterval(fetchNotifications, 30000);
       return () => clearInterval(interval);
     }
-  }, [isAuthenticated, fetchCart, fetchNotifications]);
+  }, [isAuthenticated, user?.role, fetchCart, fetchNotifications]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -171,8 +171,8 @@ export default function Header() {
                 </motion.button>
               )}
 
-              {/* Notifications */}
-              {isAuthenticated && (
+              {/* Notifications - chỉ hiện cho customer */}
+              {isAuthenticated && user?.role !== 'admin' && (
                 <div className="relative" ref={notiRef}>
                   <motion.button
                     whileTap={{ scale: 0.92 }}

@@ -22,6 +22,8 @@ const useToastStore = create((set) => ({
 
   removeToast: (id) =>
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
+
+  clearAll: () => set({ toasts: [] }),
 }));
 
 // ── Shorthand helpers ────────────────────────────────
@@ -30,6 +32,7 @@ export const toast = {
   error:   (msg, dur) => useToastStore.getState().addToast(msg, 'error',   dur),
   warning: (msg, dur) => useToastStore.getState().addToast(msg, 'warning', dur),
   info:    (msg, dur) => useToastStore.getState().addToast(msg, 'info',    dur),
+  clearAll: () => useToastStore.getState().clearAll(),
 };
 
 export default useToastStore;

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useNotificationStore from '../../store/notificationStore';
+import ToastContainer from '../ui/ToastContainer';
 
 const adminNavItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin', desc: 'Tổng quan hệ thống' },
@@ -28,7 +29,10 @@ export default function AdminLayout() {
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(() => fetchNotifications(), 30000); // Refresh every 30s
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      import('../../store/toastStore').then(m => m.toast.clearAll());
+    };
   }, []);
 
   const handleLogout = () => {
@@ -44,6 +48,7 @@ export default function AdminLayout() {
 
   return (
     <div style={{ display: 'flex', minHeight: '125vh', background: '#F8F9FF', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", zoom: 0.8 }}>
+      <ToastContainer />
 
       {/* ═══════════════════════════════════
           DARK SIDEBAR (Lightened)
@@ -304,40 +309,6 @@ export default function AdminLayout() {
             </div>
           </div>
 
-          {/* Search */}
-          <div style={{ position: 'relative', width: '280px' }}>
-            <Search size={15} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', pointerEvents: 'none' }} />
-            <input
-              type="text"
-              placeholder="Tìm kiếm..."
-              style={{
-                width: '100%', height: '40px',
-                background: 'white',
-                border: '1px solid rgba(0,0,0,0.08)',
-                borderRadius: '10px',
-                paddingLeft: '38px', paddingRight: '16px',
-                fontSize: '13px', color: '#374151',
-                outline: 'none',
-                fontFamily: 'inherit',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                transition: 'all 0.2s',
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  toast.info('Tính năng tìm kiếm tổng hợp đang phát triển. Vui lòng sử dụng tìm kiếm bên trong từng trang.');
-                  e.target.value = '';
-                }
-              }}
-              onFocus={e => {
-                e.target.style.borderColor = 'rgba(124,58,237,0.4)';
-                e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.08)';
-              }}
-              onBlur={e => {
-                e.target.style.borderColor = 'rgba(0,0,0,0.08)';
-                e.target.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)';
-              }}
-            />
-          </div>
 
           {/* Right actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
