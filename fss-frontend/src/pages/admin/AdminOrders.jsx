@@ -465,7 +465,17 @@ export default function AdminOrders() {
               <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748B' }}><span>Tạm tính</span><span>₫{fmt(detailOrder.subtotal)}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748B' }}><span>Phí ship</span><span>₫{fmt(detailOrder.shippingFee)}</span></div>
-                {detailOrder.discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#10B981' }}><span>Giảm giá</span><span>-₫{fmt(detailOrder.discount)}</span></div>}
+                {detailOrder.discount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#10B981', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>Giảm giá</span>
+                      {detailOrder.voucherCode && (
+                        <span style={{ padding: '2px 6px', background: 'rgba(16,185,129,0.1)', borderRadius: '4px', fontSize: '11px', fontWeight: 800 }}>{detailOrder.voucherCode}</span>
+                      )}
+                    </div>
+                    <span>-₫{fmt(detailOrder.discount)}</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: 900, color: '#1E1B4B', marginTop: '4px' }}><span>Tổng cộng</span><span>₫{fmt(detailOrder.totalAmount)}</span></div>
               </div>
             </motion.div>
