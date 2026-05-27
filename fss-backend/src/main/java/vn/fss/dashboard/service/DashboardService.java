@@ -6,17 +6,17 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import vn.fss.auth.entity.User;
 import vn.fss.auth.repository.UserRepository;
-import vn.fss.dashboard.dto.DashboardResponse;
-import vn.fss.dashboard.dto.DashboardStatsDto;
-import vn.fss.dashboard.dto.MonthlyRevenueDto;
+import vn.fss.dashboard.dto.*;
 import vn.fss.order.dto.OrderResponse;
 import vn.fss.order.dto.OrderItemResponse;
 import vn.fss.order.entity.Order;
+import vn.fss.order.entity.OrderStatus;
 import vn.fss.order.repository.OrderRepository;
 import vn.fss.product.entity.Product;
 import vn.fss.product.repository.ProductRepository;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,33 +50,62 @@ public class DashboardService {
             vn.fss.order.entity.OrderStatus.CANCELLED, "Đã huỷ"
     );
 
-    public DashboardResponse getDashboardData() {
+    public DashboardResponse getDashboardData(Integer year) {
+        int targetYear = (year != null) ? year : LocalDate.now().getYear();
+        int currentMonth = LocalDate.now().getMonthValue();
+        int currentYear = LocalDate.now().getYear();
+
         // 1. KPI Stats
         long totalOrders = orderRepository.count();
         long totalCustomers = userRepository.countByRole(User.Role.CUSTOMER);
         long totalProducts = productRepository.count();
         BigDecimal totalRevenue = orderRepository.calculateTotalRevenue();
-        if (totalRevenue == null) {
-            totalRevenue = BigDecimal.ZERO;
+        if (totalRevenue == null) totalRevenue = BigDecimal.ZERO;
+
+        // Extended KPIs
+        long deliveredOrders = orderRepository.countByStatus(OrderStatus.DELIVERED);
+        long cancelledOrders = orderRepository.countByStatus(OrderStatus.CANCELLED);
+        long pendingOrders = orderRepository.countByStatus(OrderStatus.PENDING);
+
+        BigDecimal avgOrderValue = orderRepository.calculateAvgOrderValue();
+        if (avgOrderValue == null) avgOrderValue = BigDecimal.ZERO;
+        avgOrderValue = avgOrderValue.setScale(0, RoundingMode.HALF_UP);
+
+        long newCustomersThisMonth = 0;
+        try {
+            newCustomersThisMonth = userRepository.countNewCustomersByMonthAndYear(currentMonth, currentYear);
+        } catch (Exception e) {
+            log.warn("Error counting new customers: {}", e.getMessage());
         }
+
+        BigDecimal revenueThisMonth = orderRepository.sumRevenueByMonthAndYear(currentMonth, currentYear);
+        if (revenueThisMonth == null) revenueThisMonth = BigDecimal.ZERO;
+
+        int prevMonth = currentMonth == 1 ? 12 : currentMonth - 1;
+        int prevYear = currentMonth == 1 ? currentYear - 1 : currentYear;
+        BigDecimal revenueLastMonth = orderRepository.sumRevenueByMonthAndYear(prevMonth, prevYear);
+        if (revenueLastMonth == null) revenueLastMonth = BigDecimal.ZERO;
 
         DashboardStatsDto stats = DashboardStatsDto.builder()
                 .totalOrders(totalOrders)
                 .totalCustomers(totalCustomers)
                 .totalProducts(totalProducts)
                 .totalRevenue(totalRevenue)
+                .deliveredOrders(deliveredOrders)
+                .cancelledOrders(cancelledOrders)
+                .pendingOrders(pendingOrders)
+                .avgOrderValue(avgOrderValue)
+                .newCustomersThisMonth(newCustomersThisMonth)
+                .revenueThisMonth(revenueThisMonth)
+                .revenueLastMonth(revenueLastMonth)
                 .build();
 
-        // 2. Monthly Revenue
-        int currentYear = LocalDate.now().getYear();
-        List<Object[]> rawRevenue = orderRepository.findMonthlyRevenue(currentYear);
+        // 2. Monthly Revenue (for target year)
+        List<Object[]> rawRevenue = orderRepository.findMonthlyRevenue(targetYear);
         List<MonthlyRevenueDto> revenueData = new ArrayList<>();
-        
-        // Initialize 12 months with 0
         for (int i = 1; i <= 12; i++) {
             revenueData.add(new MonthlyRevenueDto("T" + i, BigDecimal.ZERO));
         }
-        
         for (Object[] row : rawRevenue) {
             if (row != null && row.length >= 2 && row[0] != null) {
                 int month = ((Number) row[0]).intValue();
@@ -88,20 +117,89 @@ public class DashboardService {
         }
 
         // 3. Top Products
-        List<Product> topProducts = productRepository.findTopProductsBySold(PageRequest.of(0, 4)).getContent();
+        List<Product> topProducts = productRepository.findTopProductsBySold(PageRequest.of(0, 5)).getContent();
 
         // 4. Recent Orders
-        List<Order> recentOrderEntities = orderRepository.findTopRecentOrders(PageRequest.of(0, 5));
+        List<Order> recentOrderEntities = orderRepository.findTopRecentOrders(PageRequest.of(0, 8));
         List<OrderResponse> recentOrders = recentOrderEntities.stream()
                 .map(this::mapToOrderResponse)
                 .collect(Collectors.toList());
+
+        // 5. Order Status Stats (REAL DATA)
+        OrderStatusStatsDto orderStatusStats = buildOrderStatusStats();
+
+        // 6. Payment Method Stats (REAL DATA)
+        List<PaymentMethodStatsDto> paymentMethodStats = buildPaymentMethodStats();
+
+        // 7. Category Revenue (REAL DATA)
+        List<CategoryRevenueDto> categoryRevenue = buildCategoryRevenue();
 
         return DashboardResponse.builder()
                 .stats(stats)
                 .revenueData(revenueData)
                 .topProducts(topProducts)
                 .recentOrders(recentOrders)
+                .orderStatusStats(orderStatusStats)
+                .paymentMethodStats(paymentMethodStats)
+                .categoryRevenue(categoryRevenue)
                 .build();
+    }
+
+    private OrderStatusStatsDto buildOrderStatusStats() {
+        List<Object[]> statusCounts = orderRepository.countByStatusGrouped();
+        long pending = 0, confirmed = 0, shipping = 0, delivered = 0, cancelled = 0;
+        for (Object[] row : statusCounts) {
+            if (row[0] == null) continue;
+            OrderStatus status = (OrderStatus) row[0];
+            long count = ((Number) row[1]).longValue();
+            switch (status) {
+                case PENDING -> pending = count;
+                case CONFIRMED -> confirmed = count;
+                case SHIPPING -> shipping = count;
+                case DELIVERED -> delivered = count;
+                case CANCELLED -> cancelled = count;
+            }
+        }
+        return OrderStatusStatsDto.builder()
+                .pending(pending)
+                .confirmed(confirmed)
+                .shipping(shipping)
+                .delivered(delivered)
+                .cancelled(cancelled)
+                .build();
+    }
+
+    private List<PaymentMethodStatsDto> buildPaymentMethodStats() {
+        List<Object[]> raw = orderRepository.revenueByPaymentMethod();
+        List<PaymentMethodStatsDto> result = new ArrayList<>();
+        for (Object[] row : raw) {
+            String method = row[0] != null ? row[0].toString() : "unknown";
+            long count = ((Number) row[1]).longValue();
+            BigDecimal revenue = row[2] != null ? new BigDecimal(row[2].toString()) : BigDecimal.ZERO;
+            result.add(PaymentMethodStatsDto.builder()
+                    .method(method)
+                    .label(PAYMENT_LABELS.getOrDefault(method, method))
+                    .orderCount(count)
+                    .revenue(revenue)
+                    .build());
+        }
+        return result;
+    }
+
+    private List<CategoryRevenueDto> buildCategoryRevenue() {
+        List<Object[]> raw = orderRepository.revenueByCategory();
+        List<CategoryRevenueDto> result = new ArrayList<>();
+        for (Object[] row : raw) {
+            String category = row[0] != null ? row[0].toString() : "Khác";
+            BigDecimal revenue = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+            long quantity = row[2] != null ? ((Number) row[2]).longValue() : 0;
+            result.add(CategoryRevenueDto.builder()
+                    .category(category)
+                    .revenue(revenue)
+                    .quantity(quantity)
+                    .build());
+        }
+        return result;
     }
 
     private OrderResponse mapToOrderResponse(Order order) {

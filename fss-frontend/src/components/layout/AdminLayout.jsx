@@ -4,14 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
   LogOut, ChevronRight, Bell, Search, X, Check,
-  Zap, TrendingUp, Activity
+  Zap, TrendingUp, Activity, BarChart2
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useNotificationStore from '../../store/notificationStore';
 import ToastContainer from '../ui/ToastContainer';
 
 const adminNavItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/admin', desc: 'Tổng quan hệ thống' },
+  { icon: BarChart2, label: 'Báo cáo', path: '/admin', desc: 'Thống kê kinh doanh' },
   { icon: Package, label: 'Sản phẩm', path: '/admin/products', desc: 'Quản lý kho hàng' },
   { icon: ShoppingCart, label: 'Đơn hàng', path: '/admin/orders', desc: 'Theo dõi giao dịch' },
   { icon: Users, label: 'Tài khoản', path: '/admin/accounts', desc: 'Quản lý người dùng' },

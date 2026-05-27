@@ -16,4 +16,13 @@ public class DashboardStatsDto {
     private long totalCustomers;
     private long totalProducts;
     private BigDecimal totalRevenue;
+
+    // Extended KPIs
+    private long deliveredOrders;
+    private long cancelledOrders;
+    private long pendingOrders;
+    private BigDecimal avgOrderValue;
+    private long newCustomersThisMonth;
+    private BigDecimal revenueThisMonth;
+    private BigDecimal revenueLastMonth;
 }

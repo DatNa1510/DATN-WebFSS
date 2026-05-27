@@ -378,7 +378,7 @@ export default function AdminOrders() {
           <div style={{ position: 'absolute', bottom: '-30px', left: '40px', width: '100px', height: '100px', background: 'radial-gradient(circle, rgba(79,70,229,0.2), transparent)', borderRadius: '50%', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
             <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '6px' }}>
-              Thống kê tháng này
+              Thống kê hiện nay
             </p>
             <p style={{ fontSize: '36px', fontWeight: 900, color: 'white', letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '24px' }}>
               {fmt(totalThisMonth)} <span style={{ fontSize: '22px', fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>Đơn hàng</span>
@@ -405,7 +405,7 @@ export default function AdminOrders() {
           boxShadow: '0 2px 12px rgba(124,58,237,0.06)',
         }}>
           <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#7C3AED', marginBottom: '4px' }}>
-            Vận hành hôm nay
+            Vận hành hiện nay
           </h3>
           <p style={{ fontSize: '12px', color: 'rgba(124,58,237,0.6)', marginBottom: '24px', fontWeight: 500 }}>
             Nhân viên kho đang xử lý tích cực

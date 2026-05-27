@@ -18,4 +18,9 @@ public class DashboardResponse {
     private List<MonthlyRevenueDto> revenueData;
     private List<Product> topProducts;
     private List<OrderResponse> recentOrders;
+
+    // New analytics data
+    private OrderStatusStatsDto orderStatusStats;
+    private List<PaymentMethodStatsDto> paymentMethodStats;
+    private List<CategoryRevenueDto> categoryRevenue;
 }

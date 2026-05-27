@@ -28,6 +28,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Đếm số lượng user theo role
     long countByRole(User.Role role);
 
+    // Đếm khách hàng mới trong tháng/năm cụ thể
+    @org.springframework.data.jpa.repository.Query(
+        value = "SELECT COUNT(*) FROM users WHERE role = 'CUSTOMER' AND EXTRACT(MONTH FROM created_at) = :month AND EXTRACT(YEAR FROM created_at) = :year",
+        nativeQuery = true)
+    long countNewCustomersByMonthAndYear(
+            @org.springframework.data.repository.query.Param("month") int month,
+            @org.springframework.data.repository.query.Param("year") int year);
+
     // Admin: Tìm kiếm user theo role, name/email với pagination
     @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE " +
             "(:role = 'ALL' OR CAST(u.role AS string) = :role) AND " +

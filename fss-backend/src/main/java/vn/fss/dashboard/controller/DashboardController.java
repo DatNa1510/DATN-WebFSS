@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import vn.fss.dashboard.dto.DashboardResponse;
 import vn.fss.dashboard.service.DashboardService;
@@ -18,7 +19,8 @@ public class DashboardController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<DashboardResponse> getDashboardData() {
-        return ResponseEntity.ok(dashboardService.getDashboardData());
+    public ResponseEntity<DashboardResponse> getDashboardData(
+            @RequestParam(value = "year", required = false) Integer year) {
+        return ResponseEntity.ok(dashboardService.getDashboardData(year));
     }
 }

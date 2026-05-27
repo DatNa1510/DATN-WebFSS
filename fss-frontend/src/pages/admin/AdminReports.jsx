@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Download, Calendar, ArrowUpRight, ArrowDownRight, Banknote, ShoppingBag, CheckCircle, Package, Star, RefreshCw } from 'lucide-react';
+import { Download, Calendar, Filter, ArrowUpRight, ArrowDownRight, Banknote, ShoppingBag, CheckCircle, Package } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar
+  PieChart, Pie, Cell, BarChart, Bar, Legend
 } from 'recharts';
-import { Link } from 'react-router-dom';
 import { formatPrice } from '../../data/mockData';
 import { toast } from '../../store/toastStore';
 
@@ -30,28 +29,19 @@ const STATUS_LABELS = {
 
 const PAYMENT_COLORS = ['#10B981', '#3B82F6', '#D946EF', '#F59E0B'];
 
-const statusStyle = {
-  DELIVERED: { bg: 'rgba(16,185,129,0.1)', color: '#059669' },
-  SHIPPING:  { bg: 'rgba(14,165,233,0.1)', color: '#0284C7' },
-  CONFIRMED: { bg: 'rgba(124,58,237,0.1)', color: '#6D28D9' },
-  PENDING:   { bg: 'rgba(100,116,139,0.1)', color: '#475569' },
-  CANCELLED: { bg: 'rgba(239,68,68,0.1)', color: '#DC2626' },
-};
-
-export default function AdminDashboard() {
+export default function AdminReports() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchDashboard = async (selectedYear, showLoader = true) => {
-    if (showLoader) setLoading(true);
-    if (showLoader) setError(null);
+  const fetchDashboard = async (selectedYear) => {
+    setLoading(true);
+    setError(null);
     try {
       const token = getToken();
       if (!token) {
-        if (showLoader) setError('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+        setError('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
         return;
       }
       const res = await fetch(`${API}/api/admin/dashboard?year=${selectedYear}`, {
@@ -61,57 +51,39 @@ export default function AdminDashboard() {
       const json = await res.json();
       setData(json);
     } catch (err) {
-      if (showLoader) setError(err.message || 'Không thể tải dữ liệu báo cáo!');
-      else toast.error('Lỗi khi làm mới dữ liệu báo cáo ngầm!');
+      setError(err.message || 'Không thể tải dữ liệu báo cáo!');
+      toast.error('Không thể tải dữ liệu báo cáo!');
     } finally {
-      if (showLoader) setLoading(false);
+      setLoading(false);
     }
   };
 
-  useEffect(() => { 
-    fetchDashboard(year); 
-    const interval = setInterval(() => {
-      fetchDashboard(year, false);
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [year]);
-
-  const handleManualRefresh = async () => {
-    setIsRefreshing(true);
-    await fetchDashboard(year, false);
-    setIsRefreshing(false);
-    toast.success('Đã làm mới dữ liệu!');
-  };
+  useEffect(() => { fetchDashboard(year); }, [year]);
 
   const handleExport = () => {
+    // Để giữ cho mã nhẹ nhàng và không phụ thuộc quá nhiều vào thư viện ngoài, 
+    // export có thể được thực hiện bằng cách tạo CSV trực tiếp
     if (!data) return;
     
-    // Hàm định dạng số để Excel không bị lỗi khoa học (VD: 7.73E+08)
-    const fmtVND = (num) => `"${(num || 0).toLocaleString('vi-VN')} ₫"`;
-    const fmtNum = (num) => `"${(num || 0).toLocaleString('vi-VN')}"`;
-    const catMap = { 'Accessories': 'Phụ kiện', 'Apparel': 'Quần áo', 'Footwear': 'Giày dép' };
-
     let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-    csvContent += `"BÁO CÁO THỐNG KÊ DOANH THU NĂM ${year}"\r\n\r\n`;
+    csvContent += "BÁO CÁO THỐNG KÊ DOANH THU NĂM " + year + "\r\n\r\n";
     
     csvContent += "1. TỔNG QUAN\r\n";
-    csvContent += "Chỉ số,Giá trị\r\n";
-    csvContent += `Tổng doanh thu,${fmtVND(data.stats?.totalRevenue)}\r\n`;
-    csvContent += `Tổng đơn hàng,${fmtNum(data.stats?.totalOrders)}\r\n`;
-    csvContent += `Đơn thành công,${fmtNum(data.stats?.deliveredOrders)}\r\n`;
-    csvContent += `Giá trị đơn TB (AOV),${fmtVND(data.stats?.avgOrderValue)}\r\n\r\n`;
+    csvContent += `Tổng doanh thu,${data.stats.totalRevenue}\r\n`;
+    csvContent += `Tổng đơn hàng,${data.stats.totalOrders}\r\n`;
+    csvContent += `Đơn thành công,${data.stats.deliveredOrders}\r\n`;
+    csvContent += `Giá trị đơn TB,${data.stats.avgOrderValue}\r\n\r\n`;
 
     csvContent += "2. DOANH THU THEO THÁNG\r\n";
     csvContent += "Tháng,Doanh thu\r\n";
-    (data.revenueData || []).forEach(r => {
-      csvContent += `"${r.month}",${fmtVND(r.revenue)}\r\n`;
+    data.revenueData.forEach(r => {
+      csvContent += `${r.month},${r.revenue}\r\n`;
     });
     
     csvContent += "\r\n3. DOANH THU THEO DANH MỤC\r\n";
     csvContent += "Danh mục,Doanh thu,Số lượng bán\r\n";
-    (data.categoryRevenue || []).forEach(c => {
-      const catName = catMap[c.category] || c.category;
-      csvContent += `"${catName}",${fmtVND(c.revenue)},${fmtNum(c.quantity)}\r\n`;
+    data.categoryRevenue.forEach(c => {
+      csvContent += `${c.category},${c.revenue},${c.quantity}\r\n`;
     });
 
     const encodedUri = encodeURI(csvContent);
@@ -148,16 +120,7 @@ export default function AdminDashboard() {
   const revenueData = data?.revenueData || [];
   const orderStatusStats = data?.orderStatusStats || {};
   const paymentMethodStats = data?.paymentMethodStats || [];
-  const categoryRevenue = (data?.categoryRevenue || []).map(item => ({
-    ...item,
-    category: {
-      'Accessories': 'Phụ kiện',
-      'Apparel': 'Quần áo',
-      'Footwear': 'Giày dép'
-    }[item.category] || item.category
-  }));
-  const recentOrders = data?.recentOrders || [];
-  const topProducts = data?.topProducts || [];
+  const categoryRevenue = data?.categoryRevenue || [];
 
   // Chart data formatting
   const donutData = Object.entries(orderStatusStats).map(([key, value]) => ({
@@ -186,31 +149,17 @@ export default function AdminDashboard() {
       {/* ── HEADER ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', padding: '20px 28px', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1E1B4B' }}>Báo cáo thống kê</h1>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#1E1B4B' }}>Báo cáo chi tiết</h1>
           <p style={{ fontSize: '13px', color: '#64748B', marginTop: '4px' }}>Phân tích số liệu kinh doanh thực tế từ hệ thống</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button 
-            onClick={handleManualRefresh}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '10px', background: 'white', border: '1px solid #E2E8F0', color: '#64748B', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#7C3AED'; e.currentTarget.style.borderColor = '#7C3AED'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#64748B'; e.currentTarget.style.borderColor = '#E2E8F0'; }}
-            title="Làm mới dữ liệu"
-          >
-            <motion.div animate={{ rotate: isRefreshing ? 360 : 0 }} transition={{ repeat: isRefreshing ? Infinity : 0, duration: 1, ease: 'linear' }}>
-              <RefreshCw size={16} />
-            </motion.div>
-          </button>
-          
           <div style={{ position: 'relative' }}>
             <Calendar size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748B' }} />
             <select 
               value={year} onChange={e => setYear(Number(e.target.value))}
               style={{ padding: '10px 16px 10px 36px', borderRadius: '10px', border: '1px solid #E2E8F0', outline: 'none', fontWeight: 600, color: '#1E1B4B', cursor: 'pointer', appearance: 'none', background: '#F8FAFC' }}
             >
-              {Array.from({ length: Math.max(1, new Date().getFullYear() - 2026 + 1) }, (_, i) => 2026 + i).map(y => (
-                <option key={y} value={y}>Năm {y}</option>
-              ))}
+              {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>Năm {y}</option>)}
             </select>
           </div>
           <button 
@@ -327,101 +276,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-      </div>
-
-      {/* ── ROW 3: RECENT ORDERS & TOP PRODUCTS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
-        
-        {/* RECENT ORDERS TABLE */}
-        <div style={{ background: 'white', borderRadius: '18px', padding: '28px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#1E1B4B' }}>Đơn hàng gần đây</h2>
-            <Link to="/admin/orders" style={{ fontSize: '13px', fontWeight: 700, color: '#7C3AED', textDecoration: 'none', padding: '6px 14px', borderRadius: '8px', background: 'rgba(124,58,237,0.06)' }}>Xem tất cả →</Link>
-          </div>
-
-          {recentOrders && recentOrders.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #F1F5F9' }}>
-                    {['Mã đơn', 'Khách hàng', 'Tổng tiền', 'Trạng thái', 'Ngày đặt'].map(h => (
-                      <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: '#94A3B8', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrders.map(order => {
-                    const st = statusStyle[order.status] || statusStyle.PENDING;
-                    return (
-                      <tr key={order.id} style={{ borderBottom: '1px solid #F8FAFC', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = '#FAFAFE'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                        <td style={{ padding: '12px', fontWeight: 700, color: '#1E1B4B' }}>{order.orderCode}</td>
-                        <td style={{ padding: '12px', color: '#475569' }}>{order.userName || order.userEmail}</td>
-                        <td style={{ padding: '12px', fontWeight: 700, color: '#1E1B4B' }}>{formatPrice(order.totalAmount)}</td>
-                        <td style={{ padding: '12px' }}><span style={{ padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, background: st.bg, color: st.color }}>{order.statusLabel}</span></td>
-                        <td style={{ padding: '12px', color: '#94A3B8', fontSize: '12px' }}>{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: '14px', fontWeight: 600 }}>Chưa có đơn hàng nào.</div>
-          )}
-        </div>
-
-        {/* TOP PRODUCTS */}
-        <div style={{ background: 'white', borderRadius: '18px', padding: '28px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#1E1B4B' }}>🔥 Bán chạy nhất</h2>
-            <Star size={16} style={{ color: '#F59E0B' }} fill="#F59E0B" />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
-            {topProducts && topProducts.length > 0 ? topProducts.map((p, i) => (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <img
-                    src={p.imagePath ? (p.imagePath.split(',')[0].trim().startsWith('/') ? `http://localhost:8080${p.imagePath.split(',')[0].trim()}` : (p.imagePath.split(',')[0].trim().startsWith('http') ? p.imagePath.split(',')[0].trim() : `http://localhost:8080/images/${p.imagePath.split(',')[0].trim()}`)) : ''}
-                    alt={p.productDisplayName}
-                    style={{ width: '46px', height: '46px', borderRadius: '12px', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.07)' }}
-                    onError={e => { e.target.src = 'https://placehold.co/46x46/f8fafc/94a3b8?text=Img'; }}
-                  />
-                  {i === 0 && (
-                    <div style={{
-                      position: 'absolute', top: '-6px', right: '-6px',
-                      width: '18px', height: '18px', borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '9px', fontWeight: 800, color: 'white', border: '2px solid white',
-                    }}>1</div>
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {p.productDisplayName}
-                  </p>
-                  <p style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>
-                    {formatPrice(p.price)} · <span style={{ color: '#7C3AED', fontWeight: 600 }}>{p.sold} đã bán</span>
-                  </p>
-                </div>
-              </div>
-            )) : (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: '13px', fontWeight: 600 }}>Chưa có sản phẩm.</div>
-            )}
-          </div>
-
-          <Link to="/admin/products" style={{
-            display: 'block', textAlign: 'center', textDecoration: 'none',
-            width: '100%', marginTop: '20px', padding: '10px',
-            borderRadius: '12px', border: '1px solid rgba(124,58,237,0.2)',
-            background: 'rgba(124,58,237,0.05)',
-            fontSize: '13px', fontWeight: 700, color: '#7C3AED',
-            cursor: 'pointer', transition: 'all 0.2s',
-          }}>
-            Xem tất cả →
-          </Link>
-        </div>
       </div>
     </div>
   );

@@ -22,10 +22,6 @@ const categories = [
   { id: 'Apparel', name: 'Quần áo (Apparel)' },
   { id: 'Footwear', name: 'Giày dép (Footwear)' },
   { id: 'Accessories', name: 'Phụ kiện (Accessories)' },
-  { id: 'Personal Care', name: 'Mỹ phẩm / Chăm sóc cá nhân (Personal Care)' },
-  { id: 'Sporting Goods', name: 'Đồ thể thao (Sporting Goods)' },
-  { id: 'Home', name: 'Đồ gia dụng (Home)' },
-  { id: 'Free Items', name: 'Quà tặng (Free Items)' },
 ];
 
 const subCategoriesMap = {
