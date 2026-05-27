@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Shield, User, ChevronLeft, ChevronRight, Users, Lock, ShieldAlert, Loader2, Trash2, History } from 'lucide-react';
+import { Search, Shield, User, ChevronLeft, ChevronRight, Users, Lock, ShieldAlert, Loader2, Trash2, History, RotateCcw } from 'lucide-react';
 import { toast } from '../../store/toastStore';
 import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
 
@@ -22,6 +22,7 @@ export default function AdminAccounts() {
   const [lockReason, setLockReason] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null); // id of user to delete
   const [deleteReason, setDeleteReason] = useState('');
+  const [confirmRestore, setConfirmRestore] = useState(null); // id of user to restore
   const [isLogsOpen, setIsLogsOpen] = useState(false);
 
   const fetchUsers = useCallback(async (p = 0, q = search, r = filterRole, s = filterStatus) => {
@@ -103,6 +104,23 @@ export default function AdminAccounts() {
     }
     setConfirmDelete(null);
     setDeleteReason('');
+  };
+
+  const restoreUser = async (id) => {
+    try {
+      const res = await fetch(`${API}/api/admin/users/${id}/restore`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi khôi phục');
+      toast.success(data.message);
+      setUsers(prev => prev.map(u => u.id === id ? data.user : u));
+      fetchUsers(page, search, filterRole, filterStatus);
+    } catch (err) {
+      toast.error(err.message || 'Không thể khôi phục tài khoản!');
+    }
+    setConfirmRestore(null);
   };
 
   return (
@@ -333,7 +351,7 @@ export default function AdminAccounts() {
                     </p>
                   </td>
                   <td style={{ padding: '14px 20px' }}>
-                    <div className="user-action" style={{ display: 'flex', gap: '6px', opacity: 0, transition: 'opacity 0.2s' }}>
+                    <div className="user-action" style={{ display: 'flex', gap: '6px', opacity: 1, transition: 'opacity 0.2s' }}>
                       {/* Nút Khóa / Mở khóa */}
                       {!u.isDeleted && u.role !== 'ADMIN' && (
                         <button
@@ -365,7 +383,24 @@ export default function AdminAccounts() {
                         </button>
                       )}
                       {u.isDeleted && (
-                        <span style={{ fontSize: '11px', color: '#94A3B8', fontStyle: 'italic' }}>Đã bị xóa</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {(u.restoreCount || 0) < 2 ? (
+                            <button
+                              onClick={() => { setConfirmRestore(confirmRestore === u.id ? null : u.id); setConfirmLock(null); setConfirmDelete(null); }}
+                              style={{
+                                padding: '5px 12px', borderRadius: '8px',
+                                background: 'rgba(16,185,129,0.08)',
+                                border: 'none', fontSize: '12px', fontWeight: 700,
+                                color: '#10B981', cursor: 'pointer', fontFamily: 'inherit',
+                                display: 'flex', alignItems: 'center', gap: '4px',
+                              }}
+                            >
+                              <RotateCcw size={12} /> Khôi phục ({u.restoreCount || 0}/2)
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: '11px', color: '#94A3B8', fontStyle: 'italic' }}>Hết lượt khôi phục</span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </td>
@@ -672,6 +707,90 @@ export default function AdminAccounts() {
                       cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >Xác nhận xóa</button>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
+      {/* ── MODAL KHÔI PHỤC TÀI KHOẢN ── */}
+      <AnimatePresence>
+        {confirmRestore && (() => {
+          const u = users.find(x => x.id === confirmRestore);
+          if (!u) return null;
+          return (
+            <motion.div
+              key="restore-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmRestore(null)}
+              style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+                backdropFilter: 'blur(4px)',
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  background: 'white', borderRadius: '20px', padding: '28px',
+                  width: '420px', maxWidth: '90vw',
+                  boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{
+                    width: '44px', height: '44px', borderRadius: '14px',
+                    background: 'rgba(16,185,129,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <RotateCcw size={20} color="#10B981" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1E1B4B' }}>Khôi phục tài khoản</h3>
+                    <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>{u.email}</p>
+                  </div>
+                </div>
+
+                <p style={{ fontSize: '13px', color: '#475569', marginBottom: '12px', lineHeight: 1.5 }}>
+                  Bạn có chắc chắn muốn khôi phục tài khoản <strong style={{ color: '#10B981' }}>{u.fullName}</strong>?
+                  Người dùng sẽ có thể đăng nhập trở lại bình thường.
+                </p>
+
+                <div style={{
+                  background: '#FFF7ED', padding: '10px 14px', borderRadius: '10px',
+                  borderLeft: '3px solid #F59E0B', marginBottom: '6px',
+                }}>
+                  <p style={{ fontSize: '12px', color: '#92400E', fontWeight: 600 }}>
+                    ⚠️ Lưu ý: Tài khoản này đã sử dụng {u.restoreCount || 0}/2 lượt khôi phục.
+                    {(u.restoreCount || 0) === 1 && ' Đây là lần khôi phục cuối cùng!'}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                  <button
+                    onClick={() => setConfirmRestore(null)}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: '10px',
+                      background: '#F1F5F9', border: 'none', fontSize: '13px',
+                      fontWeight: 700, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >Hủy</button>
+                  <button
+                    onClick={() => restoreUser(u.id)}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: '10px',
+                      background: '#10B981', border: 'none',
+                      fontSize: '13px', fontWeight: 700, color: 'white',
+                      cursor: 'pointer', fontFamily: 'inherit',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    }}
+                  ><RotateCcw size={14} /> Xác nhận khôi phục</button>
                 </div>
               </motion.div>
             </motion.div>

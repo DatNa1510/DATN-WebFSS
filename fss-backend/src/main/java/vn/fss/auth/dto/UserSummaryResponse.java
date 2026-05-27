@@ -20,5 +20,6 @@ public class UserSummaryResponse {
     private String deletionReason;
     private String lockReason;
     private Integer failedAttempts;
+    private Integer restoreCount;
     private LocalDateTime createdAt;
 }

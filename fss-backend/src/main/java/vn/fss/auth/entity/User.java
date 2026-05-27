@@ -105,6 +105,11 @@ public class User implements Principal {
     @Column(name = "lock_reason", columnDefinition = "TEXT")
     private String lockReason;
 
+    // Số lần đã khôi phục tài khoản (tối đa 2 lần)
+    @Column(name = "restore_count", columnDefinition = "integer default 0")
+    @Builder.Default
+    private Integer restoreCount = 0;
+
     // ── Timestamps ─────────────────────────────────────────────
 
     @CreationTimestamp

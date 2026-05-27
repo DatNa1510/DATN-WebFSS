@@ -151,6 +151,15 @@ export default function AdminLogsDrawer({ isOpen, onClose, targetType, title }) 
                           {log.detail}
                         </p>
                         
+                        {log.notes && (
+                          <div style={{ background: '#FFF7ED', padding: '8px 12px', borderRadius: '6px', borderLeft: '3px solid #F97316', marginBottom: '10px' }}>
+                            <p style={{ fontSize: '12px', color: '#C2410C', fontWeight: 600, display: 'flex', gap: '4px' }}>
+                              <span style={{ display: 'inline-block', minWidth: '45px' }}>Lý do:</span>
+                              <span style={{ fontWeight: 500, color: '#9A3412', fontStyle: 'italic' }}>{log.notes}</span>
+                            </p>
+                          </div>
+                        )}
+                        
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <User size={12} color="#94A3B8" />
                           <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>

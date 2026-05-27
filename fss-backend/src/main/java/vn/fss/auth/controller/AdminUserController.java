@@ -122,6 +122,38 @@ public class AdminUserController {
         ));
     }
 
+    @PatchMapping("/{id}/restore")
+    public ResponseEntity<?> restoreUser(Authentication auth, @PathVariable Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng #" + id));
+
+        if (!Boolean.TRUE.equals(user.getIsDeleted())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Tài khoản này chưa bị xóa"));
+        }
+
+        int currentCount = user.getRestoreCount() != null ? user.getRestoreCount() : 0;
+        if (currentCount >= 2) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Tài khoản này đã hết lượt khôi phục (tối đa 2 lần)"));
+        }
+
+        user.setIsDeleted(false);
+        user.setDeletionReason(null);
+        user.setIsEnabled(true);
+        user.setRestoreCount(currentCount + 1);
+        User saved = userRepository.save(user);
+
+        adminLogService.log(
+            auth.getName(), auth.getName(), "UPDATE", "ACCOUNT",
+            id, saved.getEmail(),
+            "Khôi phục tài khoản " + saved.getEmail() + " (Lần " + saved.getRestoreCount() + "/2)"
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Đã khôi phục tài khoản thành công (Lần " + saved.getRestoreCount() + "/2)",
+                "user", mapToResponse(saved)
+        ));
+    }
+
     private UserSummaryResponse mapToResponse(User user) {
         return UserSummaryResponse.builder()
                 .id(user.getId())
@@ -135,6 +167,7 @@ public class AdminUserController {
                 .deletionReason(user.getDeletionReason())
                 .lockReason(user.getLockReason())
                 .failedAttempts(user.getFailedAttempts())
+                .restoreCount(user.getRestoreCount())
                 .createdAt(user.getCreatedAt())
                 .build();
     }
