@@ -26,6 +26,8 @@ export default function AdminOrders() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [detailOrder, setDetailOrder] = useState(null);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -44,6 +46,8 @@ export default function AdminOrders() {
   }, []);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  useEffect(() => { setCurrentPage(1); }, [search, filterStatus]);
 
   const filtered = orders.filter((o) => {
     const q = search.toLowerCase();
@@ -69,6 +73,9 @@ export default function AdminOrders() {
       toast.error('Cập nhật thất bại!');
     }
   };
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const paginatedOrders = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const counts = statusOptions.reduce((acc, s) => {
     acc[s] = s === 'all' ? orders.length : orders.filter(o => o.status === s).length;
@@ -243,7 +250,7 @@ export default function AdminOrders() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((order, idx) => {
+                paginatedOrders.map((order, idx) => {
                   const cfg = statusConfig[order.status] || statusConfig.PENDING;
                   return (
                     <motion.tr
@@ -341,22 +348,37 @@ export default function AdminOrders() {
             background: '#FAFAFA',
           }}>
             <p style={{ fontSize: '12.5px', color: '#64748B', fontWeight: 500 }}>
-              Hiển thị {filtered.length} / {orders.length} đơn hàng
+              Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filtered.length)} / {filtered.length} đơn hàng
             </p>
             <div style={{ display: 'flex', gap: '4px' }}>
-              <button style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'white', border: '1px solid rgba(0,0,0,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}>
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'white', border: '1px solid rgba(0,0,0,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: '#64748B', opacity: currentPage === 1 ? 0.5 : 1 }}>
                 <ChevronLeft size={15} />
               </button>
-              {[1, 2, 3].map(n => (
-                <button key={n} style={{
-                  width: '32px', height: '32px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
-                  cursor: 'pointer', fontFamily: 'inherit', border: 'none',
-                  background: n === 1 ? 'linear-gradient(135deg,#7C3AED,#4F46E5)' : 'white',
-                  color: n === 1 ? 'white' : '#475569',
-                  boxShadow: n === 1 ? '0 2px 8px rgba(124,58,237,0.3)' : '0 0 0 1px rgba(0,0,0,0.09)',
-                }}>{n}</button>
-              ))}
-              <button style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'white', border: '1px solid rgba(0,0,0,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748B' }}>
+              {Array.from({ length: totalPages }).map((_, i) => {
+                const n = i + 1;
+                // Chỉ hiển thị 5 trang xung quanh trang hiện tại hoặc trang đầu/cuối
+                if (n === 1 || n === totalPages || (n >= currentPage - 1 && n <= currentPage + 1)) {
+                  return (
+                    <button key={n} onClick={() => setCurrentPage(n)} style={{
+                      width: '32px', height: '32px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
+                      cursor: 'pointer', fontFamily: 'inherit', border: 'none',
+                      background: n === currentPage ? 'linear-gradient(135deg,#7C3AED,#4F46E5)' : 'white',
+                      color: n === currentPage ? 'white' : '#475569',
+                      boxShadow: n === currentPage ? '0 2px 8px rgba(124,58,237,0.3)' : '0 0 0 1px rgba(0,0,0,0.09)',
+                    }}>{n}</button>
+                  );
+                } else if (n === currentPage - 2 || n === currentPage + 2) {
+                  return <span key={n} style={{ display: 'flex', alignItems: 'end', padding: '0 4px', color: '#94A3B8' }}>...</span>;
+                }
+                return null;
+              })}
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'white', border: '1px solid rgba(0,0,0,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: '#64748B', opacity: currentPage === totalPages ? 0.5 : 1 }}>
                 <ChevronRight size={15} />
               </button>
             </div>
