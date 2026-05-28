@@ -35,6 +35,6 @@ public class AddressController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteAddress(Authentication auth, @PathVariable Long id) {
         addressService.deleteAddress(auth.getName(), id);
-        return ResponseEntity.ok(Map.of("message", "Deleted successfully"));
+        return ResponseEntity.ok(Map.of("message", "Xóa thành công"));
     }
 }

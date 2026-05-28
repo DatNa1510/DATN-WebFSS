@@ -23,14 +23,14 @@ public class AddressService {
     private final NotificationService notificationService;
 
     public List<AddressDto> getUserAddresses(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         return addressRepository.findByUserOrderByIsDefaultDescCreatedAtDesc(user)
                 .stream().map(AddressDto::fromEntity).collect(Collectors.toList());
     }
 
     @Transactional
     public AddressDto addAddress(String email, AddressDto dto) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         
         List<UserAddress> existing = addressRepository.findByUserOrderByIsDefaultDescCreatedAtDesc(user);
         boolean isFirst = existing.isEmpty();
@@ -68,11 +68,11 @@ public class AddressService {
 
     @Transactional
     public AddressDto updateAddress(String email, Long id, AddressDto dto) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        UserAddress address = addressRepository.findById(id).orElseThrow(() -> new RuntimeException("Address not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        UserAddress address = addressRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
         
         if (!address.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Unauthorized");
+            throw new RuntimeException("Không có quyền thực hiện");
         }
 
         address.setRecipientName(dto.getRecipientName());
@@ -105,11 +105,11 @@ public class AddressService {
 
     @Transactional
     public void deleteAddress(String email, Long id) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        UserAddress address = addressRepository.findById(id).orElseThrow(() -> new RuntimeException("Address not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        UserAddress address = addressRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
         
         if (!address.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Unauthorized");
+            throw new RuntimeException("Không có quyền thực hiện");
         }
         
         boolean wasDefault = address.getIsDefault();

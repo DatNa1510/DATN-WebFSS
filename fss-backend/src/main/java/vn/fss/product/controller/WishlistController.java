@@ -25,7 +25,7 @@ public class WishlistController {
     @PostMapping("/{productId}")
     public ResponseEntity<?> toggleWishlist(Authentication auth, @PathVariable Long productId) {
         wishlistService.toggleWishlist(auth.getName(), productId);
-        return ResponseEntity.ok(Map.of("message", "Toggled successfully"));
+        return ResponseEntity.ok(Map.of("message", "Đã cập nhật danh sách yêu thích"));
     }
 
     @GetMapping("/{productId}/check")

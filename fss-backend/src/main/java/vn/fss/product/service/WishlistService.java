@@ -27,15 +27,15 @@ public class WishlistService {
 
     @Transactional
     public List<WishlistItemDto> getUserWishlist(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         return wishlistRepository.findByUserOrderByAddedAtDesc(user)
                 .stream().map(WishlistItemDto::fromEntity).collect(Collectors.toList());
     }
 
     @Transactional
     public void toggleWishlist(String email, Long productId) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        Product product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        Product product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
         
         wishlistRepository.findByUserAndProduct(user, product).ifPresentOrElse(
             wishlistRepository::delete,
@@ -52,8 +52,8 @@ public class WishlistService {
     }
 
     public boolean checkWishlist(String email, Long productId) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        Product product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        Product product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
         return wishlistRepository.existsByUserAndProduct(user, product);
     }
 }

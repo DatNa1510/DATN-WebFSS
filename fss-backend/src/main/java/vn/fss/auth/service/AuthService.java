@@ -186,8 +186,7 @@ public class AuthService {
                         .name(user.getFullName())
                         .email(user.getEmail())
                         .role(user.getRole().name().toLowerCase())
-                        .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : 
-                               (user.getRole() == User.Role.ADMIN ? "/admin-pfp.jpg" : "/default-customer.jpg"))
+                        .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : null)
                         .phone(user.getPhone())
                         .dob(user.getDob())
                         .gender(user.getGender())
@@ -205,8 +204,7 @@ public class AuthService {
                 .name(user.getFullName())
                 .email(user.getEmail())
                 .role(user.getRole().name().toLowerCase())
-                .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : 
-                               (user.getRole() == User.Role.ADMIN ? "/admin-pfp.jpg" : "/default-customer.jpg"))
+                .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : null)
                 .phone(user.getPhone())
                 .dob(user.getDob())
                 .gender(user.getGender())
@@ -272,8 +270,7 @@ public class AuthService {
                         .name(user.getFullName())
                         .email(user.getEmail())
                         .role(user.getRole().name().toLowerCase())
-                        .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : 
-                               (user.getRole() == User.Role.ADMIN ? "/admin-pfp.jpg" : "/customer-pfp.jpg"))
+                        .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : null)
                         .phone(user.getPhone())
                         .build())
                 .build();
@@ -341,8 +338,7 @@ public class AuthService {
                                 .name(user.getFullName())
                                 .email(user.getEmail())
                                 .role(user.getRole().name().toLowerCase())
-                                .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : 
-                                       (user.getRole() == User.Role.ADMIN ? "/admin-pfp.jpg" : "/default-customer.jpg"))
+                                .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : null)
                                 .phone(user.getPhone())
                                 .build())
                         .build();
@@ -422,8 +418,7 @@ public class AuthService {
                 .name(user.getFullName())
                 .email(user.getEmail())
                 .role(user.getRole().name().toLowerCase())
-                .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() :
-                        (user.getRole() == User.Role.ADMIN ? "/admin-pfp.jpg" : "/default-customer.jpg"))
+                .avatar(user.getAvatarUrl() != null ? user.getAvatarUrl() : null)
                 .phone(user.getPhone())
                 .dob(user.getDob())
                 .gender(user.getGender())
