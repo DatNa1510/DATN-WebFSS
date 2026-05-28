@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, SlidersHorizontal, X, ChevronDown, Camera, Loader2 } from 'lucide-react';
 import axios from 'axios';
-import { getProducts, allCategories } from '../../data/fashionData';
+import { getProducts, allCategories, reverseTranslateSearch } from '../../data/fashionData';
 import ProductCard from '../../components/ui/ProductCard';
 
 // ─── CONSTANTS ────────────────────────────────────────
@@ -81,18 +81,30 @@ export default function ProductListPage() {
           limit: PAGE_SIZE,
           category: activeCategory,
           gender: activeGender,
-          search: search,
+          search: reverseTranslateSearch(search),
           sort: sortBy,
           minPrice: range.min.toString(),
           maxPrice: (range.max === Infinity ? 999999999 : range.max).toString()
         }
       });
 
-      const result = response.data;
-      // Dùng phân trang số nên không nối mảng sản phẩm nữa
-      setProducts(result.items);
-      setTotal(result.total);
-      setHasMore(result.hasMore);
+      let finalItems = response.data.items;
+      
+      // Lọc lại trên frontend để loại bỏ các kết quả false-positive do LIKE query của backend
+      // Ví dụ: tìm "nhẫn" -> "ring", backend LIKE '%ring%' trả về cả áo "Ringer"
+      if (search && search.trim()) {
+        const q = search.toLowerCase().trim();
+        const { translateName, translate } = await import('../../data/fashionData');
+        finalItems = finalItems.filter(p => {
+          const tName = translateName(p).toLowerCase();
+          return tName.includes(q) || 
+                 (p.category && translate(p.category).toLowerCase().includes(q));
+        });
+      }
+
+      setProducts(finalItems);
+      setTotal(response.data.total);
+      setHasMore(response.data.hasMore);
 
     } catch (error) {
       // 2. Fallback sang JSON Mock nếu backend server chưa bật
@@ -335,7 +347,8 @@ export default function ProductListPage() {
                     {[
                       { id: 'all', label: 'Tất cả' },
                       { id: 'Men', label: 'Nam' },
-                      { id: 'Women', label: 'Nữ' }
+                      { id: 'Women', label: 'Nữ' },
+                      { id: 'Unisex', label: 'Unisex' }
                     ].map((genderObj) => (
                       <label key={genderObj.id} className="flex items-center gap-3 cursor-pointer group">
                         <div

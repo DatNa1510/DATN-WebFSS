@@ -257,6 +257,10 @@ export default function AdminLayout() {
               src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=7C3AED&color=fff&bold=true`}
               alt={user?.name}
               style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(167,139,250,0.4)' }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=7C3AED&color=fff&bold=true`;
+              }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: '12.5px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

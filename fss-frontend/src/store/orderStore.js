@@ -73,11 +73,11 @@ const useOrderStore = create((set, get) => ({
     }
   },
 
-  // Huỷ đơn hàng
-  cancelOrder: async (orderId) => {
+  // Huỷ đơn hàng (cần lý do)
+  cancelOrder: async (orderId, reason) => {
     try {
       set({ isLoading: true });
-      const res = await axios.patch(`${API_URL}/${orderId}/cancel`, {}, getHeaders());
+      const res = await axios.patch(`${API_URL}/${orderId}/cancel`, { reason }, getHeaders());
       const updated = res.data.order;
       set(state => ({
         orders: state.orders.map(o => o.id === updated.id ? { ...o, ...updated } : o),

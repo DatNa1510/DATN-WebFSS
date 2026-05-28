@@ -57,6 +57,17 @@ function AdminRoute() {
 
 // Customer layout with header/footer
 function CustomerLayout() {
+  useEffect(() => {
+    // Thu nhỏ toàn bộ giao diện khách hàng về 95% bằng cách giảm base font-size
+    // Tailwind sử dụng rem cho margin, padding, width, height, text-size nên mọi thứ sẽ thu nhỏ đều
+    document.documentElement.style.fontSize = '95%';
+    
+    return () => {
+      // Trả lại 100% (hoặc bỏ trống để dùng mặc định 16px) khi thoát khỏi giao diện KH (ví dụ sang trang Admin)
+      document.documentElement.style.fontSize = '';
+    };
+  }, []);
+
   return (
     <>
       <Header />

@@ -197,6 +197,7 @@ export default function ProfilePage() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
   const [addressToDelete, setAddressToDelete] = useState(null);
   const [showProfileHistory, setShowProfileHistory] = useState(false);
   // Tải toàn bộ dữ liệu ngay khi vào trang để Sidebar có số liệu chính xác
@@ -1296,28 +1297,44 @@ export default function ProfilePage() {
       <AnimatePresence>
         {orderToCancel && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setOrderToCancel(null)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white p-10 rounded-xs max-w-sm w-full text-center shadow-2xl flex flex-col items-center">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setOrderToCancel(null); setCancelReason(''); }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white p-10 rounded-xs max-w-md w-full text-center shadow-2xl flex flex-col items-center">
               <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
                 <AlertCircle size={28} />
               </div>
               <h3 className="text-lg font-black text-slate-800 mb-2">Huỷ đơn hàng?</h3>
-              <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+              <p className="text-sm text-slate-500 mb-4 leading-relaxed">
                 Bạn có chắc chắn muốn huỷ đơn hàng <span className="font-bold text-slate-700">{orderToCancel.orderCode}</span> không? Hành động này không thể hoàn tác.
               </p>
+              <div className="w-full mb-6">
+                <label className="block text-left text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-2">Lý do huỷ đơn *</label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Vui lòng cho chúng tôi biết lý do bạn muốn huỷ đơn hàng..."
+                  className="w-full h-24 p-3 text-[13px] text-slate-700 resize-none outline-none transition-all focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                  style={{ border: '2px solid rgba(226,232,240,0.8)', background: 'rgba(248,250,252,0.8)', borderRadius: '2px' }}
+                />
+                {cancelReason.trim().length === 0 && (
+                  <p className="text-[11px] text-red-400 mt-1.5 text-left font-medium">Bạn cần nhập lý do để huỷ đơn hàng</p>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-3 w-full">
-                <button onClick={() => setOrderToCancel(null)} className="py-3 text-[12px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all border border-slate-100">QUAY LẠI</button>
+                <button onClick={() => { setOrderToCancel(null); setCancelReason(''); }} className="py-3 text-[12px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all border border-slate-100">QUAY LẠI</button>
                 <button 
                   onClick={async () => {
-                    const res = await cancelOrder(orderToCancel.id);
+                    if (!cancelReason.trim()) return;
+                    const res = await cancelOrder(orderToCancel.id, cancelReason.trim());
                     if (res.success) {
                         toast.success('Đã huỷ đơn hàng thành công');
                         setOrderToCancel(null);
+                        setCancelReason('');
                     } else {
                         toast.error(res.error || 'Lỗi khi huỷ đơn hàng');
                     }
                   }}
-                  className="py-3 text-[12px] font-black uppercase tracking-widest bg-red-600 text-white hover:bg-red-700 transition-all shadow-lg shadow-red-200"
+                  disabled={!cancelReason.trim()}
+                  className="py-3 text-[12px] font-black uppercase tracking-widest bg-red-600 text-white hover:bg-red-700 transition-all shadow-lg shadow-red-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     XÁC NHẬN
                 </button>

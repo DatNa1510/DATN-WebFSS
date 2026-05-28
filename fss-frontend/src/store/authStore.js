@@ -5,7 +5,7 @@ const API_URL = 'http://localhost:8080/api/auth';
 
 // Ảnh đại diện mặc định theo vai trò
 export const DEFAULT_AVATARS = {
-  admin: '/admin-pfp.jpg',
+  admin: 'https://ui-avatars.com/api/?name=Admin&background=7C3AED&color=fff',
   customer: '/default-customer.jpg',
 };
 

@@ -42,7 +42,7 @@ export const VN_DICT = {
   'Nails': 'Sơn móng tay',
   'Makeup': 'Trang điểm',
   'Skin Care': 'Chăm sóc da',
-  'Bath and Body': 'Tắm & Toàn thân',
+  'Bath and Body': 'Sữa tắm & Dưỡng thể',
   'Sports Gear': 'Dụng cụ thể thao',
   'Sports Shoes': 'Giày thể thao',
   'Sports Apparel': 'Quần áo thể thao',
@@ -54,22 +54,36 @@ export const VN_DICT = {
   
   // Articles
   'Tshirts': 'Áo thun',
+  'Tshirt': 'Áo thun',
   'Shirts': 'Áo sơ mi',
+  'Shirt': 'Áo sơ mi',
   'Casual Shoes': 'Giày thời trang',
+  'Casual Shoe': 'Giày thời trang',
   'Sports Shoes': 'Giày thể thao',
+  'Sports Shoe': 'Giày thể thao',
   'Formal Shoes': 'Giày tây',
+  'Formal Shoe': 'Giày tây',
   'Handbags': 'Túi xách tay',
+  'Handbag': 'Túi xách tay',
   'Backpacks': 'Balo',
+  'Backpack': 'Balo',
   'Shorts': 'Quần short',
   'Jeans': 'Quần Jeans',
   'Trousers': 'Quần dài',
   'Jackets': 'Áo khoác',
+  'Jacket': 'Áo khoác',
   'Sweaters': 'Áo len',
-  'Sweatshirts': 'Áo nỉ (Sweatshirt)',
-  'Sandals': 'Sandal / Xăng-đan',
+  'Sweater': 'Áo len',
+  'Sweatshirts': 'Áo nỉ',
+  'Sweatshirt': 'Áo nỉ',
+  'Sandals': 'Sandal',
+  'Sandal': 'Sandal',
   'Heels': 'Giày cao gót',
+  'Heel': 'Giày cao gót',
   'Wedges': 'Giày đế xuồng',
+  'Wedge': 'Giày đế xuồng',
   'Flats': 'Giày đế bằng',
+  'Flat': 'Giày đế bằng',
   'Kurta': 'Áo Kurta',
   'Kurtas': 'Áo Kurta',
   'Tunics': 'Áo Tunics',
@@ -81,10 +95,15 @@ export const VN_DICT = {
   'Ring': 'Nhẫn',
   'Rings': 'Nhẫn',
   'Bracelets': 'Vòng tay',
+  'Bracelet': 'Vòng tay',
   'Earrings': 'Hoa tai',
+  'Earring': 'Hoa tai',
   'Necklaces': 'Vòng cổ',
+  'Necklace': 'Vòng cổ',
   'Pendants': 'Mặt dây chuyền',
+  'Pendant': 'Mặt dây chuyền',
   'Bangles': 'Vòng kiềng',
+  'Bangle': 'Vòng kiềng',
   'Sunglasses': 'Kính mát',
   'Messenger Bag': 'Túi đeo chéo',
   'Duffel Bag': 'Túi trống du lịch',
@@ -99,16 +118,42 @@ export const VN_DICT = {
   'Stoles': 'Khăn choàng vai',
   'Mufflers': 'Khăn len',
   'Gloves': 'Găng tay',
+  'Glove': 'Găng tay',
   'Belt': 'Thắt lưng',
+  'Belts': 'Thắt lưng',
+  'Wallets': 'Ví & Bóp',
+  'Wallet': 'Ví & Bóp',
+  'Socks': 'Vớ & Tất',
+  'Sock': 'Vớ & Tất',
+  'Watches': 'Đồng hồ',
+  'Watch': 'Đồng hồ',
+  'Umbrellas': 'Ô & Dù',
+  'Umbrella': 'Ô & Dù',
   'Kurti': 'Áo Kurti',
   'Salwar': 'Quần Salwar',
   'Churidar': 'Quần Churidar',
   'Dupatta': 'Khăn Dupatta',
+  'Capris': 'Quần lửng Capris',
+  'Capri': 'Quần lửng Capris',
+  'Tights': 'Quần Tights (Bó cơ)',
+  'Tight': 'Quần Tights (Bó cơ)',
   'Skirts': 'Chân váy',
+  'Skirt': 'Chân váy',
+  'Jumpsuit': 'Đồ bay (Jumpsuit)',
+  'Jumpsuits': 'Đồ bay (Jumpsuit)',
+  'Romper': 'Đồ bay liền quần (Romper)',
+  'Rompers': 'Đồ bay liền quần (Romper)',
   'Nightdress': 'Váy ngủ',
+  'Nightdresses': 'Váy ngủ',
+  'Suspenders': 'Dây đeo quần (Suspenders)',
+  'Suspender': 'Dây đeo quần (Suspenders)',
+  'Shoe Accessories': 'Phụ kiện giày',
+  'Shoe Accessory': 'Phụ kiện giày',
+  'Sports Sandals': 'Sandal thể thao',
+  'Sports Sandal': 'Sandal thể thao',
   'Briefs': 'Quần lót nam',
-  'Trunks': 'Quần lót Trunks',
-  'Boxers': 'Quần lót Boxers',
+  'Trunks': 'Quần lót nam (Trunk)',
+  'Boxers': 'Quần lót nam (Boxer)',
   'Bra': 'Áo ngực',
   'Camisoles': 'Áo hai dây',
   'Shapewear': 'Gen nịt bụng',
@@ -229,10 +274,41 @@ export function translateName(product) {
   }
 
   if (vnColor && vnColor !== 'Mặc định') {
-    finalName += ` màu ${vnColor}`;
+    const colorStr = String(vnColor).toLowerCase();
+    if (colorStr.startsWith('màu ')) {
+      finalName += ` ${colorStr}`;
+    } else {
+      finalName += ` màu ${colorStr}`;
+    }
   }
 
   return finalName;
+}
+
+// ─── TỰ ĐỘNG DỊCH NGƯỢC TỪ KHÓA TÌM KIẾM SANG TIẾNG ANH ─────────
+export function reverseTranslateSearch(keyword) {
+  if (!keyword) return keyword;
+  let translatedSearch = keyword.toLowerCase();
+  
+  // Sắp xếp từ điển theo độ dài từ khóa tiếng Việt giảm dần để ưu tiên cụm từ dài (VD: "áo sơ mi" trước "áo")
+  // Nếu độ dài tiếng Việt bằng nhau, ưu tiên từ tiếng Anh NHỎ HƠN (số ít, VD 'Shirt' trước 'Shirts')
+  const reverseDict = Object.entries(VN_DICT)
+    .sort((a, b) => {
+      if (b[1].length !== a[1].length) {
+        return b[1].length - a[1].length;
+      }
+      return a[0].length - b[0].length;
+    });
+
+  for (const [en, vn] of reverseDict) {
+    if (vn && vn.length > 2) {
+      // Tìm từ khóa tiếng Việt và thay thế bằng tiếng Anh
+      // Không dùng regex word boundary \b vì tiếng Việt có dấu
+      const regex = new RegExp(vn.toLowerCase(), 'g');
+      translatedSearch = translatedSearch.replace(regex, en.toLowerCase());
+    }
+  }
+  return translatedSearch.trim();
 }
 
 // ─── MAP CATEGORY SANG TIẾNG VIỆT ─────────────────────

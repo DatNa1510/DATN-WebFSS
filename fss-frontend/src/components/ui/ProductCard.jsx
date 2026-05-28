@@ -150,7 +150,7 @@ export default function ProductCard({ product }) {
 
         {/* Product Name */}
         <Link to={`/products/${product.id}`} className="block mb-1.5">
-          <h3 className="font-black text-[13px] text-slate-800 leading-tight hover:text-[#00168d] transition-colors line-clamp-2 uppercase tracking-wide">
+          <h3 className="font-black text-[13px] text-slate-800 leading-tight hover:text-[#00168d] transition-colors line-clamp-2 tracking-wide">
             {name}
           </h3>
         </Link>
