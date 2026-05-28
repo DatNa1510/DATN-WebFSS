@@ -241,7 +241,7 @@ public class OrderService {
             return Map.of("alreadyProcessed", true, "status", order.getStatus().name());
         }
         if (!"vietqr".equals(order.getPaymentMethod()) && !"momo".equals(order.getPaymentMethod())) {
-            return Map.of("error", "Only online payment orders can be expired");
+            return Map.of("error", "Chỉ đơn hàng thanh toán trực tuyến mới có thể hết hạn");
         }
 
         // Hoàn lại tồn kho
@@ -272,13 +272,17 @@ public class OrderService {
 
     // ─── HUỶ ĐƠN HÀNG ───────────────────────────────────────────────────────
     @Transactional
-    public OrderResponse cancelOrder(String email, Long orderId) {
+    public OrderResponse cancelOrder(String email, Long orderId, String reason) {
         User user = findUser(email);
         Order order = orderRepository.findByIdAndUser(orderId, user)
                 .orElseThrow(() -> new IllegalArgumentException("Đơn hàng không tồn tại"));
 
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Chỉ có thể huỷ đơn hàng ở trạng thái Chờ xác nhận");
+        }
+
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập lý do huỷ đơn hàng");
         }
 
         // Hoàn lại tồn kho
@@ -292,12 +296,13 @@ public class OrderService {
         }
 
         order.setStatus(OrderStatus.CANCELLED);
+        order.setCancelReason(reason.trim());
         Order saved = orderRepository.save(order);
         
         notificationService.createNotification(
             user, 
             "Đã hủy đơn hàng", 
-            "Đơn hàng " + String.format("FSS-%06d", saved.getId()) + " đã được hủy theo yêu cầu của bạn.", 
+            "Đơn hàng " + String.format("FSS-%06d", saved.getId()) + " đã được hủy. Lý do: " + reason.trim(),
             NotificationType.WARNING
         );
 
@@ -352,6 +357,8 @@ public class OrderService {
                 .recipientPhone(order.getRecipientPhone())
                 .shippingAddress(order.getShippingAddress())
                 .note(order.getNote())
+                .cancelReason(order.getCancelReason())
+                .compensationVoucher(order.getCompensationVoucher())
                 .items(itemResponses)
                 .createdAt(order.getCreatedAt())
                 .build();
@@ -366,11 +373,63 @@ public class OrderService {
 
     // ─── ADMIN: CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG ──────────────────────────────
     @Transactional
-    public OrderResponse updateOrderStatus(Long orderId, String statusStr) {
+    public OrderResponse updateOrderStatus(Long orderId, String statusStr, String cancelReason) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đƠn hàng #" + orderId));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng #" + orderId));
         try {
             OrderStatus newStatus = OrderStatus.valueOf(statusStr.toUpperCase());
+            OrderStatus currentStatus = order.getStatus();
+
+            // Kiểm soát luồng trạng thái chặt chẽ
+            if (currentStatus == OrderStatus.CANCELLED) {
+                throw new IllegalArgumentException("Đơn hàng đã bị hủy, không thể đổi sang trạng thái khác");
+            }
+            if (currentStatus == OrderStatus.DELIVERED) {
+                throw new IllegalArgumentException("Đơn hàng đã giao thành công, không thể đổi trạng thái");
+            }
+            if (currentStatus == newStatus) {
+                throw new IllegalArgumentException("Đơn hàng đã ở trạng thái này rồi");
+            }
+
+            // Chỉ cho phép chuyển trạng thái theo luồng hợp lệ
+            boolean validTransition = switch (currentStatus) {
+                case PENDING   -> newStatus == OrderStatus.CONFIRMED || newStatus == OrderStatus.CANCELLED;
+                case CONFIRMED -> newStatus == OrderStatus.SHIPPING  || newStatus == OrderStatus.CANCELLED;
+                case SHIPPING  -> newStatus == OrderStatus.DELIVERED  || newStatus == OrderStatus.CANCELLED;
+                default -> false;
+            };
+            if (!validTransition) {
+                throw new IllegalArgumentException(
+                    "Không thể chuyển từ \"" + STATUS_LABELS.get(currentStatus) + "\" sang \"" + STATUS_LABELS.get(newStatus) + "\""
+                );
+            }
+
+            // Nếu Admin hủy đơn thì phải có lý do
+            if (newStatus == OrderStatus.CANCELLED) {
+                if (cancelReason == null || cancelReason.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Vui lòng nhập lý do hủy đơn hàng cho khách hàng");
+                }
+                order.setCancelReason(cancelReason.trim());
+
+                // Hoàn lại tồn kho khi Admin hủy
+                for (OrderItem item : order.getItems()) {
+                    if (item.getProduct() != null) {
+                        Product p = item.getProduct();
+                        p.setStock(p.getStock() + item.getQuantity());
+                        p.setSold(Math.max(0, p.getSold() - item.getQuantity()));
+                        productRepository.save(p);
+                    }
+                }
+
+                // Tạo voucher ưu đãi bù đắp cho khách hàng
+                try {
+                    String voucherCode = voucherService.createCompensationVoucher(order);
+                    order.setCompensationVoucher(voucherCode);
+                } catch (Exception e) {
+                    log.error("Lỗi khi tạo voucher bù đắp cho đơn #{}: {}", orderId, e.getMessage());
+                }
+            }
+
             order.setStatus(newStatus);
             Order saved = orderRepository.save(order);
             log.info("Admin updated order {} status to {}", orderId, newStatus);
@@ -399,7 +458,10 @@ public class OrderService {
                         break;
                     case CANCELLED:
                         title = "Đơn hàng đã bị hủy";
-                        message = "Đơn hàng FSS-" + String.format("%06d", saved.getId()) + " đã bị hủy bởi quản trị viên.";
+                        message = "Đơn hàng FSS-" + String.format("%06d", saved.getId()) + " đã bị hủy bởi quản trị viên. Lý do: " + cancelReason.trim() + ".";
+                        if (saved.getCompensationVoucher() != null) {
+                            message += " Bạn đã được tặng mã ưu đãi " + saved.getCompensationVoucher() + " (giảm 10%) cho đơn hàng tiếp theo. Xin lỗi vì sự bất tiện!";
+                        }
                         type = NotificationType.WARNING;
                         break;
                     default:
@@ -415,7 +477,7 @@ public class OrderService {
 
             return mapToResponse(saved);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Trạng thái không hợp lệ: " + statusStr);
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 }

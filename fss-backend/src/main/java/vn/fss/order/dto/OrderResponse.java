@@ -34,6 +34,9 @@ public class OrderResponse {
     private String shippingAddress;
     private String note;
 
+    private String cancelReason;
+    private String compensationVoucher;
+
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
 }

@@ -45,10 +45,10 @@ public class PaymentController {
     public ResponseEntity<?> createPayment(@PathVariable Long orderId) {
         try {
             Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng"));
 
             if (order.getStatus() != OrderStatus.PENDING) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Order cannot be paid. Status: " + order.getStatus()));
+                return ResponseEntity.badRequest().body(Map.of("error", "Không thể thanh toán đơn hàng. Trạng thái: " + order.getStatus()));
             }
 
             PaymentResponse response;
@@ -57,7 +57,7 @@ public class PaymentController {
             } else if ("vietqr".equals(order.getPaymentMethod()) || "banking".equals(order.getPaymentMethod())) {
                 response = vietQRPaymentService.createPayment(order);
             } else {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid payment method for online payment"));
+                return ResponseEntity.badRequest().body(Map.of("error", "Phương thức thanh toán trực tuyến không hợp lệ"));
             }
 
             return ResponseEntity.ok(response);

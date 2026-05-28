@@ -63,6 +63,12 @@ public class Order {
     @Column(name = "voucher_code", length = 50)
     private String voucherCode;
 
+    @Column(name = "cancel_reason", length = 500)
+    private String cancelReason;
+
+    @Column(name = "compensation_voucher", length = 50)
+    private String compensationVoucher;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();

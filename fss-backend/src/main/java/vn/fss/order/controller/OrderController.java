@@ -52,11 +52,13 @@ public class OrderController {
         }
     }
 
-    // Huỷ đơn hàng (chỉ khi PENDING)
+    // Huỷ đơn hàng (chỉ khi PENDING) — cần lý do
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelOrder(Authentication auth, @PathVariable Long id) {
+    public ResponseEntity<?> cancelOrder(Authentication auth, @PathVariable Long id,
+                                         @RequestBody Map<String, String> body) {
         try {
-            OrderResponse order = orderService.cancelOrder(auth.getName(), id);
+            String reason = body != null ? body.getOrDefault("reason", "") : "";
+            OrderResponse order = orderService.cancelOrder(auth.getName(), id, reason);
             return ResponseEntity.ok(Map.of("message", "Huỷ đơn hàng thành công", "order", order));
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -94,12 +96,13 @@ public class OrderController {
                                                     @RequestBody Map<String, String> body) {
         try {
             String status = body.get("status");
-            OrderResponse updated = orderService.updateOrderStatus(id, status);
+            String cancelReason = body.getOrDefault("cancelReason", "");
+            OrderResponse updated = orderService.updateOrderStatus(id, status, cancelReason);
             adminLogService.log(
                 auth.getName(), auth.getName(), "STATUS_CHANGE", "ORDER",
                 id, updated.getOrderCode() != null ? updated.getOrderCode() : "#" + id,
                 "Đổi trạng thái đơn #" + (updated.getOrderCode() != null ? updated.getOrderCode() : id)
-                    + " thành: " + status
+                    + " thành: " + updated.getStatusLabel()
             );
             return ResponseEntity.ok(Map.of("message", "Cập nhật thành công", "order", updated));
         } catch (IllegalArgumentException e) {

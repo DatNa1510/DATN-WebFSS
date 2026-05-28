@@ -147,6 +147,32 @@ public class VoucherService {
         return mapToResponse(saved);
     }
 
+    /**
+     * Tạo voucher ưu đãi bù đắp khi Admin hủy đơn hàng.
+     * Giảm 10%, tối đa 100.000₫, hiệu lực 30 ngày, dùng 1 lần.
+     */
+    @Transactional
+    public String createCompensationVoucher(vn.fss.order.entity.Order order) {
+        String code = "SORRY-" + order.getId() + "-" + (int)(Math.random() * 9000 + 1000);
+        code = code.toUpperCase();
+
+        Voucher voucher = Voucher.builder()
+                .code(code)
+                .type(VoucherType.PERCENT)
+                .value(0.1) // 10%
+                .minOrder(BigDecimal.ZERO)
+                .maxDiscount(new BigDecimal("100000")) // Tối đa 100.000₫
+                .expiryDate(LocalDate.now().plusDays(30))
+                .usageLimit(1)
+                .usedCount(0)
+                .isActive(true)
+                .build();
+        voucherRepository.save(voucher);
+
+        log.info("Created compensation voucher {} for cancelled order #{}", code, order.getId());
+        return code;
+    }
+
     @Transactional
     public void deleteVoucher(Long id) {
         if (!voucherRepository.existsById(id)) {
