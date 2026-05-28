@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronDown, Eye, Package, ChevronLeft, ChevronRight, X, History } from 'lucide-react';
+import { Search, ChevronDown, Eye, Package, ChevronLeft, ChevronRight, X, History, AlertTriangle } from 'lucide-react';
 import { toast } from '../../store/toastStore';
 import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
 
@@ -28,6 +28,10 @@ export default function AdminOrders() {
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Cancel reason modal state
+  const [cancelModal, setCancelModal] = useState(null); // { orderId: number }
+  const [cancelReason, setCancelReason] = useState('');
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -59,19 +63,39 @@ export default function AdminOrders() {
     return matchSearch && matchStatus;
   });
 
-  const updateStatus = async (id, newStatus) => {
+  const updateStatus = async (id, newStatus, cancelReason = '') => {
     try {
       const res = await fetch(`${API}/api/orders/admin/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, cancelReason }),
       });
-      if (!res.ok) throw new Error();
-      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Cập nhật thất bại');
+      }
+      const data = await res.json();
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, ...data.order } : o));
       toast.success('Cập nhật trạng thái thành công!');
-    } catch {
-      toast.error('Cập nhật thất bại!');
+    } catch (err) {
+      toast.error(err.message || 'Cập nhật thất bại!');
     }
+  };
+
+  const handleStatusChange = (orderId, newStatus) => {
+    if (newStatus === 'CANCELLED') {
+      setCancelModal({ orderId });
+      setCancelReason('');
+    } else {
+      updateStatus(orderId, newStatus);
+    }
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelModal || !cancelReason.trim()) return;
+    await updateStatus(cancelModal.orderId, 'CANCELLED', cancelReason.trim());
+    setCancelModal(null);
+    setCancelReason('');
   };
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
@@ -288,16 +312,19 @@ export default function AdminOrders() {
                           <div style={{ position: 'relative' }}>
                             <select
                               value={order.status}
-                              onChange={(e) => updateStatus(order.id, e.target.value)}
+                              onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                              disabled={order.status === 'CANCELLED' || order.status === 'DELIVERED'}
                               style={{
                                 appearance: 'none',
                                 padding: '6px 28px 6px 10px',
                                 fontSize: '12px', fontWeight: 700,
-                                borderRadius: '8px', cursor: 'pointer',
+                                borderRadius: '8px',
+                                cursor: (order.status === 'CANCELLED' || order.status === 'DELIVERED') ? 'not-allowed' : 'pointer',
                                 border: `1.5px solid ${cfg.dot}30`,
                                 background: cfg.bg, color: cfg.color,
                                 outline: 'none', fontFamily: 'inherit',
                                 transition: 'all 0.2s',
+                                opacity: (order.status === 'CANCELLED' || order.status === 'DELIVERED') ? 0.7 : 1,
                               }}
                             >
                               {statusOptions.filter(s => s !== 'all').map((s) => (
@@ -511,6 +538,85 @@ export default function AdminOrders() {
         targetType="ORDER"
         title="Lịch sử Quản lý Đơn hàng"
       />
+
+      {/* ── CANCEL REASON MODAL ── */}
+      <AnimatePresence>
+        {cancelModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(15,15,35,0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+            onClick={e => e.target === e.currentTarget && setCancelModal(null)}>
+            <motion.div initial={{ scale: 0.94, y: 20, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.94, y: 20, opacity: 0 }}
+              style={{ background: 'white', borderRadius: '20px', width: '100%', maxWidth: '460px', padding: '32px', boxShadow: '0 24px 80px rgba(0,0,0,0.25)' }}>
+              
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(239,68,68,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <AlertTriangle size={28} style={{ color: '#EF4444' }} />
+                </div>
+              </div>
+              
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#1E1B4B', textAlign: 'center', marginBottom: '6px' }}>
+                Hủy đơn hàng #{orders.find(o => o.id === cancelModal.orderId)?.orderCode || cancelModal.orderId}
+              </h2>
+              <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', marginBottom: '20px', lineHeight: 1.6 }}>
+                Vui lòng nhập lý do hủy đơn để khách hàng hiểu rõ. Hệ thống sẽ tự động tạo mã ưu đãi bù đắp (giảm 10%, tối đa 100K) cho khách hàng.
+              </p>
+              
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#64748B', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Lý do hủy đơn hàng *
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Nhập lý do hủy đơn hàng..."
+                  style={{
+                    width: '100%', height: '100px', padding: '12px 14px',
+                    border: '1.5px solid rgba(124,58,237,0.15)', borderRadius: '12px',
+                    background: '#FAFAFA', fontSize: '13.5px', color: '#374151',
+                    resize: 'none', outline: 'none', fontFamily: 'inherit',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(239,68,68,0.4)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(124,58,237,0.15)'}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 14px', background: 'rgba(16,185,129,0.06)', borderRadius: '10px', marginBottom: '20px', border: '1px solid rgba(16,185,129,0.12)' }}>
+                <span style={{ fontSize: '16px' }}>🎁</span>
+                <p style={{ fontSize: '12px', color: '#047857', fontWeight: 600, lineHeight: 1.5 }}>
+                  Khách hàng sẽ được tặng mã Voucher giảm 10% (tối đa 100.000đ) cho đơn hàng tiếp theo.
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <button
+                  onClick={() => { setCancelModal(null); setCancelReason(''); }}
+                  style={{
+                    padding: '12px', borderRadius: '10px', fontSize: '13px', fontWeight: 700,
+                    background: '#F1F5F9', border: 'none', cursor: 'pointer',
+                    color: '#64748B', fontFamily: 'inherit', transition: 'all 0.2s',
+                  }}
+                >
+                  Quay lại
+                </button>
+                <button
+                  onClick={handleConfirmCancel}
+                  disabled={!cancelReason.trim()}
+                  style={{
+                    padding: '12px', borderRadius: '10px', fontSize: '13px', fontWeight: 700,
+                    background: cancelReason.trim() ? 'linear-gradient(135deg, #DC2626, #EF4444)' : '#E2E8F0',
+                    border: 'none', cursor: cancelReason.trim() ? 'pointer' : 'not-allowed',
+                    color: 'white', fontFamily: 'inherit', transition: 'all 0.2s',
+                    boxShadow: cancelReason.trim() ? '0 4px 14px rgba(239,68,68,0.3)' : 'none',
+                  }}
+                >
+                  Xác nhận hủy đơn
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

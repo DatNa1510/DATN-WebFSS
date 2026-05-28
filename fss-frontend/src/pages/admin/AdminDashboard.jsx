@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Download, Calendar, ArrowUpRight, ArrowDownRight, Banknote, ShoppingBag, CheckCircle, Package, Star, RefreshCw } from 'lucide-react';
+import { Download, Calendar, ArrowUpRight, ArrowDownRight, Banknote, ShoppingBag, CheckCircle, Package, Star, RefreshCw, FileText, Table as TableIcon } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar
@@ -8,6 +8,7 @@ import {
 import { Link } from 'react-router-dom';
 import { formatPrice } from '../../data/mockData';
 import { toast } from '../../store/toastStore';
+import Modal from '../../components/ui/Modal';
 
 const API = 'http://localhost:8080';
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
@@ -44,6 +45,8 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [year, setYear] = useState(new Date().getFullYear());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [previewCsv, setPreviewCsv] = useState(null);
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'raw'
 
   const fetchDashboard = async (selectedYear, showLoader = true) => {
     if (showLoader) setLoading(true);
@@ -91,7 +94,7 @@ export default function AdminDashboard() {
     const fmtNum = (num) => `"${(num || 0).toLocaleString('vi-VN')}"`;
     const catMap = { 'Accessories': 'Phụ kiện', 'Apparel': 'Quần áo', 'Footwear': 'Giày dép' };
 
-    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    let csvContent = "";
     csvContent += `"BÁO CÁO THỐNG KÊ DOANH THU NĂM ${year}"\r\n\r\n`;
     
     csvContent += "1. TỔNG QUAN\r\n";
@@ -114,15 +117,50 @@ export default function AdminDashboard() {
       csvContent += `"${catName}",${fmtVND(c.revenue)},${fmtNum(c.quantity)}\r\n`;
     });
 
-    const encodedUri = encodeURI(csvContent);
+    setPreviewCsv(csvContent);
+  };
+
+  const triggerDownload = () => {
+    if (!previewCsv) return;
+    const fullContent = "data:text/csv;charset=utf-8,\uFEFF" + previewCsv;
+    const encodedUri = encodeURI(fullContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", `bao-cao-doanh-thu-${year}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    toast.success('Đã xuất báo cáo CSV thành công!');
+    setPreviewCsv(null);
+    toast.success('Đã tải xuống báo cáo CSV thành công!');
+  };
+
+  const parseSections = (csvText) => {
+    const sections = [];
+    let currentSection = null;
+    const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
+
+    lines.forEach((line, idx) => {
+      if (idx === 0) {
+        sections.push({ type: 'title', value: line.replace(/^"|"$/g, '') });
+        return;
+      }
+      if (line.match(/^[1-3]\.\s+/)) {
+        currentSection = { type: 'section', title: line, headers: [], rows: [] };
+        sections.push(currentSection);
+        return;
+      }
+      
+      const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+      
+      if (currentSection) {
+        if (currentSection.headers.length === 0 && (line.includes('Chỉ số') || line.includes('Tháng') || line.includes('Danh mục'))) {
+          currentSection.headers = cells;
+        } else {
+          currentSection.rows.push(cells);
+        }
+      }
+    });
+    return sections;
   };
 
   if (loading && !data) {
@@ -423,6 +461,132 @@ export default function AdminDashboard() {
           </Link>
         </div>
       </div>
+
+      {/* MODAL XEM TRƯỚC CSV */}
+      <Modal isOpen={!!previewCsv} onClose={() => setPreviewCsv(null)} title="Xem trước dữ liệu báo cáo" size="lg">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '16px' }}>
+          <button
+            onClick={() => setViewMode('table')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '6px 14px', borderRadius: '8px',
+              background: viewMode === 'table' ? '#7C3AED' : 'white',
+              color: viewMode === 'table' ? 'white' : '#64748B',
+              border: '1px solid ' + (viewMode === 'table' ? '#7C3AED' : '#E2E8F0'),
+              fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
+            }}
+          >
+            <TableIcon size={14} /> Dạng bảng
+          </button>
+          <button
+            onClick={() => setViewMode('raw')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '6px 14px', borderRadius: '8px',
+              background: viewMode === 'raw' ? '#7C3AED' : 'white',
+              color: viewMode === 'raw' ? 'white' : '#64748B',
+              border: '1px solid ' + (viewMode === 'raw' ? '#7C3AED' : '#E2E8F0'),
+              fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
+            }}
+          >
+            <FileText size={14} /> Dạng thô
+          </button>
+        </div>
+
+        {viewMode === 'raw' ? (
+          <pre style={{
+            fontFamily: "'Courier New', Courier, monospace",
+            fontSize: '12.5px',
+            color: '#334155',
+            background: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            padding: '16px',
+            borderRadius: '12px',
+            whiteSpace: 'pre',
+            overflow: 'auto',
+            maxHeight: '380px',
+            lineHeight: 1.5
+          }}>
+            {previewCsv}
+          </pre>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' }}>
+            {previewCsv && parseSections(previewCsv).map((sec, sIdx) => {
+              if (sec.type === 'title') {
+                return (
+                  <h2 key={sIdx} style={{ fontSize: '18px', fontWeight: 800, color: '#1E1B4B', textAlign: 'center', margin: '10px 0' }}>
+                    {sec.value}
+                  </h2>
+                );
+              }
+              return (
+                <div key={sIdx} style={{ background: '#F8FAFC', borderRadius: '12px', padding: '16px', border: '1px solid #E2E8F0' }}>
+                  <h4 style={{ fontSize: '13.5px', fontWeight: 800, color: '#7C3AED', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ display: 'inline-block', width: '6px', height: '14px', background: '#7C3AED', borderRadius: '3px' }} />
+                    {sec.title}
+                  </h4>
+                  {sec.rows.length > 0 && (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '2px solid #E2E8F0' }}>
+                            {sec.headers.map((h, hIdx) => (
+                              <th key={hIdx} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '11px', textTransform: 'uppercase' }}>
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sec.rows.map((row, rIdx) => (
+                            <tr key={rIdx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                              {row.map((cell, cIdx) => (
+                                <td key={cIdx} style={{ padding: '10px 12px', color: '#1E293B', fontWeight: cIdx === 0 ? 600 : 700 }}>
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px', borderTop: '1px solid #F1F5F9', paddingTop: '16px' }}>
+          <button
+            onClick={() => setPreviewCsv(null)}
+            style={{
+              padding: '10px 20px', borderRadius: '10px',
+              background: 'white', color: '#64748B',
+              border: '1px solid #E2E8F0', fontWeight: 600,
+              cursor: 'pointer', transition: 'all 0.2s'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#F8FAFC'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'white'; }}
+          >
+            Đóng
+          </button>
+          <button
+            onClick={triggerDownload}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 20px', borderRadius: '10px',
+              background: '#1E1B4B', color: 'white',
+              border: 'none', fontWeight: 600,
+              cursor: 'pointer', transition: 'background 0.2s'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#111827'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#1E1B4B'; }}
+          >
+            <Download size={16} /> Tải xuống (.csv)
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

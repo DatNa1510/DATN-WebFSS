@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Edit2, Trash2, X, Check, AlertTriangle, TrendingUp, Star, ChevronLeft, ChevronRight, Filter, ArrowUpDown, Loader2, History } from 'lucide-react';
 import { toast } from '../../store/toastStore';
 import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
-import { translate } from '../../data/fashionData';
+import { translate, reverseTranslateSearch } from '../../data/fashionData';
 
 const API = 'http://localhost:8080';
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
@@ -56,7 +56,7 @@ const subCategoriesMap = {
     { id: 'Nails', name: 'Sơn móng tay (Nails)' },
     { id: 'Makeup', name: 'Trang điểm (Makeup)' },
     { id: 'Skin Care', name: 'Chăm sóc da (Skin Care)' },
-    { id: 'Bath and Body', name: 'Tắm & Toàn thân (Bath and Body)' },
+    { id: 'Bath and Body', name: 'Sữa tắm & Dưỡng thể (Bath and Body)' },
     { id: 'Fragrance', name: 'Nước hoa (Fragrance)' },
   ],
   'Sporting Goods': [
@@ -161,13 +161,26 @@ export default function AdminProducts() {
   const fetchProducts = useCallback(async (page = 0, q = '', cat = 'all', s = 'newest') => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page, limit: 20, search: q, category: cat, sort: s });
+      const params = new URLSearchParams({ page, limit: 20, search: reverseTranslateSearch(q), category: cat, sort: s });
       const res = await fetch(`${API}/api/products?${params}`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setProducts(data.items || []);
+      let finalItems = data.items || [];
+      
+      // Lọc lại trên frontend để loại bỏ các kết quả false-positive do LIKE query của backend
+      if (q && q.trim()) {
+        const queryLower = q.toLowerCase().trim();
+        const { translateName, translate } = await import('../../data/fashionData');
+        finalItems = finalItems.filter(p => {
+          const tName = translateName(p).toLowerCase();
+          return tName.includes(queryLower) || 
+                 (p.category && translate(p.category).toLowerCase().includes(queryLower));
+        });
+      }
+
+      setProducts(finalItems);
       setTotal(data.total || 0);
       setTotalPages(data.totalPages || 1);
       setCurrentPage(data.currentPage || 0);

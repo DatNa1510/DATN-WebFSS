@@ -171,16 +171,24 @@ public class DashboardService {
 
     private List<PaymentMethodStatsDto> buildPaymentMethodStats() {
         List<Object[]> raw = orderRepository.revenueByPaymentMethod();
-        List<PaymentMethodStatsDto> result = new ArrayList<>();
+        // Gộp các method trùng nhau do chữ hoa/thường khác nhau
+        Map<String, long[]> countMap = new java.util.LinkedHashMap<>();
+        Map<String, BigDecimal> revenueMap = new java.util.LinkedHashMap<>();
         for (Object[] row : raw) {
-            String method = row[0] != null ? row[0].toString() : "unknown";
+            String method = row[0] != null ? row[0].toString().toLowerCase().trim() : "unknown";
             long count = ((Number) row[1]).longValue();
             BigDecimal revenue = row[2] != null ? new BigDecimal(row[2].toString()) : BigDecimal.ZERO;
+            countMap.merge(method, new long[]{count}, (a, b) -> { a[0] += b[0]; return a; });
+            revenueMap.merge(method, revenue, BigDecimal::add);
+        }
+        List<PaymentMethodStatsDto> result = new ArrayList<>();
+        for (String method : countMap.keySet()) {
+            String label = PAYMENT_LABELS.getOrDefault(method, method.toUpperCase());
             result.add(PaymentMethodStatsDto.builder()
-                    .method(method)
-                    .label(PAYMENT_LABELS.getOrDefault(method, method))
-                    .orderCount(count)
-                    .revenue(revenue)
+                    .method(label)
+                    .label(label)
+                    .orderCount(countMap.get(method)[0])
+                    .revenue(revenueMap.get(method))
                     .build());
         }
         return result;
