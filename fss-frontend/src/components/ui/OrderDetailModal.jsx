@@ -7,11 +7,17 @@ import {
 import { formatPrice } from '../../data/mockData';
 
 const statusConfig = {
-    PENDING: { label: 'Chờ xác nhận', color: '#2563eb', bg: 'bg-blue-50', dot: 'bg-blue-500' },
-    CONFIRMED: { label: 'Đã xác nhận', color: '#059669', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
-    SHIPPING: { label: 'Đang giao', color: '#d97706', bg: 'bg-amber-50', dot: 'bg-amber-500' },
+    PENDING:   { label: 'Chờ xác nhận',   color: '#2563eb', bg: 'bg-blue-50',    dot: 'bg-blue-500'    },
+    CONFIRMED: { label: 'Đã xác nhận',    color: '#059669', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
+    SHIPPING:  { label: 'Đang giao',      color: '#d97706', bg: 'bg-amber-50',   dot: 'bg-amber-500'   },
     DELIVERED: { label: 'Đã hoàn thành', color: '#059669', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
-    CANCELLED: { label: 'Đã huỷ', color: '#dc2626', bg: 'bg-red-50', dot: 'bg-red-500' },
+    CANCELLED: { label: 'Đã huỷ',         color: '#dc2626', bg: 'bg-red-50',     dot: 'bg-red-500'     },
+    // lowercase aliases (backend may return lowercase)
+    pending:   { label: 'Chờ xác nhận',   color: '#2563eb', bg: 'bg-blue-50',    dot: 'bg-blue-500'    },
+    confirmed: { label: 'Đã xác nhận',    color: '#059669', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
+    shipping:  { label: 'Đang giao',      color: '#d97706', bg: 'bg-amber-50',   dot: 'bg-amber-500'   },
+    delivered: { label: 'Đã hoàn thành', color: '#059669', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
+    cancelled: { label: 'Đã huỷ',         color: '#dc2626', bg: 'bg-red-50',     dot: 'bg-red-500'     },
 };
 
 export default function OrderDetailModal({ isOpen, onClose, order }) {

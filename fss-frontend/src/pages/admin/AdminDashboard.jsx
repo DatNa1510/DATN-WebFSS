@@ -229,7 +229,7 @@ export default function AdminDashboard() {
       value: formatPrice(stats.totalRevenue || 0), 
       icon: Banknote, 
       borderColor: '#1E3BC3', 
-      bg: '#F4F6FF', 
+      bg: '#FFFFFF', 
       iconBg: '#E8EEFF', 
       iconColor: '#1E3BC3' 
     },
@@ -238,7 +238,7 @@ export default function AdminDashboard() {
       value: formatPrice(stats.revenueThisMonth || 0), 
       icon: Banknote, 
       borderColor: '#DC2626', 
-      bg: '#FFF5F5', 
+      bg: '#FFFFFF', 
       iconBg: '#FEE2E2', 
       iconColor: '#DC2626', 
       sub: `${isRevenueUp ? '+' : ''}${revenueGrowth}% so với tháng trước`, 
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
       value: formatPrice(stats.avgOrderValue || 0), 
       icon: Banknote, 
       borderColor: '#7C3AED', 
-      bg: '#F5F3FF', 
+      bg: '#FFFFFF', 
       iconBg: '#EDE9FE', 
       iconColor: '#7C3AED' 
     },
@@ -258,7 +258,7 @@ export default function AdminDashboard() {
       value: (stats.totalOrders || 0).toLocaleString(), 
       icon: ShoppingBag, 
       borderColor: '#0284C7', 
-      bg: '#F0F9FF', 
+      bg: '#FFFFFF', 
       iconBg: '#E0F2FE', 
       iconColor: '#0284C7' 
     },
@@ -267,7 +267,7 @@ export default function AdminDashboard() {
       value: (stats.deliveredOrders || 0).toLocaleString(), 
       icon: CheckCircle, 
       borderColor: '#16A34A', 
-      bg: '#F0FDF4', 
+      bg: '#FFFFFF', 
       iconBg: '#DCFCE7', 
       iconColor: '#16A34A' 
     },
@@ -276,7 +276,7 @@ export default function AdminDashboard() {
       value: (stats.pendingOrders || 0).toLocaleString(), 
       icon: Package, 
       borderColor: '#D97706', 
-      bg: '#FFFBEB', 
+      bg: '#FFFFFF', 
       iconBg: '#FEF3C7', 
       iconColor: '#D97706' 
     },
@@ -335,7 +335,7 @@ export default function AdminDashboard() {
               background: card.bg, 
               padding: '20px 24px', 
               borderRadius: '8px', 
-              border: `1px solid ${card.iconBg}`,
+              border: `1px solid ${J.lightGray}`,
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02)',
               display: 'flex',
               flexDirection: 'column',
@@ -352,12 +352,11 @@ export default function AdminDashboard() {
                 </p>
               </div>
               <div style={{
-                width: '38px', height: '38px', borderRadius: '50%',
-                background: card.iconBg,
+                width: '38px', height: '38px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0
               }}>
-                <card.icon size={18} color={card.iconColor} />
+                <card.icon size={20} color={card.iconColor} />
               </div>
             </div>
             {card.sub && (

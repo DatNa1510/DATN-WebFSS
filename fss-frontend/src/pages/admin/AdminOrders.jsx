@@ -37,6 +37,11 @@ const statusConfig = {
   SHIPPING:  { label: 'Đang giao',    color: '#E67E22', bg: '#FDF2E9' },
   DELIVERED: { label: 'Đã giao',      color: J.green,  bg: '#E9F7EF' },
   CANCELLED: { label: 'Đã hủy',       color: '#E74C3C', bg: '#FDEDEC' },
+  pending:   { label: 'Chờ xác nhận', color: J.gray,   bg: '#F5F5F5' },
+  confirmed: { label: 'Đã xác nhận',  color: J.blue,   bg: '#EAF2F8' },
+  shipping:  { label: 'Đang giao',    color: '#E67E22', bg: '#FDF2E9' },
+  delivered: { label: 'Đã giao',      color: J.green,  bg: '#E9F7EF' },
+  cancelled: { label: 'Đã hủy',       color: '#E74C3C', bg: '#FDEDEC' },
 };
 
 export default function AdminOrders() {

@@ -2,17 +2,17 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LogOut, ChevronRight, ChevronDown, Package, MapPin, Heart, User,
-  Camera, Lock, Eye, EyeOff, Box, ArrowUpRight,
-  Shield, Clock, Sparkles, Plus, Check, X, Star, Bell, Trash2,
-  TrendingUp, ShoppingBag, CreditCard, AlertCircle
+  LogOut, ChevronRight, ChevronDown, MapPin, Heart, User,
+  Camera, Lock, Eye, EyeOff, ArrowUpRight,
+  Shield, Clock, Plus, Check, X, Trash2,
+  ShoppingBag, Box
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useOrderStore from '../../store/orderStore';
 import useAddressStore from '../../store/addressStore';
 import useWishlistStore from '../../store/wishlistStore';
 import AddressModal from '../../components/ui/AddressModal';
-import { formatPrice, orderStatusMap } from '../../data/mockData';
+import { formatPrice } from '../../data/mockData';
 import { toast } from '../../store/toastStore';
 import OrderDetailModal from '../../components/ui/OrderDetailModal';
 
@@ -126,8 +126,8 @@ const statusConfig = {
   confirmed: { label: 'Đã xác nhận', bg: '#dbeafe', color: '#1e40af', dot: '#3b82f6' },
   delivered: { label: 'Đã giao', bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
   processing: { label: 'Đang xử lý', bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
-  pending: { label: 'Chờ xử lý', bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' },
-  shipping: { label: 'Đang giao', bg: '#dbeafe', color: '#1e40af', dot: '#3b82f6' },
+  pending: { label: 'Chờ xác nhận', bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' },
+  shipping: { label: 'Đang giao', bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
   cancelled: { label: 'Đã huỷ', bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
 };
 
@@ -139,7 +139,7 @@ function StatusChip({ status }) {
       style={{ background: cfg.bg, color: cfg.color, border: `2px solid ${cfg.dot}40` }}
     >
       <span className="w-1.5 h-1.5 rounded-xs" style={{ background: cfg.dot }} />
-      {cfg.label || orderStatusMap[status]?.label || status}
+      {cfg.label || status}
     </span>
   );
 }
@@ -385,7 +385,14 @@ export default function ProfilePage() {
                         src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `http://localhost:8080/images/${user.avatar}`) : '/default-customer.jpg'}
                         alt={user?.name}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                        onError={(e) => { 
+                          if (!e.target.src.includes('default-customer.jpg')) {
+                            e.target.src = '/default-customer.jpg';
+                          } else {
+                            e.target.style.display = 'none'; 
+                            e.target.nextSibling.style.display = 'flex';
+                          }
+                        }}
                       />
                       <div className="w-full h-full hidden items-center justify-center text-white text-3xl font-black"
                         style={{ background: 'linear-gradient(135deg, #00168d, #7c3aed)' }}>

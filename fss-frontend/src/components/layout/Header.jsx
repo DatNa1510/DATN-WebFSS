@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ShoppingBag, Search, User, Menu, X, Camera, ChevronDown,
-  LogOut, Settings, Package, Bell, Check, Trash2, Clock
+  ShoppingBag, Search, User, Menu, X, ChevronDown, LogOut, Bell, Clock, Camera, Settings
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useCartStore from '../../store/cartStore';
@@ -273,8 +272,12 @@ export default function Header() {
                               alt={user?.name}
                               className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
                               onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
+                                if (!e.target.src.includes('default-customer.jpg')) {
+                                  e.target.src = '/default-customer.jpg';
+                                } else {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }
                               }}
                             />
                             <span
