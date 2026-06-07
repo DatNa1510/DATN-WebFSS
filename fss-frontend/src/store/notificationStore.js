@@ -11,7 +11,7 @@ const useNotificationStore = create((set, get) => ({
   fetchNotifications: async () => {
     if (!useAuthStore.getState().token) return;
     try {
-      const res = await axios.get('http://localhost:8080/api/notifications', {
+      const res = await axios.get('https://datn-webfss.onrender.com/api/notifications', {
         headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
       });
       
@@ -32,7 +32,7 @@ const useNotificationStore = create((set, get) => ({
   fetchUnreadCount: async () => {
     if (!useAuthStore.getState().token) return;
     try {
-      const res = await axios.get('http://localhost:8080/api/notifications/unread-count', {
+      const res = await axios.get('https://datn-webfss.onrender.com/api/notifications/unread-count', {
         headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
       });
       set({ unreadCount: res.data.count });
@@ -43,7 +43,7 @@ const useNotificationStore = create((set, get) => ({
 
   markAsRead: async (id) => {
     try {
-      await axios.put(`http://localhost:8080/api/notifications/${id}/read`, {}, {
+      await axios.put(`https://datn-webfss.onrender.com/api/notifications/${id}/read`, {}, {
         headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
       });
       set(s => ({
@@ -57,7 +57,7 @@ const useNotificationStore = create((set, get) => ({
 
   markAllAsRead: async () => {
     try {
-      await axios.put('http://localhost:8080/api/notifications/read-all', {}, {
+      await axios.put('https://datn-webfss.onrender.com/api/notifications/read-all', {}, {
         headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
       });
       set(s => ({
@@ -71,7 +71,7 @@ const useNotificationStore = create((set, get) => ({
 
   markAsUnread: async (id) => {
     try {
-      await axios.put(`http://localhost:8080/api/notifications/${id}/unread`, {}, {
+      await axios.put(`https://datn-webfss.onrender.com/api/notifications/${id}/unread`, {}, {
         headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
       });
       set(s => ({
@@ -85,7 +85,7 @@ const useNotificationStore = create((set, get) => ({
 
   deleteNotification: async (id) => {
     try {
-      await axios.delete(`http://localhost:8080/api/notifications/${id}`, {
+      await axios.delete(`https://datn-webfss.onrender.com/api/notifications/${id}`, {
         headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
       });
       set(s => {
@@ -102,7 +102,7 @@ const useNotificationStore = create((set, get) => ({
 
   deleteAllNotifications: async () => {
     try {
-      await axios.delete('http://localhost:8080/api/notifications', {
+      await axios.delete('https://datn-webfss.onrender.com/api/notifications', {
         headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
       });
       set({ notifications: [], unreadCount: 0 });
@@ -123,7 +123,7 @@ const useNotificationStore = create((set, get) => ({
         read: read === 'ALL' ? '' : read
       });
 
-      const res = await axios.get(`http://localhost:8080/api/notifications?${params}`, {
+      const res = await axios.get(`https://datn-webfss.onrender.com/api/notifications?${params}`, {
         headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
       });
 

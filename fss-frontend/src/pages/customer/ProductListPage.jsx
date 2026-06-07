@@ -75,7 +75,7 @@ export default function ProductListPage() {
 
     try {
       // 1. Thử gọi API thật từ Spring Boot Backend
-      const response = await axios.get('http://localhost:8080/api/products', {
+      const response = await axios.get('https://datn-webfss.onrender.com/api/products', {
         params: {
           page: pg,
           limit: PAGE_SIZE,

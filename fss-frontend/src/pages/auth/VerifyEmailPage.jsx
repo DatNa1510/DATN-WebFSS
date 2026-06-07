@@ -22,7 +22,7 @@ export default function VerifyEmailPage() {
 
     const verifyToken = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/auth/verify?token=${token}`);
+        const response = await fetch(`https://datn-webfss.onrender.com/api/auth/verify?token=${token}`);
         const data = await response.json();
 
         if (response.ok) {

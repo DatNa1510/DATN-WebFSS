@@ -29,8 +29,8 @@ export default function ProductCard({ product }) {
     ? (product.imagePath.startsWith('http')
         ? product.imagePath
         : product.imagePath.startsWith('/')
-          ? `http://localhost:8080${product.imagePath}`
-          : `http://localhost:8080/images/${product.imagePath}`)
+          ? `https://datn-webfss.onrender.com${product.imagePath}`
+          : `https://datn-webfss.onrender.com/images/${product.imagePath}`)
     : (product.images?.[imgIdx] || FALLBACK);
   const sizes = product.sizes || ['S', 'M', 'L', 'XL'];
   const colorNames = product.colorNames || [translate(product.baseColour) || 'Mặc định'];

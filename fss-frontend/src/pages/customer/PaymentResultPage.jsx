@@ -45,7 +45,7 @@ export default function PaymentResultPage() {
             const authStorage = JSON.parse(localStorage.getItem('fss-auth'));
             const token = authStorage?.state?.token;
             if (token) {
-              const res = await fetch(`http://localhost:8080/api/orders/${targetOrderId}/expire`, {
+              const res = await fetch(`https://datn-webfss.onrender.com/api/orders/${targetOrderId}/expire`, {
                 method: 'PATCH',
                 headers: {
                   'Authorization': `Bearer ${token}`

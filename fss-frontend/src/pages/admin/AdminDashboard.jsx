@@ -10,7 +10,7 @@ import { formatPrice } from '../../data/mockData';
 import { toast } from '../../store/toastStore';
 import Modal from '../../components/ui/Modal';
 
-const API = 'http://localhost:8080';
+const API = 'https://datn-webfss.onrender.com';
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
 
 const J = {
@@ -512,7 +512,7 @@ export default function AdminDashboard() {
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '12px', borderBottom: i < topProducts.length -1 ? `1px dashed ${J.lightGray}` : 'none' }}>
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <img
-                    src={p.imagePath ? (p.imagePath.split(',')[0].trim().startsWith('/') ? `http://localhost:8080${p.imagePath.split(',')[0].trim()}` : (p.imagePath.split(',')[0].trim().startsWith('http') ? p.imagePath.split(',')[0].trim() : `http://localhost:8080/images/${p.imagePath.split(',')[0].trim()}`)) : ''}
+                    src={p.imagePath ? (p.imagePath.split(',')[0].trim().startsWith('/') ? `https://datn-webfss.onrender.com${p.imagePath.split(',')[0].trim()}` : (p.imagePath.split(',')[0].trim().startsWith('http') ? p.imagePath.split(',')[0].trim() : `https://datn-webfss.onrender.com/images/${p.imagePath.split(',')[0].trim()}`)) : ''}
                     alt={p.productDisplayName}
                     style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover', border: `1px solid ${J.lightGray}` }}
                     onError={e => { e.target.src = 'https://placehold.co/40x40/fafaf8/6b6b6b?text=Img'; }}

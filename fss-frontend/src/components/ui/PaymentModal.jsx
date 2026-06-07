@@ -52,7 +52,7 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
   const pollStatus = useCallback(async () => {
     if (!orderId || !token) return;
     try {
-      const res = await fetch(`http://localhost:8080/api/orders/${orderId}`, {
+      const res = await fetch(`https://datn-webfss.onrender.com/api/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
@@ -90,7 +90,7 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
   // Khi QR hết hạn → tự động gọi API huỷ đơn & hoàn kho
   useEffect(() => {
     if (expired && payStatus === 'waiting' && orderId && token) {
-      fetch(`http://localhost:8080/api/orders/${orderId}/expire`, {
+      fetch(`https://datn-webfss.onrender.com/api/orders/${orderId}/expire`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` }
       }).then(() => {
@@ -115,7 +115,7 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
     toast.warning('Thanh toán chưa hoàn tất. Đơn hàng của bạn đã bị hủy.');
     if (orderId && token) {
       try {
-        await fetch(`http://localhost:8080/api/orders/${orderId}/expire`, {
+        await fetch(`https://datn-webfss.onrender.com/api/orders/${orderId}/expire`, {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${token}` }
         });

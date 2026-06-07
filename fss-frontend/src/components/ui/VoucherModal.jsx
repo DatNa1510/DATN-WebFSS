@@ -18,7 +18,7 @@ export default function VoucherModal({ isOpen, onClose, onSelect, currentSubtota
   React.useEffect(() => {
     if (isOpen) {
       setLoading(true);
-      fetch('http://localhost:8080/api/vouchers/active')
+      fetch('https://datn-webfss.onrender.com/api/vouchers/active')
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {

@@ -5,7 +5,7 @@ import { Search, ChevronDown, Eye, Package, ChevronLeft, ChevronRight, X, Histor
 import { toast } from '../../store/toastStore';
 import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
 
-const API = 'http://localhost:8080';
+const API = 'https://datn-webfss.onrender.com';
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
 const fmt = (n) => n?.toLocaleString('vi-VN') ?? '0';
 const parseDate = (dVal) => {

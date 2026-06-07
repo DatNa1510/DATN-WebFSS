@@ -10,8 +10,8 @@ import { formatPrice } from '../../data/mockData';
 import useVisualSearchStore from '../../store/visualSearchStore';
 import useCartStore from '../../store/cartStore';
 
-const API_BASE = 'http://localhost:8080';
-const IMG_BASE = 'http://localhost:8080';
+const API_BASE = 'https://datn-webfss.onrender.com';
+const IMG_BASE = 'https://datn-webfss.onrender.com';
 
 function getImg(product) {
   if (product.imagePath)

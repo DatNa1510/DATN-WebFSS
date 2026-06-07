@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import useAuthStore from './authStore';
 
-const API = 'http://localhost:8080/api/reviews';
+const API = 'https://datn-webfss.onrender.com/api/reviews';
 
 const useReviewStore = create((set, get) => ({
   // State

@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import axios from 'axios';
 import useAuthStore from './authStore';
 
-const API_URL = 'http://localhost:8080/api/orders';
-const BACKEND_BASE = 'http://localhost:8080';
+const API_URL = 'https://datn-webfss.onrender.com/api/orders';
+const BACKEND_BASE = 'https://datn-webfss.onrender.com';
 
 const getHeaders = () => {
   const token = useAuthStore.getState().token;

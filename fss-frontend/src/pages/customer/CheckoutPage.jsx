@@ -97,7 +97,7 @@ export default function CheckoutPage() {
       
       if (pay === 'momo' || pay === 'vietqr') {
         try {
-          const res = await fetch(`http://localhost:8080/api/payment/create/${r.order.id}`, {
+          const res = await fetch(`https://datn-webfss.onrender.com/api/payment/create/${r.order.id}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

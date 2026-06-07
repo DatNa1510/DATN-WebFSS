@@ -3,8 +3,8 @@ import axios from 'axios';
 import useAuthStore from './authStore';
 import { toast } from './toastStore';
 
-const API_URL = 'http://localhost:8080/api/cart';
-const BACKEND_BASE = 'http://localhost:8080';
+const API_URL = 'https://datn-webfss.onrender.com/api/cart';
+const BACKEND_BASE = 'https://datn-webfss.onrender.com';
 
 // Helper to get auth headers
 const getHeaders = () => {

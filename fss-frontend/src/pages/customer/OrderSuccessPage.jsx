@@ -15,7 +15,7 @@ export default function OrderSuccessPage() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await axios.get(`http://localhost:8080/api/orders/${id}`, {
+        const res = await axios.get(`https://datn-webfss.onrender.com/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
         });
         setOrder(res.data);

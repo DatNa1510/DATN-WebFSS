@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import useAuthStore from './authStore';
 
-const API_URL = 'http://localhost:8080/api/addresses';
+const API_URL = 'https://datn-webfss.onrender.com/api/addresses';
 
 const useAddressStore = create((set, get) => ({
   addresses: [],

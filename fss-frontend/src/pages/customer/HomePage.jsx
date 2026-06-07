@@ -37,7 +37,7 @@ export default function HomePage() {
 
   useEffect(() => {
     // Lấy top 3 Best Seller
-    axios.get('http://localhost:8080/api/products?limit=3&sort=best-seller')
+    axios.get('https://datn-webfss.onrender.com/api/products?limit=3&sort=best-seller')
       .then(res => {
         if (res.data && res.data.items) {
           setHeroProducts(res.data.items);
@@ -58,7 +58,7 @@ export default function HomePage() {
 
   useEffect(() => {
     // Lấy danh sách sản phẩm nổi bật
-    axios.get(`http://localhost:8080/api/products?limit=8&category=${activeCategory}&sort=best-seller`)
+    axios.get(`https://datn-webfss.onrender.com/api/products?limit=8&category=${activeCategory}&sort=best-seller`)
       .then(res => setFilteredProducts(res.data.items || []))
       .catch(err => console.error('Loi tai products:', err));
   }, [activeCategory]);
@@ -133,7 +133,7 @@ export default function HomePage() {
                       className="absolute inset-0"
                     >
                       <img
-                        src={heroProduct.imagePath ? (heroProduct.imagePath.startsWith('http') ? heroProduct.imagePath : heroProduct.imagePath.startsWith('/') ? `http://localhost:8080${heroProduct.imagePath}` : `http://localhost:8080/images/${heroProduct.imagePath}`) : (heroProduct.images?.[0] || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=60')}
+                        src={heroProduct.imagePath ? (heroProduct.imagePath.startsWith('http') ? heroProduct.imagePath : heroProduct.imagePath.startsWith('/') ? `https://datn-webfss.onrender.com${heroProduct.imagePath}` : `https://datn-webfss.onrender.com/images/${heroProduct.imagePath}`) : (heroProduct.images?.[0] || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=60')}
                         alt={heroProduct.productDisplayName || heroProduct.name}
                         className="w-full h-full object-cover object-top"
                       />

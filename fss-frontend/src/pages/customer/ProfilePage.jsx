@@ -382,7 +382,7 @@ export default function ProfilePage() {
                     <div className="absolute -inset-[3px] rounded-xs bg-white z-0" />
                     <div className="relative w-[88px] h-[88px] rounded-xs overflow-hidden border-2 border-white shadow-2xl z-10">
                       <img
-                        src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `http://localhost:8080/images/${user.avatar}`) : '/default-customer.jpg'}
+                        src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `https://datn-webfss.onrender.com/images/${user.avatar}`) : '/default-customer.jpg'}
                         alt={user?.name}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         onError={(e) => { 
