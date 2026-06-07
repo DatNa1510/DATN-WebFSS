@@ -269,8 +269,8 @@ export default function Header() {
                         <div className="flex items-center gap-3 mb-2">
                           <div className="relative w-10 h-10 shrink-0">
                             <img
-                              src={user.avatar}
-                              alt={user.name}
+                              src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `http://localhost:8080/images/${user.avatar}`) : '/default-customer.jpg'}
+                              alt={user?.name}
                               className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
                               onError={(e) => {
                                 e.target.style.display = 'none';
@@ -280,17 +280,17 @@ export default function Header() {
                             <span
                               className="w-10 h-10 rounded-full bg-primary text-white text-sm font-bold absolute inset-0 items-center justify-center hidden"
                             >
-                              {user.name?.charAt(0).toUpperCase()}
+                              {user?.name?.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div className="flex-1">
-                            <p className="font-bold text-sm text-foreground">{user.name}</p>
-                            <p className="text-[11px] text-muted-foreground font-medium leading-tight">{user.email}</p>
+                            <p className="font-bold text-sm text-foreground">{user?.name}</p>
+                            <p className="text-[11px] text-muted-foreground font-medium leading-tight">{user?.email}</p>
                           </div>
                         </div>
                       </div>
                       <div className="p-2">
-                        {user.role === 'admin' ? (
+                        {user?.role === 'admin' ? (
                           <motion.div
                             whileHover={{ x: 4 }}
                             transition={{ type: 'spring', stiffness: 400, damping: 10 }}

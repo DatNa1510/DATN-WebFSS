@@ -5,6 +5,7 @@ import { Eye, EyeOff, Mail, Lock, AlertCircle, Sparkles } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import useAuthStore from '../../store/authStore';
 import { DEFAULT_AVATARS } from '../../store/authStore';
+import { toast } from '../../store/toastStore';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ fss_identity: '', fss_secret: '' });
@@ -44,7 +45,7 @@ export default function LoginPage() {
     const result = await resendVerification(formData.fss_identity);
     setResendLoading(false);
     if (result.success) {
-      alert("Đã gửi lại email xác thực thành công. Vui lòng kiểm tra hòm thư.");
+      toast.success("Đã gửi lại email xác thực thành công. Vui lòng kiểm tra hòm thư.");
     }
   };
 
@@ -61,7 +62,7 @@ export default function LoginPage() {
     onError: () => {
       clearError();
       setLoading(false);
-      alert('Đăng nhập Google thất bại');
+      toast.error('Đăng nhập Google thất bại');
     }
   });
 

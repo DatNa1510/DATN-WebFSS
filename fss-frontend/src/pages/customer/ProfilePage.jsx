@@ -3,7 +3,7 @@ import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, ChevronRight, ChevronDown, Package, MapPin, Heart, User,
-  ArrowUpRight, Camera, Ruler, Lock, Eye, EyeOff, Box,
+  Camera, Lock, Eye, EyeOff, Box, ArrowUpRight,
   Shield, Clock, Sparkles, Plus, Check, X, Star, Bell, Trash2,
   TrendingUp, ShoppingBag, CreditCard, AlertCircle
 } from 'lucide-react';
@@ -123,6 +123,7 @@ const statusConfig = {
   DELIVERED: { label: 'Đã giao', bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
   CANCELLED: { label: 'Đã huỷ', bg: '#fee2e2', color: '#991b1b', dot: '#ef4444' },
   // Legacy lowercase
+  confirmed: { label: 'Đã xác nhận', bg: '#dbeafe', color: '#1e40af', dot: '#3b82f6' },
   delivered: { label: 'Đã giao', bg: '#d1fae5', color: '#065f46', dot: '#10b981' },
   processing: { label: 'Đang xử lý', bg: '#fef3c7', color: '#92400e', dot: '#f59e0b' },
   pending: { label: 'Chờ xử lý', bg: '#f1f5f9', color: '#475569', dot: '#94a3b8' },
@@ -270,8 +271,8 @@ export default function ProfilePage() {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) { alert('Vui lòng chọn file ảnh!'); return; }
-    if (file.size > 5 * 1024 * 1024) { alert('File quá lớn (tối đa 5MB)!'); return; }
+    if (!file.type.startsWith('image/')) { toast.error('Vui lòng chọn file ảnh!'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('File quá lớn (tối đa 5MB)!'); return; }
     const reader = new FileReader();
     reader.onload = (ev) => updateAvatar(ev.target.result);
     reader.readAsDataURL(file);
@@ -314,7 +315,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="layout-page pt-0 pb-10 relative z-10">
-          <div className="flex flex-col lg:flex-row gap-6 items-start">
+          <div className="flex flex-col lg:flex-row gap-6 items-stretch">
 
             <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-4">
 
@@ -323,7 +324,7 @@ export default function ProfilePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
-                className="relative overflow-hidden rounded-xs"
+                className="relative rounded-xs"
                 style={{
                   background: 'rgba(255,255,255,0.75)',
                   backdropFilter: 'blur(24px)',
@@ -334,7 +335,7 @@ export default function ProfilePage() {
               >
                 {/* Gradient header bg */}
                 <div
-                  className="absolute top-0 left-0 right-0 h-28 -z-0"
+                  className="absolute top-0 left-0 right-0 h-28 -z-0 overflow-hidden"
                   style={{
                     background: 'linear-gradient(135deg, rgba(0,22,141,0.08) 0%, rgba(124,58,237,0.06) 100%)',
                   }}
@@ -354,15 +355,12 @@ export default function ProfilePage() {
 
                 <div className="flex flex-col items-center pt-8 pb-6 px-6 relative">
                   {/* Avatar */}
-                  <div className="relative mb-14 group z-10" style={{ paddingBottom: '4px' }}>
+                  <div className="relative mb-14 group z-10">
                     {/* Sweeping Shimmer Border Container */}
                     <div
                       className="absolute -inset-[6px] rounded-xs overflow-hidden pointer-events-none"
                       style={{
                         background: 'linear-gradient(135deg, #00168d, #7c3aed)',
-                        top: '-6px',
-                        bottom: 'auto',
-                        height: '100px',
                       }}
                     >
                       {/* Sweeping Light Sheen */}
@@ -381,10 +379,10 @@ export default function ProfilePage() {
                       />
                     </div>
                     {/* White backing border ring */}
-                    <div className="absolute -inset-[3px] rounded-xs bg-white z-0" style={{ top: '-3px', bottom: 'auto', height: '94px' }} />
+                    <div className="absolute -inset-[3px] rounded-xs bg-white z-0" />
                     <div className="relative w-[88px] h-[88px] rounded-xs overflow-hidden border-2 border-white shadow-2xl z-10">
                       <img
-                        src={user?.avatar}
+                        src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `http://localhost:8080/images/${user.avatar}`) : '/default-customer.jpg'}
                         alt={user?.name}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
@@ -427,7 +425,7 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-2 gap-2 w-full mt-3">
                     {[
                       { label: 'Đơn hàng', value: orders.length, icon: ShoppingBag, color: 'text-primary' },
-                      { label: 'Điểm tích', value: '0', icon: Star, color: 'text-amber-500 fill-amber-400' },
+                      { label: 'Địa chỉ', value: addresses.length, icon: MapPin, color: 'text-rose-500 fill-rose-100' },
                     ].map(({ label, value, icon: Icon, color }) => (
                       <div
                         key={label}
@@ -437,7 +435,7 @@ export default function ProfilePage() {
                           border: '2px solid rgba(226,232,240,0.6)',
                         }}
                       >
-                        <Icon size={13} className={`${color} mb-1 ${label === 'Điểm tích' ? 'opacity-100' : 'opacity-60'}`} />
+                        <Icon size={13} className={`${color} mb-1 ${label === 'Địa chỉ' ? 'opacity-100' : 'opacity-60'}`} />
                         <span className="text-[15px] font-black text-slate-800">{value}</span>
                         <span className="text-[9px] text-slate-400 font-semibold tracking-wide">{label}</span>
                       </div>
@@ -561,7 +559,7 @@ export default function ProfilePage() {
             {/* ══════════════════════════════
               MAIN PANEL
           ══════════════════════════════ */}
-            <main className="flex-1 min-h-[700px] flex flex-col gap-5">
+            <main className="flex-1 flex flex-col gap-5">
 
               {/* ── PROFILE PANEL ── */}
               <AnimatePresence mode="wait">
@@ -1180,101 +1178,7 @@ export default function ProfilePage() {
                 )}
               </AnimatePresence>
 
-              {/* ── SMART FIT BANNER ── */}
-              {sideTab === 'profile' && mainTab === 'info' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="relative overflow-hidden rounded-xs p-8 md:p-10"
-                  style={{
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f5f3ff 50%, #fdf2f8 100%)',
-                    boxShadow: '0 20px 60px rgba(0,22,141,0.05)',
-                    border: '2px solid rgba(0,22,141,0.08)',
-                  }}
-                >
-                  {/* Animated orbs */}
-                  <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full blur-[80px]"
-                    style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.5), transparent)' }} />
-                  <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full blur-[60px]"
-                    style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.4), transparent)' }} />
-                  <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-32 h-32 rounded-full blur-[50px]"
-                    style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.3), transparent)' }} />
 
-                  {/* Grid texture overlay */}
-                  <div className="absolute inset-0 opacity-5"
-                    style={{
-                      backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(255,255,255,0.5) 30px, rgba(255,255,255,0.5) 31px), repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(255,255,255,0.5) 30px, rgba(255,255,255,0.5) 31px)',
-                    }} />
-
-                  <div className="relative z-10">
-                    {/* Badge */}
-                    <div className="flex items-center gap-2 mb-5">
-                      <div
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{ background: '#a78bfa', boxShadow: '0 0 8px #a78bfa' }}
-                      />
-                      <span
-                        className="text-[10px] font-black tracking-[0.28em] uppercase"
-                        style={{ background: 'linear-gradient(90deg, #a78bfa, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-                      >
-                        Smart Fit
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
-                      <div>
-                        <h3 className="text-[24px] md:text-[28px] font-black text-slate-800 leading-[1.2] tracking-tight mb-3 max-w-lg">
-                          Hãy cập nhật số đo để chúng tôi gợi ý size chuẩn nhất với bạn.
-                        </h3>
-                        <p className="text-[14px] text-slate-500 font-medium leading-relaxed max-w-md">
-                          Phân tích lịch sử mua sắm và hình thể của bạn để đưa ra tư vấn độc quyền.
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col gap-3 shrink-0">
-                        {/* Size pills */}
-                        <div className="flex gap-2">
-                          {['S', 'M', 'L', 'XL', 'XXL'].map((s) => (
-                            <div
-                              key={s}
-                              className="w-9 h-9 rounded-xs flex items-center justify-center text-[11px] font-black transition-all"
-                              style={s === ''
-                                ? {
-                                  background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                                  color: 'white',
-                                  boxShadow: '0 4px 14px rgba(124,58,237,0.5)',
-                                  transform: 'scale(1.15)',
-                                }
-                                : {
-                                  background: 'rgba(0,0,0,0.03)',
-                                  color: '#94a3b8',
-                                  border: '2px solid rgba(0,0,0,0.05)',
-                                }
-                              }
-                            >
-                              {s}
-                            </div>
-                          ))}
-                        </div>
-
-                        <button
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-xs text-[11px] font-black uppercase tracking-wider transition-all hover:-translate-y-0.5"
-                          style={{
-                            background: 'rgba(0,22,141,0.05)',
-                            border: '2px solid rgba(0,22,141,0.1)',
-                            color: '#00168d',
-                          }}
-                        >
-                          <Ruler size={12} />
-                          Xem chi tiết số đo
-                          <ArrowUpRight size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
 
             </main>
           </div>

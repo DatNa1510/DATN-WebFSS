@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Download, Calendar, ArrowUpRight, ArrowDownRight, Banknote, ShoppingBag, CheckCircle, Package, Star, RefreshCw, FileText, Table as TableIcon } from 'lucide-react';
+import { Download, Calendar, ArrowUpRight, ArrowDownRight, Banknote, ShoppingBag, CheckCircle, Package, Flame, RefreshCw, FileText, Table as TableIcon } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar
@@ -13,12 +13,23 @@ import Modal from '../../components/ui/Modal';
 const API = 'http://localhost:8080';
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
 
+const J = {
+  black: '#1A1A1A',
+  gray: '#6B6B6B',
+  lightGray: '#E8E8E4',
+  red: '#1e3bc3', // Softer Shop theme blue
+  redLight: '#E8EEFF', // Soft blue
+  white: '#FFFFFF',
+  green: '#27AE60',
+  blue: '#2980B9',
+};
+
 const STATUS_COLORS = {
-  PENDING: '#94A3B8',
-  CONFIRMED: '#7C3AED',
-  SHIPPING: '#0EA5E9',
-  DELIVERED: '#10B981',
-  CANCELLED: '#EF4444'
+  PENDING: J.gray,
+  CONFIRMED: J.blue,
+  SHIPPING: '#E67E22',
+  DELIVERED: J.green,
+  CANCELLED: '#E74C3C'
 };
 
 const STATUS_LABELS = {
@@ -29,14 +40,19 @@ const STATUS_LABELS = {
   CANCELLED: 'Đã huỷ'
 };
 
-const PAYMENT_COLORS = ['#10B981', '#3B82F6', '#D946EF', '#F59E0B'];
+const getPaymentColor = (method) => {
+  const name = method?.toLowerCase() || '';
+  if (name.includes('momo')) return '#D82D8B'; // MoMo pink
+  if (name.includes('payos')) return '#00B156'; // PayOS green
+  return '#7F8C8D'; // Grey for COD / other
+};
 
 const statusStyle = {
-  DELIVERED: { bg: 'rgba(16,185,129,0.1)', color: '#059669' },
-  SHIPPING:  { bg: 'rgba(14,165,233,0.1)', color: '#0284C7' },
-  CONFIRMED: { bg: 'rgba(124,58,237,0.1)', color: '#6D28D9' },
-  PENDING:   { bg: 'rgba(100,116,139,0.1)', color: '#475569' },
-  CANCELLED: { bg: 'rgba(239,68,68,0.1)', color: '#DC2626' },
+  DELIVERED: { bg: '#E9F7EF', color: J.green },
+  SHIPPING:  { bg: '#FDF2E9', color: '#E67E22' },
+  CONFIRMED: { bg: '#EAF2F8', color: J.blue },
+  PENDING:   { bg: '#F5F5F5', color: J.gray },
+  CANCELLED: { bg: J.redLight, color: J.red },
 };
 
 export default function AdminDashboard() {
@@ -89,7 +105,6 @@ export default function AdminDashboard() {
   const handleExport = () => {
     if (!data) return;
     
-    // Hàm định dạng số để Excel không bị lỗi khoa học (VD: 7.73E+08)
     const fmtVND = (num) => `"${(num || 0).toLocaleString('vi-VN')} ₫"`;
     const fmtNum = (num) => `"${(num || 0).toLocaleString('vi-VN')}"`;
     const catMap = { 'Accessories': 'Phụ kiện', 'Apparel': 'Quần áo', 'Footwear': 'Giày dép' };
@@ -167,8 +182,8 @@ export default function AdminDashboard() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px', gap: '16px' }}>
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          style={{ width: '40px', height: '40px', border: '4px solid rgba(124,58,237,0.1)', borderTopColor: '#7C3AED', borderRadius: '50%' }} />
-        <p style={{ color: '#64748B', fontWeight: 600 }}>Đang tải dữ liệu báo cáo...</p>
+          style={{ width: '32px', height: '32px', border: `2px solid ${J.lightGray}`, borderTopColor: J.red, borderRadius: '50%' }} />
+        <p style={{ color: J.gray, fontWeight: 500, fontSize: '13px' }}>Đang tải dữ liệu báo cáo...</p>
       </div>
     );
   }
@@ -176,8 +191,8 @@ export default function AdminDashboard() {
   if (error && !data) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px', gap: '16px' }}>
-        <p style={{ color: '#DC2626', fontWeight: 600 }}>{error}</p>
-        <button onClick={() => fetchDashboard(year)} style={{ padding: '8px 20px', borderRadius: '10px', background: '#7C3AED', border: 'none', color: 'white', fontWeight: 700, cursor: 'pointer' }}>Thử lại</button>
+        <p style={{ color: J.red, fontWeight: 600 }}>{error}</p>
+        <button onClick={() => fetchDashboard(year)} style={{ padding: '8px 20px', borderRadius: '4px', background: J.red, border: 'none', color: J.white, fontWeight: 500, cursor: 'pointer' }}>Thử lại</button>
       </div>
     );
   }
@@ -197,7 +212,6 @@ export default function AdminDashboard() {
   const recentOrders = data?.recentOrders || [];
   const topProducts = data?.topProducts || [];
 
-  // Chart data formatting
   const donutData = Object.entries(orderStatusStats).map(([key, value]) => ({
     name: STATUS_LABELS[key.toUpperCase()] || key,
     value: value,
@@ -210,41 +224,91 @@ export default function AdminDashboard() {
   const isRevenueUp = parseFloat(revenueGrowth) >= 0;
 
   const kpiCards = [
-    { label: 'Tổng doanh thu (Năm)', value: formatPrice(stats.totalRevenue || 0), icon: Banknote, color: '#10B981' },
-    { label: 'Doanh thu tháng này', value: formatPrice(stats.revenueThisMonth || 0), icon: Banknote, color: '#7C3AED', sub: `${isRevenueUp ? '+' : ''}${revenueGrowth}% so với tháng trước`, up: isRevenueUp },
-    { label: 'Giá trị đơn TB (AOV)', value: formatPrice(stats.avgOrderValue || 0), icon: Banknote, color: '#F59E0B' },
-    { label: 'Tổng đơn hàng', value: (stats.totalOrders || 0).toLocaleString(), icon: ShoppingBag, color: '#3B82F6' },
-    { label: 'Đơn thành công', value: (stats.deliveredOrders || 0).toLocaleString(), icon: CheckCircle, color: '#10B981' },
-    { label: 'Đơn chờ xử lý', value: (stats.pendingOrders || 0).toLocaleString(), icon: Package, color: '#64748B' },
+    { 
+      label: 'Tổng doanh thu (Năm)', 
+      value: formatPrice(stats.totalRevenue || 0), 
+      icon: Banknote, 
+      borderColor: '#1E3BC3', 
+      bg: '#F4F6FF', 
+      iconBg: '#E8EEFF', 
+      iconColor: '#1E3BC3' 
+    },
+    { 
+      label: 'Doanh thu tháng này', 
+      value: formatPrice(stats.revenueThisMonth || 0), 
+      icon: Banknote, 
+      borderColor: '#DC2626', 
+      bg: '#FFF5F5', 
+      iconBg: '#FEE2E2', 
+      iconColor: '#DC2626', 
+      sub: `${isRevenueUp ? '+' : ''}${revenueGrowth}% so với tháng trước`, 
+      up: isRevenueUp 
+    },
+    { 
+      label: 'Giá trị đơn TB (AOV)', 
+      value: formatPrice(stats.avgOrderValue || 0), 
+      icon: Banknote, 
+      borderColor: '#7C3AED', 
+      bg: '#F5F3FF', 
+      iconBg: '#EDE9FE', 
+      iconColor: '#7C3AED' 
+    },
+    { 
+      label: 'Tổng đơn hàng', 
+      value: (stats.totalOrders || 0).toLocaleString(), 
+      icon: ShoppingBag, 
+      borderColor: '#0284C7', 
+      bg: '#F0F9FF', 
+      iconBg: '#E0F2FE', 
+      iconColor: '#0284C7' 
+    },
+    { 
+      label: 'Đơn thành công', 
+      value: (stats.deliveredOrders || 0).toLocaleString(), 
+      icon: CheckCircle, 
+      borderColor: '#16A34A', 
+      bg: '#F0FDF4', 
+      iconBg: '#DCFCE7', 
+      iconColor: '#16A34A' 
+    },
+    { 
+      label: 'Đơn chờ xử lý', 
+      value: (stats.pendingOrders || 0).toLocaleString(), 
+      icon: Package, 
+      borderColor: '#D97706', 
+      bg: '#FFFBEB', 
+      iconBg: '#FEF3C7', 
+      iconColor: '#D97706' 
+    },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '40px' }}>
       
       {/* ── HEADER ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', padding: '20px 28px', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: J.white, padding: '16px 24px', borderRadius: '4px', border: `1px solid ${J.lightGray}` }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1E1B4B' }}>Báo cáo thống kê</h1>
-          <p style={{ fontSize: '13px', color: '#64748B', marginTop: '4px' }}>Phân tích số liệu kinh doanh thực tế từ hệ thống</p>
+          <h1 style={{ fontSize: '22px', fontWeight: 600, color: J.black, letterSpacing: '0.02em' }}>Báo cáo thống kê</h1>
+          <p style={{ fontSize: '12px', color: J.gray, marginTop: '4px' }}>Phân tích số liệu kinh doanh thực tế từ hệ thống</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button 
             onClick={handleManualRefresh}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '10px', background: 'white', border: '1px solid #E2E8F0', color: '#64748B', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#7C3AED'; e.currentTarget.style.borderColor = '#7C3AED'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#64748B'; e.currentTarget.style.borderColor = '#E2E8F0'; }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '4px', background: J.white, border: `1px solid ${J.lightGray}`, color: J.gray, cursor: 'pointer', transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.color = J.red; e.currentTarget.style.borderColor = J.red; }}
+            onMouseLeave={e => { e.currentTarget.style.color = J.gray; e.currentTarget.style.borderColor = J.lightGray; }}
             title="Làm mới dữ liệu"
           >
             <motion.div animate={{ rotate: isRefreshing ? 360 : 0 }} transition={{ repeat: isRefreshing ? Infinity : 0, duration: 1, ease: 'linear' }}>
-              <RefreshCw size={16} />
+              <RefreshCw size={14} />
             </motion.div>
           </button>
           
           <div style={{ position: 'relative' }}>
-            <Calendar size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748B' }} />
+            <Calendar size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: J.gray }} />
             <select 
               value={year} onChange={e => setYear(Number(e.target.value))}
-              style={{ padding: '10px 16px 10px 36px', borderRadius: '10px', border: '1px solid #E2E8F0', outline: 'none', fontWeight: 600, color: '#1E1B4B', cursor: 'pointer', appearance: 'none', background: '#F8FAFC' }}
+              style={{ padding: '8px 12px 8px 32px', borderRadius: '4px', border: `1px solid ${J.lightGray}`, outline: 'none', fontWeight: 500, fontSize: '13px', color: J.black, cursor: 'pointer', appearance: 'none', background: '#FAFAFA' }}
             >
               {Array.from({ length: Math.max(1, new Date().getFullYear() - 2026 + 1) }, (_, i) => 2026 + i).map(y => (
                 <option key={y} value={y}>Năm {y}</option>
@@ -253,27 +317,56 @@ export default function AdminDashboard() {
           </div>
           <button 
             onClick={handleExport}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', background: '#1E1B4B', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '4px', background: J.red, color: J.white, border: 'none', fontWeight: 500, fontSize: '13px', cursor: 'pointer', transition: 'background 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#152e9c'}
+            onMouseLeave={e => e.currentTarget.style.background = J.red}
           >
-            <Download size={16} /> Xuất CSV
+            <Download size={14} /> Xuất CSV
           </button>
         </div>
       </div>
 
       {/* ── KPI CARDS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
         {kpiCards.map((card, i) => (
-          <div key={i} style={{ background: 'white', padding: '24px', borderRadius: '16px', border: '1px solid #F1F5F9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${card.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <card.icon size={20} color={card.color} />
+          <div 
+            key={i} 
+            style={{ 
+              background: card.bg, 
+              padding: '20px 24px', 
+              borderRadius: '8px', 
+              border: `1px solid ${card.iconBg}`,
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: '#4B5563', marginBottom: '8px' }}>
+                  {card.label}
+                </p>
+                <p style={{ fontSize: '24px', fontWeight: 700, color: J.black, lineHeight: 1.2 }}>
+                  {card.value}
+                </p>
               </div>
-              <p style={{ fontSize: '13px', fontWeight: 700, color: '#64748B' }}>{card.label}</p>
+              <div style={{
+                width: '38px', height: '38px', borderRadius: '50%',
+                background: card.iconBg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <card.icon size={18} color={card.iconColor} />
+              </div>
             </div>
-            <p style={{ fontSize: '24px', fontWeight: 800, color: '#1E1B4B' }}>{card.value}</p>
             {card.sub && (
-              <p style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 600, color: card.up ? '#10B981' : '#EF4444', marginTop: '8px' }}>
-                {card.up ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />} {card.sub}
+              <p style={{ 
+                display: 'flex', alignItems: 'center', gap: '4px', 
+                fontSize: '11px', fontWeight: 600, 
+                color: card.up ? J.green : J.red, marginTop: '12px' 
+              }}>
+                {card.up ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />} {card.sub}
               </p>
             )}
           </div>
@@ -281,45 +374,45 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── CHARTS ROW 1 ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
         
         {/* Line Chart: Doanh thu theo tháng */}
-        <div style={{ background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: '1px solid #F1F5F9' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1E1B4B', marginBottom: '24px' }}>Doanh thu theo tháng ({year})</h3>
+        <div style={{ background: J.white, padding: '24px', borderRadius: '4px', border: `1px solid ${J.lightGray}` }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, color: J.black, marginBottom: '24px', letterSpacing: '0.04em' }}>DOANH THU THEO THÁNG ({year})</h3>
           <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} tickFormatter={val => `${val / 1000000}M`} />
-                <RechartsTooltip formatter={(value) => [formatPrice(value), 'Doanh thu']} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                <Line type="monotone" dataKey="revenue" stroke="#7C3AED" strokeWidth={3} dot={{ r: 4, fill: '#7C3AED', strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 6 }} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={J.lightGray} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: J.gray }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: J.gray }} tickFormatter={val => `${val / 1000000}M`} />
+                <RechartsTooltip formatter={(value) => [formatPrice(value), 'Doanh thu']} contentStyle={{ borderRadius: '0px', border: `1px solid ${J.lightGray}`, boxShadow: 'none' }} />
+                <Line type="monotone" dataKey="revenue" stroke={J.red} strokeWidth={2} dot={{ r: 3, fill: J.white, strokeWidth: 2, stroke: J.red }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Donut Chart: Trạng thái đơn hàng */}
-        <div style={{ background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1E1B4B', marginBottom: '16px' }}>Trạng thái đơn hàng</h3>
+        <div style={{ background: J.white, padding: '24px', borderRadius: '4px', border: `1px solid ${J.lightGray}`, display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, color: J.black, marginBottom: '16px', letterSpacing: '0.04em' }}>TRẠNG THÁI ĐƠN HÀNG</h3>
           <div style={{ flex: 1, minHeight: '200px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={donutData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                <Pie data={donutData} innerRadius={55} outerRadius={75} paddingAngle={2} dataKey="value" stroke="none">
                   {donutData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
-                <RechartsTooltip formatter={(value) => [value, 'Số lượng']} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                <RechartsTooltip formatter={(value) => [value, 'Số lượng']} contentStyle={{ borderRadius: '0px', border: `1px solid ${J.lightGray}`, boxShadow: 'none' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {donutData.map(d => (
-              <div key={d.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px' }}>
+              <div key={d.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: d.color }} />
-                  <span style={{ color: '#475569', fontWeight: 600 }}>{d.name}</span>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: d.color }} />
+                  <span style={{ color: J.gray, fontWeight: 500 }}>{d.name}</span>
                 </div>
-                <span style={{ fontWeight: 800, color: '#1E1B4B' }}>{d.value}</span>
+                <span style={{ fontWeight: 600, color: J.black }}>{d.value}</span>
               </div>
             ))}
           </div>
@@ -327,37 +420,37 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── CHARTS ROW 2 ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         
         {/* Bar Chart: Doanh thu theo danh mục */}
-        <div style={{ background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: '1px solid #F1F5F9' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1E1B4B', marginBottom: '24px' }}>Doanh thu theo danh mục</h3>
+        <div style={{ background: J.white, padding: '24px', borderRadius: '4px', border: `1px solid ${J.lightGray}` }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, color: J.black, marginBottom: '24px', letterSpacing: '0.04em' }}>DOANH THU THEO DANH MỤC</h3>
           <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryRevenue} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E2E8F0" />
-                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} tickFormatter={val => `${val / 1000000}M`} />
-                <YAxis type="category" dataKey="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#1E1B4B', fontWeight: 600 }} width={80} />
-                <RechartsTooltip formatter={(value) => [formatPrice(value), 'Doanh thu']} cursor={{ fill: '#F8FAFC' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                <Bar dataKey="revenue" fill="#3B82F6" radius={[0, 4, 4, 0]} barSize={24} />
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={J.lightGray} />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: J.gray }} tickFormatter={val => `${val / 1000000}M`} />
+                <YAxis type="category" dataKey="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: J.black, fontWeight: 500 }} width={80} />
+                <RechartsTooltip formatter={(value) => [formatPrice(value), 'Doanh thu']} cursor={{ fill: '#FAFAFA' }} contentStyle={{ borderRadius: '0px', border: `1px solid ${J.lightGray}`, boxShadow: 'none' }} />
+                <Bar dataKey="revenue" fill="#1E3BC3" radius={[0, 2, 2, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Bar Chart: Doanh thu theo phương thức thanh toán */}
-        <div style={{ background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: '1px solid #F1F5F9' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1E1B4B', marginBottom: '24px' }}>Doanh thu theo phương thức TT</h3>
+        <div style={{ background: J.white, padding: '24px', borderRadius: '4px', border: `1px solid ${J.lightGray}` }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, color: J.black, marginBottom: '24px', letterSpacing: '0.04em' }}>DOANH THU THEO PTTT</h3>
           <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={paymentMethodStats} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="method" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} tickFormatter={val => `${val / 1000000}M`} />
-                <RechartsTooltip formatter={(value) => [formatPrice(value), 'Doanh thu']} cursor={{ fill: '#F8FAFC' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                <Bar dataKey="revenue" radius={[4, 4, 0, 0]} barSize={40}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={J.lightGray} />
+                <XAxis dataKey="method" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: J.gray }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: J.gray }} tickFormatter={val => `${val / 1000000}M`} />
+                <RechartsTooltip formatter={(value) => [formatPrice(value), 'Doanh thu']} cursor={{ fill: '#FAFAFA' }} contentStyle={{ borderRadius: '0px', border: `1px solid ${J.lightGray}`, boxShadow: 'none' }} />
+                <Bar dataKey="revenue" radius={[2, 2, 0, 0]} barSize={32}>
                   {paymentMethodStats.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PAYMENT_COLORS[index % PAYMENT_COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={getPaymentColor(entry.method)} />
                   ))}
                 </Bar>
               </BarChart>
@@ -368,22 +461,22 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── ROW 3: RECENT ORDERS & TOP PRODUCTS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '16px' }}>
         
         {/* RECENT ORDERS TABLE */}
-        <div style={{ background: 'white', borderRadius: '18px', padding: '28px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ background: J.white, borderRadius: '4px', padding: '24px', border: `1px solid ${J.lightGray}`, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#1E1B4B' }}>Đơn hàng gần đây</h2>
-            <Link to="/admin/orders" style={{ fontSize: '13px', fontWeight: 700, color: '#7C3AED', textDecoration: 'none', padding: '6px 14px', borderRadius: '8px', background: 'rgba(124,58,237,0.06)' }}>Xem tất cả →</Link>
+            <h2 style={{ fontSize: '14px', fontWeight: 600, color: J.black, letterSpacing: '0.04em' }}>ĐƠN HÀNG GẦN ĐÂY</h2>
+            <Link to="/admin/orders" style={{ fontSize: '12px', fontWeight: 500, color: J.red, textDecoration: 'none' }}>Xem tất cả →</Link>
           </div>
 
           {recentOrders && recentOrders.length > 0 ? (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead>
-                  <tr style={{ borderBottom: '2px solid #F1F5F9' }}>
+                  <tr style={{ borderBottom: `1px solid ${J.lightGray}` }}>
                     {['Mã đơn', 'Khách hàng', 'Tổng tiền', 'Trạng thái', 'Ngày đặt'].map(h => (
-                      <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: '#94A3B8', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: J.gray, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.02em', background: '#FAFAFA' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -391,12 +484,12 @@ export default function AdminDashboard() {
                   {recentOrders.map(order => {
                     const st = statusStyle[order.status] || statusStyle.PENDING;
                     return (
-                      <tr key={order.id} style={{ borderBottom: '1px solid #F8FAFC', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = '#FAFAFE'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                        <td style={{ padding: '12px', fontWeight: 700, color: '#1E1B4B' }}>{order.orderCode}</td>
-                        <td style={{ padding: '12px', color: '#475569' }}>{order.userName || order.userEmail}</td>
-                        <td style={{ padding: '12px', fontWeight: 700, color: '#1E1B4B' }}>{formatPrice(order.totalAmount)}</td>
-                        <td style={{ padding: '12px' }}><span style={{ padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, background: st.bg, color: st.color }}>{order.statusLabel}</span></td>
-                        <td style={{ padding: '12px', color: '#94A3B8', fontSize: '12px' }}>{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
+                      <tr key={order.id} style={{ borderBottom: `1px solid ${J.lightGray}`, transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = '#FAFAF8'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <td style={{ padding: '10px 12px', fontWeight: 600, color: J.black }}>{order.orderCode}</td>
+                        <td style={{ padding: '10px 12px', color: J.gray }}>{order.userName || order.userEmail}</td>
+                        <td style={{ padding: '10px 12px', fontWeight: 600, color: J.black }}>{formatPrice(order.totalAmount)}</td>
+                        <td style={{ padding: '10px 12px' }}><span style={{ padding: '2px 6px', borderRadius: '2px', fontSize: '10px', fontWeight: 600, background: st.bg, color: st.color }}>{order.statusLabel}</span></td>
+                        <td style={{ padding: '10px 12px', color: '#999', fontSize: '11px' }}>{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
                       </tr>
                     );
                   })}
@@ -404,60 +497,58 @@ export default function AdminDashboard() {
               </table>
             </div>
           ) : (
-             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: '14px', fontWeight: 600 }}>Chưa có đơn hàng nào.</div>
+             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: J.gray, fontSize: '13px', fontWeight: 500 }}>Chưa có đơn hàng nào.</div>
           )}
         </div>
 
         {/* TOP PRODUCTS */}
-        <div style={{ background: 'white', borderRadius: '18px', padding: '28px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ background: J.white, borderRadius: '4px', padding: '24px', border: `1px solid ${J.lightGray}`, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#1E1B4B' }}>🔥 Bán chạy nhất</h2>
-            <Star size={16} style={{ color: '#F59E0B' }} fill="#F59E0B" />
+            <h2 style={{ fontSize: '14px', fontWeight: 600, color: J.black, letterSpacing: '0.04em' }}>SẢN PHẨM BÁN CHẠY</h2>
+            <Flame size={15} style={{ color: '#E74C3C' }} fill="#E74C3C" />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
             {topProducts && topProducts.length > 0 ? topProducts.map((p, i) => (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '12px', borderBottom: i < topProducts.length -1 ? `1px dashed ${J.lightGray}` : 'none' }}>
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <img
                     src={p.imagePath ? (p.imagePath.split(',')[0].trim().startsWith('/') ? `http://localhost:8080${p.imagePath.split(',')[0].trim()}` : (p.imagePath.split(',')[0].trim().startsWith('http') ? p.imagePath.split(',')[0].trim() : `http://localhost:8080/images/${p.imagePath.split(',')[0].trim()}`)) : ''}
                     alt={p.productDisplayName}
-                    style={{ width: '46px', height: '46px', borderRadius: '12px', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.07)' }}
-                    onError={e => { e.target.src = 'https://placehold.co/46x46/f8fafc/94a3b8?text=Img'; }}
+                    style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover', border: `1px solid ${J.lightGray}` }}
+                    onError={e => { e.target.src = 'https://placehold.co/40x40/fafaf8/6b6b6b?text=Img'; }}
                   />
                   {i === 0 && (
                     <div style={{
-                      position: 'absolute', top: '-6px', right: '-6px',
-                      width: '18px', height: '18px', borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '9px', fontWeight: 800, color: 'white', border: '2px solid white',
+                      position: 'absolute', top: '-4px', right: '-4px',
+                      width: '14px', height: '14px', borderRadius: '2px',
+                      background: J.red, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '8px', fontWeight: 600, color: J.white,
                     }}>1</div>
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: J.black, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {p.productDisplayName}
                   </p>
-                  <p style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>
-                    {formatPrice(p.price)} · <span style={{ color: '#7C3AED', fontWeight: 600 }}>{p.sold} đã bán</span>
+                  <p style={{ fontSize: '11px', color: J.gray, marginTop: '2px' }}>
+                    {formatPrice(p.price)} · <span style={{ color: J.red, fontWeight: 500 }}>{p.sold} đã bán</span>
                   </p>
                 </div>
               </div>
             )) : (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: '13px', fontWeight: 600 }}>Chưa có sản phẩm.</div>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: J.gray, fontSize: '12px', fontWeight: 500 }}>Chưa có sản phẩm.</div>
             )}
           </div>
 
           <Link to="/admin/products" style={{
             display: 'block', textAlign: 'center', textDecoration: 'none',
-            width: '100%', marginTop: '20px', padding: '10px',
-            borderRadius: '12px', border: '1px solid rgba(124,58,237,0.2)',
-            background: 'rgba(124,58,237,0.05)',
-            fontSize: '13px', fontWeight: 700, color: '#7C3AED',
-            cursor: 'pointer', transition: 'all 0.2s',
-          }}>
-            Xem tất cả →
+            width: '100%', marginTop: '16px', padding: '8px',
+            borderRadius: '4px', border: `1px solid ${J.lightGray}`,
+            background: '#FAFAFA', fontSize: '12px', fontWeight: 500, color: J.black,
+            transition: 'all 0.2s',
+          }} onMouseEnter={e => e.target.style.background = J.white} onMouseLeave={e => e.target.style.background = '#FAFAFA'}>
+            Xem tất cả kho hàng →
           </Link>
         </div>
       </div>
@@ -469,69 +560,63 @@ export default function AdminDashboard() {
             onClick={() => setViewMode('table')}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '6px 14px', borderRadius: '8px',
-              background: viewMode === 'table' ? '#7C3AED' : 'white',
-              color: viewMode === 'table' ? 'white' : '#64748B',
-              border: '1px solid ' + (viewMode === 'table' ? '#7C3AED' : '#E2E8F0'),
-              fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
+              padding: '6px 12px', borderRadius: '4px',
+              background: viewMode === 'table' ? J.red : J.white,
+              color: viewMode === 'table' ? J.white : J.gray,
+              border: `1px solid ${viewMode === 'table' ? J.red : J.lightGray}`,
+              fontSize: '11px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s'
             }}
           >
-            <TableIcon size={14} /> Dạng bảng
+            <TableIcon size={12} /> Dạng bảng
           </button>
           <button
             onClick={() => setViewMode('raw')}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '6px 14px', borderRadius: '8px',
-              background: viewMode === 'raw' ? '#7C3AED' : 'white',
-              color: viewMode === 'raw' ? 'white' : '#64748B',
-              border: '1px solid ' + (viewMode === 'raw' ? '#7C3AED' : '#E2E8F0'),
-              fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
+              padding: '6px 12px', borderRadius: '4px',
+              background: viewMode === 'raw' ? J.red : J.white,
+              color: viewMode === 'raw' ? J.white : J.gray,
+              border: `1px solid ${viewMode === 'raw' ? J.red : J.lightGray}`,
+              fontSize: '11px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s'
             }}
           >
-            <FileText size={14} /> Dạng thô
+            <FileText size={12} /> Dạng thô
           </button>
         </div>
 
         {viewMode === 'raw' ? (
           <pre style={{
-            fontFamily: "'Courier New', Courier, monospace",
-            fontSize: '12.5px',
-            color: '#334155',
-            background: '#F8FAFC',
-            border: '1px solid #E2E8F0',
-            padding: '16px',
-            borderRadius: '12px',
-            whiteSpace: 'pre',
-            overflow: 'auto',
-            maxHeight: '380px',
-            lineHeight: 1.5
+            fontFamily: "'Space Mono', 'Courier New', monospace",
+            fontSize: '11px', color: J.black, background: '#FAFAFA',
+            border: `1px solid ${J.lightGray}`, padding: '16px',
+            borderRadius: '4px', whiteSpace: 'pre', overflow: 'auto',
+            maxHeight: '380px', lineHeight: 1.6
           }}>
             {previewCsv}
           </pre>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' }}>
             {previewCsv && parseSections(previewCsv).map((sec, sIdx) => {
               if (sec.type === 'title') {
                 return (
-                  <h2 key={sIdx} style={{ fontSize: '18px', fontWeight: 800, color: '#1E1B4B', textAlign: 'center', margin: '10px 0' }}>
+                  <h2 key={sIdx} style={{ fontSize: '15px', fontWeight: 600, color: J.black, textAlign: 'center', margin: '8px 0', letterSpacing: '0.04em' }}>
                     {sec.value}
                   </h2>
                 );
               }
               return (
-                <div key={sIdx} style={{ background: '#F8FAFC', borderRadius: '12px', padding: '16px', border: '1px solid #E2E8F0' }}>
-                  <h4 style={{ fontSize: '13.5px', fontWeight: 800, color: '#7C3AED', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ display: 'inline-block', width: '6px', height: '14px', background: '#7C3AED', borderRadius: '3px' }} />
+               <div key={sIdx} style={{ background: J.white, borderRadius: '4px', padding: '16px', border: `1px solid ${J.lightGray}` }}>
+                  <h4 style={{ fontSize: '12px', fontWeight: 600, color: J.red, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.02em' }}>
+                    <span style={{ display: 'inline-block', width: '4px', height: '12px', background: J.red }} />
                     {sec.title}
                   </h4>
                   {sec.rows.length > 0 && (
                     <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                         <thead>
-                          <tr style={{ borderBottom: '2px solid #E2E8F0' }}>
+                          <tr style={{ borderBottom: `1px solid ${J.lightGray}` }}>
                             {sec.headers.map((h, hIdx) => (
-                              <th key={hIdx} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: '11px', textTransform: 'uppercase' }}>
+                              <th key={hIdx} style={{ padding: '6px 12px', textAlign: 'left', fontWeight: 600, color: J.gray, fontSize: '10px', textTransform: 'uppercase', background: '#FAFAFA' }}>
                                 {h}
                               </th>
                             ))}
@@ -539,9 +624,9 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody>
                           {sec.rows.map((row, rIdx) => (
-                            <tr key={rIdx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                            <tr key={rIdx} style={{ borderBottom: `1px solid ${J.lightGray}` }}>
                               {row.map((cell, cIdx) => (
-                                <td key={cIdx} style={{ padding: '10px 12px', color: '#1E293B', fontWeight: cIdx === 0 ? 600 : 700 }}>
+                                <td key={cIdx} style={{ padding: '8px 12px', color: J.black, fontWeight: cIdx === 0 ? 500 : 400 }}>
                                   {cell}
                                 </td>
                               ))}
@@ -557,33 +642,31 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px', borderTop: '1px solid #F1F5F9', paddingTop: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px', borderTop: `1px solid ${J.lightGray}`, paddingTop: '16px' }}>
           <button
             onClick={() => setPreviewCsv(null)}
             style={{
-              padding: '10px 20px', borderRadius: '10px',
-              background: 'white', color: '#64748B',
-              border: '1px solid #E2E8F0', fontWeight: 600,
+              padding: '8px 16px', borderRadius: '4px', background: J.white, color: J.gray,
+              border: `1px solid ${J.lightGray}`, fontSize: '12px', fontWeight: 500,
               cursor: 'pointer', transition: 'all 0.2s'
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#F8FAFC'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'white'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#FAFAFA'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = J.white; }}
           >
             Đóng
           </button>
           <button
             onClick={triggerDownload}
             style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 20px', borderRadius: '10px',
-              background: '#1E1B4B', color: 'white',
-              border: 'none', fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 16px', borderRadius: '4px', background: J.red, color: J.white,
+              border: 'none', fontSize: '12px', fontWeight: 500,
               cursor: 'pointer', transition: 'background 0.2s'
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#111827'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#1E1B4B'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#152e9c'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = J.red; }}
           >
-            <Download size={16} /> Tải xuống (.csv)
+            <Download size={14} /> Tải xuống (.csv)
           </button>
         </div>
       </Modal>

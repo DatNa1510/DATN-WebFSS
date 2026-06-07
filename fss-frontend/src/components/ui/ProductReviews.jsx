@@ -4,6 +4,7 @@ import { Star, ShieldCheck, ChevronDown, Loader2, Send, Trash2, AlertCircle } fr
 import useReviewStore from '../../store/reviewStore';
 import useAuthStore from '../../store/authStore';
 import { toast } from '../../store/toastStore';
+import ConfirmModal from './ConfirmModal';
 
 const API_BASE = 'http://localhost:8080';
 
@@ -177,6 +178,7 @@ function ReviewCard({ review, index, productId }) {
   const { user } = useAuthStore();
   const { deleteReview } = useReviewStore();
   const [deleting, setDeleting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const avatarUrl = review.userAvatarUrl
     ? (review.userAvatarUrl.startsWith('http') ? review.userAvatarUrl : `${API_BASE}${review.userAvatarUrl}`)
@@ -185,7 +187,6 @@ function ReviewCard({ review, index, productId }) {
   const isOwner = user?.id === review.userId;
 
   const handleDelete = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) return;
     setDeleting(true);
     const res = await deleteReview(review.id, productId);
     if (res.success) toast.success('Đã xóa đánh giá');
@@ -197,6 +198,15 @@ function ReviewCard({ review, index, productId }) {
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
       className={`py-5 border-b border-slate-100 last:border-0 relative ${deleting ? 'opacity-50 grayscale' : ''}`}>
+      <ConfirmModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleDelete}
+        title="Xóa đánh giá"
+        message="Bạn có chắc chắn muốn xóa đánh giá này? Hành động này không thể hoàn tác."
+        isDanger={true}
+        confirmText="Xóa"
+      />
       <div className="flex gap-3">
         {/* Avatar */}
         {avatarUrl
@@ -221,7 +231,7 @@ function ReviewCard({ review, index, productId }) {
 
             {isOwner && (
               <button 
-                onClick={handleDelete}
+                onClick={() => setShowConfirm(true)}
                 disabled={deleting}
                 className="p-1 text-slate-300 hover:text-red-500 transition-colors ml-2"
                 title="Xóa đánh giá"

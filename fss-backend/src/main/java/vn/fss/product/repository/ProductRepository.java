@@ -30,4 +30,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT MAX(p.id) FROM Product p")
     Long findMaxId();
+
+    @Query("SELECT COALESCE(SUM(p.stock), 0) FROM Product p")
+    Long sumStock();
 }

@@ -1,26 +1,38 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
-  LogOut, ChevronRight, Bell, Search, X, Check,
-  Zap, TrendingUp, Activity, BarChart2
+  LogOut, Bell, X, BarChart2, Activity
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useNotificationStore from '../../store/notificationStore';
 import ToastContainer from '../ui/ToastContainer';
 
+// ── Design Tokens (Flat Japanese) ──────────────────────────────────────────
+const J = {
+  bg:       '#FAFAF8',       // off-white washi paper
+  sidebar:  '#FFFFFF',       // pure white sidebar
+  black:    '#1A1A1A',       // soft black
+  gray:     '#6B6B6B',       // medium gray
+  lightGray:'#E8E8E4',       // border gray
+  red:      '#1e3bc3',       // Softer Shop theme blue
+  redLight: '#E8EEFF',       // Soft blue tint
+  white:    '#FFFFFF',
+  font:     "'Noto Sans JP', 'Plus Jakarta Sans', system-ui, sans-serif",
+  mono:     "'Space Mono', 'Courier New', monospace",
+};
+
 const adminNavItems = [
-  { icon: BarChart2, label: 'Báo cáo', path: '/admin', desc: 'Thống kê kinh doanh' },
-  { icon: Package, label: 'Sản phẩm', path: '/admin/products', desc: 'Quản lý kho hàng' },
-  { icon: ShoppingCart, label: 'Đơn hàng', path: '/admin/orders', desc: 'Theo dõi giao dịch' },
-  { icon: Users, label: 'Tài khoản', path: '/admin/accounts', desc: 'Quản lý người dùng' },
-  { icon: Zap, label: 'Voucher', path: '/admin/vouchers', desc: 'Quản lý mã giảm giá' },
+  { icon: BarChart2,    label: 'Dashboard',  labelVi: 'Báo cáo',   path: '/admin',          sub: 'Dashboard' },
+  { icon: Package,      label: 'Products',   labelVi: 'Sản phẩm',  path: '/admin/products', sub: 'Kho hàng'  },
+  { icon: ShoppingCart, label: 'Orders',     labelVi: 'Đơn hàng',  path: '/admin/orders',   sub: 'Giao dịch' },
+  { icon: Users,        label: 'Accounts',   labelVi: 'Tài khoản', path: '/admin/accounts', sub: 'Người dùng'},
 ];
 
 export default function AdminLayout() {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const location  = useLocation();
+  const navigate  = useNavigate();
   const { user, logout } = useAuthStore();
   const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotificationStore();
   const [notifOpen, setNotifOpen] = useState(false);
@@ -28,17 +40,14 @@ export default function AdminLayout() {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(() => fetchNotifications(), 30000); // Refresh every 30s
+    const iv = setInterval(fetchNotifications, 30000);
     return () => {
-      clearInterval(interval);
+      clearInterval(iv);
       import('../../store/toastStore').then(m => m.toast.clearAll());
     };
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const handleLogout = () => { logout(); navigate('/login'); };
 
   const currentPage = adminNavItems.find(item =>
     item.path === '/admin'
@@ -47,425 +56,320 @@ export default function AdminLayout() {
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '125vh', background: '#F8F9FF', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", zoom: 0.8 }}>
+    <div style={{
+      display: 'flex', minHeight: '100vh',
+      background: J.bg,
+      fontFamily: J.font,
+      zoom: 0.92,
+    }}>
       <ToastContainer />
 
-      {/* ═══════════════════════════════════
-          DARK SIDEBAR (Lightened)
-      ═══════════════════════════════════ */}
+      {/* ════════════════════════════════════
+          SIDEBAR – Flat Japanese
+      ════════════════════════════════════ */}
       <aside style={{
-        width: '260px',
-        background: 'linear-gradient(180deg, #1A1A3D 0%, #241C52 60%, #1B1645 100%)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        height: '125vh',
-        display: 'flex',
-        flexDirection: 'column',
+        width: '240px',
+        background: J.sidebar,
+        position: 'fixed', top: 0, bottom: 0, left: 0,
+        display: 'flex', flexDirection: 'column',
         zIndex: 50,
-        borderRight: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: '4px 0 32px rgba(0,0,0,0.4)',
-        overflow: 'hidden',
+        borderRight: `1px solid ${J.lightGray}`,
       }}>
 
-        {/* Decorative glow blobs */}
+        {/* LOGO */}
         <div style={{
-          position: 'absolute', top: '-60px', left: '-60px',
-          width: '200px', height: '200px',
-          background: 'radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '80px', right: '-40px',
-          width: '160px', height: '160px',
-          background: 'radial-gradient(circle, rgba(79,70,229,0.15) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-
-        {/* ── LOGO ── */}
-        <div style={{ padding: '28px 24px 20px', position: 'relative', zIndex: 1 }}>
+          padding: '24px 20px',
+          borderBottom: '1px solid #152e9c',
+          background: J.red, // Shop theme blue
+        }}>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
             <div style={{
-              width: '44px', height: '44px',
-              background: '#FFFFFF',
-              borderRadius: '12px',
+              width: '38px', height: '38px',
+              background: 'transparent',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
               flexShrink: 0,
-              padding: '6px',
             }}>
-              <img src="/logo.png" alt="Fashion Shopping Sense" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src="/logo.png" alt="FSS" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
             </div>
             <div>
-              <p style={{ fontWeight: 800, fontSize: '14px', color: '#FFFFFF', letterSpacing: '-0.2px', lineHeight: 1.3 }}>
+              <p style={{ fontWeight: 700, fontSize: '14px', color: '#FFFFFF', lineHeight: 1.3, letterSpacing: '0.01em' }}>
                 Fashion<br />Shopping Sense
               </p>
             </div>
           </Link>
-
-          {/* Divider */}
-          <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '20px 0 0' }} />
         </div>
 
-        {/* ── NAV LABEL ── */}
-        <div style={{ padding: '0 24px 8px', position: 'relative', zIndex: 1 }}>
-          <span style={{ fontSize: '9.5px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-            Điều hướng
+        {/* NAV LABEL */}
+        <div style={{ padding: '24px 24px 10px' }}>
+          <span style={{ fontSize: '10px', fontWeight: 500, color: J.gray, letterSpacing: '0.12em' }}>
+            DANH MỤC
           </span>
         </div>
 
-        {/* ── NAV ITEMS ── */}
-        <nav style={{ flex: 1, padding: '4px 12px', display: 'flex', flexDirection: 'column', gap: '3px', position: 'relative', zIndex: 1, overflowY: 'auto' }}>
-          {adminNavItems.map(({ icon: Icon, label, path, desc }) => {
+        {/* NAV ITEMS */}
+        <nav style={{ flex: 1, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: '1px', overflowY: 'auto' }}>
+          {adminNavItems.map(({ icon: Icon, label, labelVi, path, sub }) => {
             const isActive = path === '/admin'
               ? location.pathname === '/admin'
               : location.pathname.startsWith(path);
-
             return (
               <Link
                 key={path}
                 to={path}
-                id={`admin-nav-${label.toLowerCase().replace(/\s+/g, '-')}`}
+                id={`admin-nav-${labelVi.toLowerCase().replace(/\s+/g, '-')}`}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
+                  display: 'flex', alignItems: 'center', gap: '12px',
                   padding: '11px 14px',
-                  borderRadius: '12px',
                   textDecoration: 'none',
-                  position: 'relative',
-                  transition: 'all 0.2s ease',
-                  background: isActive
-                    ? 'linear-gradient(135deg, rgba(124,58,237,0.35), rgba(79,70,229,0.25))'
-                    : 'transparent',
-                  border: isActive
-                    ? '1px solid rgba(124,58,237,0.3)'
-                    : '1px solid transparent',
+                  background: isActive ? J.redLight : 'transparent',
+                  borderLeft: isActive ? `3px solid ${J.red}` : '3px solid transparent',
+                  transition: 'all 0.2s',
+                  marginLeft: isActive ? '-3px' : '0',
                 }}
-                onMouseEnter={e => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                    e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.border = '1px solid transparent';
-                  }
-                }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#F5F5F3'; }}
+                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
               >
-                {/* Active left bar */}
-                {isActive && (
-                  <motion.div
-                    layoutId="sidebar-active-bar"
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: '3px',
-                      height: '24px',
-                      background: 'linear-gradient(180deg, #A78BFA, #818CF8)',
-                      borderRadius: '0 3px 3px 0',
-                      boxShadow: '0 0 12px rgba(167,139,250,0.6)',
-                    }}
-                  />
-                )}
-
-                {/* Icon bg */}
-                <div style={{
-                  width: '34px', height: '34px',
-                  borderRadius: '10px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                  background: isActive
-                    ? 'linear-gradient(135deg, rgba(167,139,250,0.3), rgba(129,140,248,0.2))'
-                    : 'rgba(255,255,255,0.06)',
-                  transition: 'all 0.2s ease',
-                }}>
-                  <Icon
-                    size={17}
-                    strokeWidth={isActive ? 2.5 : 2}
-                    style={{ color: isActive ? '#C4B5FD' : 'rgba(255,255,255,0.45)' }}
-                  />
-                </div>
-
+                <Icon
+                  size={16}
+                  strokeWidth={isActive ? 2 : 1.5}
+                  style={{ color: isActive ? J.red : J.gray, flexShrink: 0 }}
+                />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{
-                    fontSize: '13.5px',
-                    fontWeight: isActive ? 700 : 500,
-                    color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
+                    fontSize: '13px', fontWeight: isActive ? 600 : 400,
+                    color: isActive ? J.black : J.gray,
                     lineHeight: 1.2,
-                    letterSpacing: '-0.1px',
-                  }}>
+                  }}>{labelVi}</p>
+                  <p style={{ fontSize: '10px', color: isActive ? J.red : '#AAAAAA', marginTop: '1px', letterSpacing: '0.03em' }}>
                     {label}
                   </p>
                 </div>
-
-                {isActive && (
-                  <ChevronRight size={14} style={{ color: 'rgba(196,181,253,0.6)', flexShrink: 0 }} />
-                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* ── DIVIDER ── */}
-        <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '8px 24px' }} />
+        {/* DIVIDER */}
+        <div style={{ height: '1px', background: J.lightGray, margin: '0 24px' }} />
 
-        {/* ── LOGOUT ── */}
-        <div style={{ padding: '8px 12px 12px', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+        {/* LOGOUT */}
+        <div style={{ padding: '12px 12px 16px' }}>
           <button
             onClick={handleLogout}
             id="admin-logout-btn"
             style={{
               display: 'flex', alignItems: 'center', gap: '12px',
-              padding: '10px 14px', borderRadius: '12px',
-              background: 'transparent', border: '1px solid transparent',
-              cursor: 'pointer', transition: 'all 0.2s',
-              color: 'rgba(255,255,255,0.45)', width: '100%',
+              padding: '10px 14px', width: '100%',
+              background: 'transparent',
+              border: `1px solid transparent`,
+              cursor: 'pointer', color: J.gray,
+              transition: 'all 0.2s', fontFamily: J.font,
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(239,68,68,0.12)';
-              e.currentTarget.style.color = '#FCA5A5';
-              e.currentTarget.style.border = '1px solid rgba(239,68,68,0.15)';
+              e.currentTarget.style.background = J.redLight;
+              e.currentTarget.style.borderColor = '#F0C0BB';
+              e.currentTarget.style.color = J.red;
             }}
             onMouseLeave={e => {
               e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
-              e.currentTarget.style.border = '1px solid transparent';
+              e.currentTarget.style.borderColor = 'transparent';
+              e.currentTarget.style.color = J.gray;
             }}
           >
-            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <LogOut size={17} strokeWidth={2} />
-            </div>
-            <span style={{ fontSize: '13.5px', fontWeight: 500 }}>Đăng xuất</span>
+            <LogOut size={15} strokeWidth={1.5} />
+            <span style={{ fontSize: '13px', fontWeight: 400 }}>Đăng xuất</span>
           </button>
         </div>
 
-        {/* ── ADMIN PROFILE (bottom) ── */}
-        <div style={{ padding: '12px 16px 24px', position: 'relative', zIndex: 1 }}>
+        {/* ADMIN PROFILE */}
+        <div style={{ padding: '0 16px 28px' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: '10px',
-            padding: '10px 12px',
-            background: 'rgba(255,255,255,0.05)',
-            borderRadius: '14px',
-            border: '1px solid rgba(255,255,255,0.08)',
+            padding: '12px 14px',
+            background: J.bg,
+            border: `1px solid ${J.lightGray}`,
           }}>
             <img
-              src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=7C3AED&color=fff&bold=true`}
+              src={user?.avatar ? (user.avatar.includes('ui-avatars.com') ? user.avatar.replace(/background=[a-zA-Z0-9]+/g, 'background=4a6cff') : (user.avatar.startsWith('http') ? user.avatar : `http://localhost:8080/images/${user.avatar}`)) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=4a6cff&color=fff&bold=true`}
               alt={user?.name}
-              style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(167,139,250,0.4)' }}
-              onError={(e) => {
+              style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '50%', border: `1px solid ${J.lightGray}`, flexShrink: 0 }}
+              onError={e => {
                 e.target.onerror = null;
-                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=7C3AED&color=fff&bold=true`;
+                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=4a6cff&color=fff&bold=true`;
               }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: '12.5px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <p style={{ fontSize: '12px', fontWeight: 600, color: J.black, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user?.name || 'Admin User'}
               </p>
-              <p style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.38)', marginTop: '2px', fontWeight: 500 }}>
-                Quản trị viên
+              <p style={{ fontSize: '10px', color: J.red, fontWeight: 400, letterSpacing: '0.03em', marginTop: '2px' }}>
+                QUẢN TRỊ VIÊN
               </p>
             </div>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34D399', boxShadow: '0 0 6px rgba(52,211,153,0.6)', flexShrink: 0 }} />
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22C55E', flexShrink: 0 }} />
           </div>
         </div>
       </aside>
 
-      {/* ═══════════════════════════════════
+      {/* ════════════════════════════════════
           MAIN CONTENT
-      ═══════════════════════════════════ */}
-      <div style={{ marginLeft: '260px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: '125vh', minWidth: 0 }}>
+      ════════════════════════════════════ */}
+      <div style={{ marginLeft: '240px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh', minWidth: 0 }}>
 
-        {/* ── TOP HEADER (Glassmorphism) ── */}
+        {/* TOP HEADER – Japanese Minimal */}
         <header style={{
-          height: '92px',
-          background: 'rgba(248, 249, 255, 0.85)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(124,58,237,0.08)',
-          boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)',
+          height: '72px',
+          background: J.white,
+          borderBottom: `1px solid ${J.lightGray}`,
           position: 'sticky', top: 0, zIndex: 30,
           display: 'flex', alignItems: 'center',
-          padding: '0 32px',
-          gap: '16px',
+          padding: '0 36px', gap: '16px',
         }}>
 
-          {/* Page title breadcrumb */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-            <div style={{
-              width: '38px', height: '38px', borderRadius: '10px',
-              background: 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(79,70,229,0.08))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Activity size={18} style={{ color: '#7C3AED' }} strokeWidth={2.5} />
-            </div>
+          {/* Page title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1 }}>
+            {/* Red accent line */}
+            <div style={{ width: '3px', height: '28px', background: J.red, flexShrink: 0 }} />
             <div>
-              <p style={{ fontSize: '17px', fontWeight: 700, color: '#1E1B4B', lineHeight: 1.2 }}>
-                {currentPage?.label || 'Admin'}
+              <p style={{ fontSize: '15px', fontWeight: 600, color: J.black, lineHeight: 1.2 }}>
+                {currentPage?.labelVi || 'Admin'}
               </p>
-              <p style={{ fontSize: '12.5px', color: '#64748B', fontWeight: 500 }}>
-                {currentPage?.desc || 'Quản trị hệ thống'}
+              <p style={{ fontSize: '11px', color: J.gray, marginTop: '2px', letterSpacing: '0.03em' }}>
+                {currentPage?.label || ''} · {currentPage?.sub || 'Quản trị hệ thống'}
               </p>
             </div>
           </div>
-
 
           {/* Right actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Link
               to="/"
               style={{
-                fontSize: '14.5px', fontWeight: 600,
-                color: '#7C3AED', textDecoration: 'none',
-                padding: '11px 24px', borderRadius: '12px',
-                background: 'rgba(124,58,237,0.08)',
+                fontSize: '12px', fontWeight: 500,
+                color: J.gray, textDecoration: 'none',
+                padding: '8px 16px',
+                border: `1px solid ${J.lightGray}`,
+                background: J.white,
                 transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(124,58,237,0.05)',
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
               }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(124,58,237,0.15)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'rgba(124,58,237,0.08)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = J.red; e.currentTarget.style.color = J.red; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = J.lightGray; e.currentTarget.style.color = J.gray; }}
             >
               ← Trang chủ
             </Link>
 
             {/* Notification bell */}
-            <button
-              onClick={() => setNotifOpen(!notifOpen)}
-              style={{
-                position: 'relative', width: '52px', height: '52px',
-                borderRadius: '14px', border: '1px solid rgba(0,0,0,0.08)',
-                background: 'white', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                color: '#64748B', transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = '#F8F4FF';
-                e.currentTarget.style.color = '#7C3AED';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'white';
-                e.currentTarget.style.color = '#64748B';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <Bell size={22} strokeWidth={2} />
-              {unreadCount > 0 && (
-                <span style={{
-                  position: 'absolute', top: '12px', right: '12px',
-                  width: '12px', height: '12px',
-                  background: '#EF4444', borderRadius: '50%',
-                  border: '2px solid white',
-                }} />
-              )}
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setNotifOpen(!notifOpen)}
+                style={{
+                  position: 'relative', width: '40px', height: '40px',
+                  background: J.white, border: `1px solid ${J.lightGray}`,
+                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: J.gray, transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = J.red; e.currentTarget.style.color = J.red; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = J.lightGray; e.currentTarget.style.color = J.gray; }}
+              >
+                <Bell size={17} strokeWidth={1.5} />
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '-3px', right: '-3px',
+                    width: '14px', height: '14px',
+                    background: J.red, borderRadius: '50%',
+                    border: `2px solid ${J.white}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '8px', fontWeight: 700, color: J.white,
+                  }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+                )}
+              </button>
 
-            <AnimatePresence>
-              {notifOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  style={{
-                    position: 'absolute', top: '70px', right: '16px',
-                    width: '360px', maxWidth: 'calc(100vw - 32px)',
-                    background: 'white', borderRadius: '20px',
-                    boxShadow: '0 25px 60px rgba(0,0,0,0.16)',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    zIndex: 50,
-                    overflow: 'hidden'
-                  }}
-                >
-                  <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <AnimatePresence>
+                {notifOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.15 }}
+                    style={{
+                      position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                      width: '320px',
+                      background: J.white,
+                      border: `1px solid ${J.lightGray}`,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                      zIndex: 50,
+                    }}
+                  >
+                    {/* Header */}
+                    <div style={{ padding: '14px 18px', borderBottom: `1px solid ${J.lightGray}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <p style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#111827' }}>Thông báo</p>
-                        <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>{unreadCount} thông báo chưa đọc</p>
+                        <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: J.black }}>Thông báo</p>
+                        <p style={{ margin: 0, fontSize: '11px', color: J.gray, marginTop: '2px' }}>{unreadCount} chưa đọc</p>
                       </div>
                       <button
                         onClick={() => setNotifOpen(false)}
-                        style={{
-                          width: '34px', height: '34px', borderRadius: '10px',
-                          background: 'rgba(241,245,249,0.9)', border: 'none',
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: '#6B7280'
-                        }}
+                        style={{ width: '26px', height: '26px', background: 'transparent', border: `1px solid ${J.lightGray}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: J.gray }}
                       >
-                        <X size={16} />
+                        <X size={13} />
                       </button>
                     </div>
-                  </div>
 
-                  <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
-                    {notificationItems.length === 0 ? (
-                      <div style={{ padding: '32px 20px', textAlign: 'center', color: '#9CA3AF' }}>
-                        Không có thông báo nào
-                      </div>
-                    ) : notificationItems.slice(0, 6).map((notification) => (
-                      <button
-                        key={notification.id}
-                        onClick={() => {
-                          if (!notification.read) markAsRead(notification.id);
-                        }}
-                        style={{
-                          width: '100%', textAlign: 'left', padding: '14px 20px',
-                          background: notification.read ? 'white' : 'rgba(124,58,237,0.06)',
-                          border: 'none', borderBottom: '1px solid rgba(0,0,0,0.04)',
-                          cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: '12px'
-                        }}
-                      >
-                        <div style={{
-                          width: '10px', height: '10px', borderRadius: '50%',
-                          background: notification.read ? '#E5E7EB' : '#7C3AED',
-                          marginTop: '6px', flexShrink: 0
-                        }} />
-                        <div style={{ flex: 1 }}>
-                          <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#111827' }}>
-                            {notification.title}
-                          </p>
-                          <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#6B7280', lineHeight: 1.6 }}>
-                            {notification.message}
-                          </p>
+                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                      {notificationItems.length === 0 ? (
+                        <div style={{ padding: '32px 18px', textAlign: 'center', color: '#BBBBBB', fontSize: '13px' }}>
+                          Không có thông báo mới
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => {
-                      markAllAsRead();
-                    }}
-                    style={{
-                      width: '100%', padding: '14px 20px', borderRadius: '0 0 20px 20px',
-                      background: '#F8F4FF', border: 'none', fontWeight: 700,
-                      color: '#7C3AED', cursor: 'pointer'
-                    }}
-                  >
-                    Đánh dấu đã đọc tất cả
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                      ) : notificationItems.slice(0, 6).map(n => (
+                        <button
+                          key={n.id}
+                          onClick={() => { if (!n.read) markAsRead(n.id); }}
+                          style={{
+                            width: '100%', textAlign: 'left', padding: '12px 18px',
+                            background: n.read ? J.white : J.redLight,
+                            border: 'none', borderBottom: `1px solid ${J.lightGray}`,
+                            cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: '10px',
+                            fontFamily: J.font, transition: 'background 0.15s',
+                          }}
+                        >
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: n.read ? J.lightGray : J.red, marginTop: '5px', flexShrink: 0 }} />
+                          <div style={{ flex: 1 }}>
+                            <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: J.black }}>{n.title}</p>
+                            <p style={{ margin: '3px 0 0', fontSize: '11px', color: J.gray, lineHeight: 1.5 }}>{n.message}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={markAllAsRead}
+                      style={{
+                        width: '100%', padding: '11px 18px',
+                        background: J.bg, border: 'none', borderTop: `1px solid ${J.lightGray}`,
+                        fontWeight: 500, fontSize: '12px', letterSpacing: '0.02em',
+                        color: J.gray, cursor: 'pointer', fontFamily: J.font,
+                        transition: 'color 0.15s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = J.red}
+                      onMouseLeave={e => e.currentTarget.style.color = J.gray}
+                    >
+                      Đánh dấu đã đọc tất cả
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </header>
 
-        {/* ── PAGE CONTENT ── */}
+        {/* PAGE CONTENT */}
         <motion.main
           key={location.pathname}
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          style={{ flex: 1, padding: '32px', overflowX: 'hidden' }}
+          transition={{ duration: 0.18 }}
+          style={{ flex: 1, padding: '36px', overflowX: 'hidden' }}
         >
           <Outlet />
         </motion.main>

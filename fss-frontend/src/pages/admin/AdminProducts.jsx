@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Edit2, Trash2, X, Check, AlertTriangle, TrendingUp, Star, ChevronLeft, ChevronRight, Filter, ArrowUpDown, Loader2, History } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Check, ArrowUpDown, ChevronLeft, ChevronRight, Filter, History, Package, AlertTriangle, Database, Star } from 'lucide-react';
 import { toast } from '../../store/toastStore';
 import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
 import { translate, reverseTranslateSearch } from '../../data/fashionData';
@@ -15,6 +15,17 @@ const getImageUrl = (path) => {
   if (firstImage.startsWith('http')) return firstImage;
   if (firstImage.startsWith('/')) return `${API}${firstImage}`;
   return `${API}/images/${firstImage}`;
+};
+
+const J = {
+  black: '#1A1A1A',
+  gray: '#6B6B6B',
+  lightGray: '#E8E8E4',
+  red: '#1e3bc3', // Softer Shop theme blue
+  redLight: '#E8EEFF', // Soft blue
+  white: '#FFFFFF',
+  green: '#27AE60',
+  blue: '#2980B9',
 };
 
 const categories = [
@@ -124,23 +135,24 @@ const articleTypesMap = {
 const emptyForm = { name: '', price: '', originalPrice: '', category: 'Apparel', subCategory: '', articleType: '', gender: 'Unisex', description: '', stock: '', images: '' };
 
 const inputStyle = {
-  width: '100%', padding: '11px 14px',
-  background: '#F8FAFF', border: '1.5px solid rgba(0,0,0,0.08)',
-  borderRadius: '10px', fontSize: '13.5px', color: '#1E293B',
+  width: '100%', padding: '10px 12px',
+  background: '#FAFAFA', border: `1px solid ${J.lightGray}`,
+  borderRadius: '4px', fontSize: '12.5px', color: J.black,
   outline: 'none', fontFamily: 'inherit',
   transition: 'all 0.2s',
   boxSizing: 'border-box',
 };
 
 const labelStyle = {
-  display: 'block', fontSize: '11px', fontWeight: 700,
-  color: '#64748B', letterSpacing: '0.06em',
-  textTransform: 'uppercase', marginBottom: '7px',
+  display: 'block', fontSize: '11px', fontWeight: 600,
+  color: J.gray, letterSpacing: '0.04em',
+  textTransform: 'uppercase', marginBottom: '6px',
 };
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
+  const [totalStock, setTotalStock] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -157,6 +169,7 @@ export default function AdminProducts() {
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [isCustomSubCategory, setIsCustomSubCategory] = useState(false);
   const [isCustomArticleType, setIsCustomArticleType] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
 
   const fetchProducts = useCallback(async (page = 0, q = '', cat = 'all', s = 'newest') => {
     setLoading(true);
@@ -169,7 +182,6 @@ export default function AdminProducts() {
       const data = await res.json();
       let finalItems = data.items || [];
       
-      // Lọc lại trên frontend để loại bỏ các kết quả false-positive do LIKE query của backend
       if (q && q.trim()) {
         const queryLower = q.toLowerCase().trim();
         const { translateName, translate } = await import('../../data/fashionData');
@@ -182,6 +194,7 @@ export default function AdminProducts() {
 
       setProducts(finalItems);
       setTotal(data.total || 0);
+      setTotalStock(data.totalStock || 0);
       setTotalPages(data.totalPages || 1);
       setCurrentPage(data.currentPage || 0);
     } catch {
@@ -238,7 +251,7 @@ export default function AdminProducts() {
       toast.error(error.message);
     } finally {
       setUploadingFiles(false);
-      e.target.value = ''; // Reset file input
+      e.target.value = '';
     }
   };
 
@@ -277,9 +290,7 @@ export default function AdminProducts() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Lỗi lưu sản phẩm');
       
-      if (window.location.pathname.startsWith('/admin')) {
-        toast.success(data.message || 'Lưu thành công!');
-      }
+      toast.success(data.message || 'Lưu thành công!');
       setShowForm(false);
       setForm(emptyForm);
       setEditId(null);
@@ -326,9 +337,7 @@ export default function AdminProducts() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Lỗi xóa sản phẩm');
       
-      if (window.location.pathname.startsWith('/admin')) {
-        toast.success(data.message || 'Xóa thành công!');
-      }
+      toast.success(data.message || 'Xóa thành công!');
       setDeleteConfirm(null);
       fetchProducts(currentPage, search, filterCategory, sortType);
     } catch (error) {
@@ -342,57 +351,57 @@ export default function AdminProducts() {
       {/* ── HEADER ── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1E1B4B', letterSpacing: '-0.5px' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 600, color: J.black, letterSpacing: '0.02em' }}>
             Danh sách sản phẩm
           </h1>
-          <p style={{ fontSize: '13.5px', color: '#64748B', marginTop: '6px', fontWeight: 500 }}>
+          <p style={{ fontSize: '12px', color: J.gray, marginTop: '4px' }}>
             Quản lý kho hàng và thông tin sản phẩm trong hệ thống
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ position: 'relative' }}>
-            <Search size={15} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+            <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: J.gray }} />
             <input
               type="text"
               placeholder="Tìm kiếm sản phẩm..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
-                height: '42px', paddingLeft: '38px', paddingRight: '16px',
-                background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-                borderRadius: '10px', fontSize: '13px', color: '#374151',
-                outline: 'none', fontFamily: 'inherit', width: '240px',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                height: '36px', paddingLeft: '34px', paddingRight: '14px',
+                background: J.white, border: `1px solid ${J.lightGray}`,
+                borderRadius: '4px', fontSize: '12px', color: J.black,
+                outline: 'none', width: '220px',
               }}
-              onFocus={e => { e.target.style.borderColor = 'rgba(124,58,237,0.4)'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.08)'; }}
-              onBlur={e => { e.target.style.borderColor = 'rgba(0,0,0,0.09)'; e.target.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'; }}
+              onFocus={e => { e.target.style.borderColor = J.red; }}
+              onBlur={e => { e.target.style.borderColor = J.lightGray; }}
             />
           </div>
           <button
             onClick={() => setIsLogsOpen(true)}
             style={{
-              display: 'flex', alignItems: 'center', gap: '7px',
-              padding: '10px 16px', borderRadius: '10px',
-              background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-              fontSize: '13px', fontWeight: 700, color: '#475569',
-              cursor: 'pointer', fontFamily: 'inherit',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)', whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 16px', borderRadius: '4px',
+              background: J.white, border: `1px solid ${J.lightGray}`,
+              fontSize: '12px', fontWeight: 500, color: J.black,
+              cursor: 'pointer', whiteSpace: 'nowrap',
             }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = J.red; e.currentTarget.style.color = J.red; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = J.lightGray; e.currentTarget.style.color = J.black; }}
           >
-            <History size={15} strokeWidth={2.5} /> Lịch sử
+            <History size={14} /> Lịch sử
           </button>
           <button
             onClick={() => { setShowForm(true); setForm(emptyForm); setEditId(null); setIsCustomSubCategory(false); setIsCustomArticleType(false); }}
             style={{
-              display: 'flex', alignItems: 'center', gap: '7px',
-              padding: '10px 20px', borderRadius: '10px',
-              background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
-              fontSize: '13px', fontWeight: 700, color: 'white',
-              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              boxShadow: '0 4px 16px rgba(124,58,237,0.35)', whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 16px', borderRadius: '4px',
+              background: J.red, fontSize: '12px', fontWeight: 500, color: J.white,
+              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
             }}
+            onMouseEnter={e => e.currentTarget.style.background = '#152e9c'}
+            onMouseLeave={e => e.currentTarget.style.background = J.red}
           >
-            <Plus size={15} strokeWidth={2.5} /> Thêm sản phẩm
+            <Plus size={14} /> Thêm sản phẩm
           </button>
         </div>
       </div>
@@ -400,35 +409,33 @@ export default function AdminProducts() {
       {/* ── KPI CARDS ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
         {[
-          { label: 'Tổng sản phẩm', value: total.toLocaleString(), sub: 'Trong hệ thống', subColor: '#10B981', icon: '📦' },
-          { label: 'Sắp hết hàng', value: products.filter(p => p.stock <= 10).length, sub: 'Cần nhập thêm', subColor: '#F59E0B', icon: '⚠️' },
-          { label: 'Trang hiện tại', value: `${currentPage + 1}/${totalPages}`, sub: '20 SP mỗi trang', subColor: '#7C3AED', icon: '📄' },
-          { label: 'Đánh giá TB', value: products.length ? (products.reduce((s,p)=>s+(p.rating||0),0)/products.length).toFixed(1)+' ⭐' : '—', sub: 'Trang này', subColor: '#64748B', icon: '🌟' },
+          { label: 'Tổng sản phẩm', value: total.toLocaleString(), sub: 'Phân loại trong kho', subColor: J.green },
+          { label: 'Sắp hết hàng', value: products.filter(p => p.stock <= 10).length, sub: 'Cần chú ý', subColor: '#E74C3C' },
+          { label: 'Tổng tồn kho', value: totalStock.toLocaleString(), sub: 'Tất cả sản phẩm', subColor: J.blue },
+          { label: 'Đánh giá TB', value: products.length ? (products.reduce((s,p)=>s+(p.rating||0),0)/products.length).toFixed(1)+' ★' : '—', sub: 'Trang này', subColor: J.gray },
         ].map((card, i) => (
-          <motion.div
+          <div
             key={card.label}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06 }}
             style={{
-              background: 'white', borderRadius: '16px', padding: '20px 22px',
-              border: '1px solid rgba(0,0,0,0.06)',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+              background: J.white, borderRadius: '4px', padding: '16px 20px',
+              border: `1px solid ${J.lightGray}`,
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-              <p style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
-                {card.label}
-              </p>
-              <span style={{ fontSize: '20px' }}>{card.icon}</span>
-            </div>
-            <p style={{ fontSize: '26px', fontWeight: 900, color: '#1E1B4B', lineHeight: 1, letterSpacing: '-0.5px', marginBottom: '8px' }}>
-              {card.value}
+            <p style={{ fontSize: '11px', fontWeight: 600, color: J.gray, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '8px' }}>
+              {card.label}
             </p>
-            <p style={{ fontSize: '12px', fontWeight: 600, color: card.subColor }}>
+            <p style={{ fontSize: '22px', fontWeight: 600, color: J.black, lineHeight: 1, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {typeof card.value === 'string' && card.value.endsWith(' ★') ? (
+                <>
+                  {card.value.replace(' ★', '')}
+                  <span style={{ color: '#FFC107' }}>★</span>
+                </>
+              ) : card.value}
+            </p>
+            <p style={{ fontSize: '11px', fontWeight: 500, color: card.subColor }}>
               {card.sub}
             </p>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -436,65 +443,37 @@ export default function AdminProducts() {
       <AnimatePresence>
         {showForm && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 100,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: '16px',
-              background: 'rgba(15,15,35,0.6)',
-              backdropFilter: 'blur(8px)',
-            }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
             onClick={(e) => e.target === e.currentTarget && setShowForm(false)}
           >
             <motion.div
-              initial={{ scale: 0.94, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.94, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              style={{
-                background: 'white', borderRadius: '20px',
-                width: '100%', maxWidth: '520px', padding: '32px',
-                boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
-                border: '1px solid rgba(124,58,237,0.1)',
-              }}
+              initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}
+              style={{ background: J.white, borderRadius: '4px', width: '100%', maxWidth: '500px', padding: '32px', border: `1px solid ${J.lightGray}`, boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}
             >
-              {/* Modal header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
-                  <h2 style={{ fontSize: '19px', fontWeight: 800, color: '#1E1B4B', letterSpacing: '-0.3px' }}>
-                    {editId ? '✏️ Chỉnh sửa sản phẩm' : '➕ Thêm sản phẩm mới'}
+                  <h2 style={{ fontSize: '16px', fontWeight: 600, color: J.black, letterSpacing: '0.02em' }}>
+                    {editId ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
                   </h2>
-                  <p style={{ fontSize: '13px', color: '#64748B', marginTop: '3px' }}>
-                    {editId ? 'Cập nhật thông tin sản phẩm' : 'Điền thông tin sản phẩm mới'}
+                  <p style={{ fontSize: '11px', color: J.gray, marginTop: '2px' }}>
+                    Cập nhật thông tin chi tiết vào kho dữ liệu
                   </p>
                 </div>
                 <button
                   onClick={() => setShowForm(false)}
-                  style={{
-                    width: '36px', height: '36px', borderRadius: '10px',
-                    background: '#F1F5F9', border: 'none', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#64748B',
-                  }}
+                  style={{ width: '32px', height: '32px', borderRadius: '4px', background: '#FAFAFA', border: `1px solid ${J.lightGray}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: J.gray }}
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
                   <label style={labelStyle}>Tên sản phẩm *</label>
                   <input
                     name="name" required value={form.name} onChange={handleChange}
-                    style={{
-                      ...inputStyle,
-                      borderColor: focusedInput === 'name' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                      boxShadow: focusedInput === 'name' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
-                    }}
-                    onFocus={() => setFocusedInput('name')}
-                    onBlur={() => setFocusedInput(null)}
+                    style={inputStyle}
                   />
                 </div>
 
@@ -503,42 +482,24 @@ export default function AdminProducts() {
                     <label style={labelStyle}>Giá bán (₫) *</label>
                     <input
                       name="price" type="number" required value={form.price} onChange={handleChange}
-                      style={{
-                        ...inputStyle,
-                        borderColor: focusedInput === 'price' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                        boxShadow: focusedInput === 'price' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
-                      }}
-                      onFocus={() => setFocusedInput('price')}
-                      onBlur={() => setFocusedInput(null)}
+                      style={inputStyle}
                     />
                   </div>
                   <div>
                     <label style={labelStyle}>Giá gốc (₫)</label>
                     <input
                       name="originalPrice" type="number" value={form.originalPrice} onChange={handleChange}
-                      style={{
-                        ...inputStyle,
-                        borderColor: focusedInput === 'originalPrice' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                        boxShadow: focusedInput === 'originalPrice' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
-                      }}
-                      onFocus={() => setFocusedInput('originalPrice')}
-                      onBlur={() => setFocusedInput(null)}
+                      style={inputStyle}
                     />
                   </div>
                 </div>
 
-                {/* Danh mục & Phân loại chi tiết (Tag 2) */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={labelStyle}>Danh mục</label>
                     <select
                       name="category" value={form.category} onChange={handleChange}
-                      style={{
-                        ...inputStyle, appearance: 'none', cursor: 'pointer',
-                        borderColor: focusedInput === 'category' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                      }}
-                      onFocus={() => setFocusedInput('category')}
-                      onBlur={() => setFocusedInput(null)}
+                      style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
                     >
                       {categories.filter(c => c.id !== 'all').map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
@@ -559,55 +520,32 @@ export default function AdminProducts() {
                           setForm(f => ({ ...f, subCategory: val }));
                         }
                       }}
-                      style={{
-                        ...inputStyle, appearance: 'none', cursor: 'pointer',
-                        borderColor: focusedInput === 'subCategorySelect' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                      }}
-                      onFocus={() => setFocusedInput('subCategorySelect')}
-                      onBlur={() => setFocusedInput(null)}
+                      style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
                     >
-                      <option value="">-- Chọn phân loại chi tiết --</option>
+                      <option value="">-- Chọn phân loại --</option>
                       {(subCategoriesMap[form.category] || []).map((sc) => (
                         <option key={sc.id} value={sc.id}>{sc.name}</option>
                       ))}
                       <option value="custom">Khác (Nhập thủ công)...</option>
                     </select>
                     {isCustomSubCategory && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        style={{ marginTop: '8px' }}
-                      >
-                        <input
-                          name="subCategory"
-                          value={form.subCategory || ''}
-                          onChange={handleChange}
-                          placeholder="Nhập phân loại chi tiết khác..."
-                          style={{
-                            ...inputStyle,
-                            borderColor: focusedInput === 'subCategoryCustom' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                            boxShadow: focusedInput === 'subCategoryCustom' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
-                          }}
-                          onFocus={() => setFocusedInput('subCategoryCustom')}
-                          onBlur={() => setFocusedInput(null)}
-                        />
-                      </motion.div>
+                      <input
+                        name="subCategory"
+                        value={form.subCategory || ''}
+                        onChange={handleChange}
+                        placeholder="Nhập phân loại..."
+                        style={{ ...inputStyle, marginTop: '8px' }}
+                      />
                     )}
                   </div>
                 </div>
 
-                {/* Đối tượng sử dụng & Chi tiết sản phẩm */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={labelStyle}>Đối tượng sử dụng *</label>
                     <select
                       name="gender" value={form.gender} onChange={handleChange}
-                      style={{
-                        ...inputStyle, appearance: 'none', cursor: 'pointer',
-                        borderColor: focusedInput === 'gender' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                      }}
-                      onFocus={() => setFocusedInput('gender')}
-                      onBlur={() => setFocusedInput(null)}
+                      style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
                     >
                       <option value="Men">Nam (Men)</option>
                       <option value="Women">Nữ (Women)</option>
@@ -615,7 +553,7 @@ export default function AdminProducts() {
                     </select>
                   </div>
                   <div>
-                    <label style={labelStyle}>Chi tiết sản phẩm (Article Type)</label>
+                    <label style={labelStyle}>Chi tiết sản phẩm</label>
                     <select
                       value={isCustomArticleType ? 'custom' : (form.articleType || '')}
                       onChange={(e) => {
@@ -628,71 +566,43 @@ export default function AdminProducts() {
                           setForm(f => ({ ...f, articleType: val }));
                         }
                       }}
-                      style={{
-                        ...inputStyle, appearance: 'none', cursor: 'pointer',
-                        borderColor: focusedInput === 'articleTypeSelect' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                      }}
-                      onFocus={() => setFocusedInput('articleTypeSelect')}
-                      onBlur={() => setFocusedInput(null)}
+                      style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
                     >
-                      <option value="">-- Chọn chi tiết sản phẩm --</option>
+                      <option value="">-- Chọn chi tiết --</option>
                       {(articleTypesMap[form.category] || []).map((at) => (
                         <option key={at.id} value={at.id}>{at.name}</option>
                       ))}
                       <option value="custom">Khác (Nhập thủ công)...</option>
                     </select>
                     {isCustomArticleType && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        style={{ marginTop: '8px' }}
-                      >
-                        <input
-                          name="articleType"
-                          value={form.articleType || ''}
-                          onChange={handleChange}
-                          placeholder="Nhập chi tiết sản phẩm khác..."
-                          style={{
-                            ...inputStyle,
-                            borderColor: focusedInput === 'articleTypeCustom' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                            boxShadow: focusedInput === 'articleTypeCustom' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
-                          }}
-                          onFocus={() => setFocusedInput('articleTypeCustom')}
-                          onBlur={() => setFocusedInput(null)}
-                        />
-                      </motion.div>
+                      <input
+                        name="articleType"
+                        value={form.articleType || ''}
+                        onChange={handleChange}
+                        placeholder="Nhập chi tiết..."
+                        style={{ ...inputStyle, marginTop: '8px' }}
+                      />
                     )}
                   </div>
                 </div>
 
-                {/* Tồn kho */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={labelStyle}>Tồn kho</label>
                     <input
                       name="stock" type="number" value={form.stock} onChange={handleChange}
-                      style={{
-                        ...inputStyle,
-                        borderColor: focusedInput === 'stock' ? 'rgba(124,58,237,0.5)' : 'rgba(0,0,0,0.08)',
-                        boxShadow: focusedInput === 'stock' ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
-                      }}
-                      onFocus={() => setFocusedInput('stock')}
-                      onBlur={() => setFocusedInput(null)}
+                      style={inputStyle}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '7px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '6px' }}>
                     <label style={{ ...labelStyle, marginBottom: 0 }}>Ảnh sản phẩm</label>
                     {editId && form.images !== originalImages && (
                       <button
-                        type="button"
-                        onClick={() => setForm(f => ({ ...f, images: originalImages }))}
-                        style={{
-                          fontSize: '11px', color: '#7C3AED', background: 'none', border: 'none',
-                          cursor: 'pointer', fontWeight: 700, padding: 0
-                        }}
+                        type="button" onClick={() => setForm(f => ({ ...f, images: originalImages }))}
+                        style={{ fontSize: '11px', color: J.red, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500, padding: 0 }}
                       >
                         Khôi phục ảnh gốc
                       </button>
@@ -705,13 +615,13 @@ export default function AdminProducts() {
                         onChange={handleFileChange}
                         disabled={uploadingFiles}
                         style={{
-                          flex: 1, padding: '8px 14px',
-                          background: '#F8FAFF', border: '1.5px dashed rgba(0,0,0,0.2)',
-                          borderRadius: '10px', fontSize: '13px', color: '#64748B',
+                          flex: 1, padding: '6px 12px',
+                          background: '#FAFAFA', border: `1px dashed ${J.lightGray}`,
+                          borderRadius: '4px', fontSize: '11px', color: J.gray,
                           cursor: 'pointer'
                         }}
                       />
-                      <div style={{ fontSize: '12px', color: '#94A3B8', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: '11px', color: J.gray }}>
                         {uploadingFiles ? 'Đang tải...' : (form.images ? `${form.images.split(',').filter(Boolean).length} ảnh` : 'Chưa có ảnh')}
                       </div>
                     </div>
@@ -722,8 +632,15 @@ export default function AdminProducts() {
                             <img 
                               src={getImageUrl(img)} 
                               alt={`preview-${idx}`} 
-                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }}
-                              onError={e => { e.target.src = 'https://placehold.co/48x48/f8fafc/94a3b8?text=Img'; }}
+                              onClick={() => setPreviewImage(getImageUrl(img))}
+                              style={{ 
+                                width: '40px', height: '40px', objectFit: 'cover', 
+                                borderRadius: '4px', border: `1px solid ${J.lightGray}`,
+                                cursor: 'zoom-in', transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                              onError={e => { e.target.src = 'https://placehold.co/40x40/fafaf8/6b6b6b?text=Img'; }}
                             />
                             <button
                               type="button"
@@ -732,11 +649,11 @@ export default function AdminProducts() {
                                 setForm({ ...form, images: newImages });
                               }}
                               style={{
-                                position: 'absolute', top: '-6px', right: '-6px',
-                                width: '18px', height: '18px', borderRadius: '50%',
-                                background: '#EF4444', color: 'white', border: '2px solid white',
+                                position: 'absolute', top: '-4px', right: '-4px',
+                                width: '14px', height: '14px', borderRadius: '50%',
+                                background: J.red, color: 'white', border: '1.5px solid white',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                cursor: 'pointer', fontSize: '10px', fontWeight: 'bold'
+                                cursor: 'pointer', fontSize: '9px', fontWeight: 'bold'
                               }}
                             >
                               ✕
@@ -748,34 +665,25 @@ export default function AdminProducts() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', paddingTop: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', paddingTop: '10px' }}>
                   <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
+                    type="button" onClick={() => setShowForm(false)}
                     style={{
-                      flex: 1, padding: '13px',
-                      background: '#F1F5F9', border: 'none',
-                      borderRadius: '12px', fontSize: '13.5px', fontWeight: 700,
-                      color: '#475569', cursor: 'pointer', fontFamily: 'inherit',
+                      padding: '10px', background: J.white, border: `1px solid ${J.lightGray}`,
+                      borderRadius: '4px', fontSize: '12px', fontWeight: 500, color: J.gray, cursor: 'pointer',
                     }}
                   >
                     Hủy
                   </button>
                   <button
-                    type="submit"
-                    id="save-product-btn"
+                    type="submit" id="save-product-btn"
                     style={{
-                      flex: 2, padding: '13px',
-                      background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
-                      border: 'none', borderRadius: '12px',
-                      fontSize: '13.5px', fontWeight: 700, color: 'white',
-                      cursor: 'pointer', fontFamily: 'inherit',
-                      boxShadow: '0 4px 16px rgba(124,58,237,0.35)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                      padding: '10px', background: J.red, border: 'none',
+                      borderRadius: '4px', fontSize: '12px', fontWeight: 500, color: 'white',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                     }}
                   >
-                    <Check size={16} strokeWidth={2.5} />
-                    {editId ? 'Lưu thay đổi' : 'Thêm sản phẩm'}
+                    <Check size={14} /> {editId ? 'Lưu thay đổi' : 'Thêm sản phẩm'}
                   </button>
                 </div>
               </form>
@@ -786,30 +694,28 @@ export default function AdminProducts() {
 
       {/* ── MAIN TABLE ── */}
       <div style={{
-        background: 'white', borderRadius: '18px',
-        border: '1px solid rgba(0,0,0,0.06)',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+        background: J.white, borderRadius: '4px',
+        border: `1px solid ${J.lightGray}`,
         overflow: 'hidden',
       }}>
         {/* Toolbar */}
         <div style={{
-          padding: '16px 24px',
-          borderBottom: '1px solid rgba(0,0,0,0.05)',
+          padding: '12px 16px',
+          borderBottom: `1px solid ${J.lightGray}`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           background: '#FAFAFA',
         }}>
           <div style={{ display: 'flex', gap: '8px' }}>
             <div style={{ position: 'relative' }}>
-              <Filter size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#475569', pointerEvents: 'none' }} />
+              <Filter size={12} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: J.gray, pointerEvents: 'none' }} />
               <select 
                 value={filterCategory} 
                 onChange={e => setFilterCategory(e.target.value)}
                 style={{
-                  appearance: 'none', padding: '7px 28px 7px 28px', borderRadius: '8px',
-                  background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-                  fontSize: '12px', fontWeight: 600, color: '#475569',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  appearance: 'none', padding: '6px 24px 6px 26px', borderRadius: '4px',
+                  background: J.white, border: `1px solid ${J.lightGray}`,
+                  fontSize: '11px', fontWeight: 500, color: J.gray,
+                  cursor: 'pointer',
                 }}
               >
                 {categories.map(c => <option key={c.id} value={c.id}>Lọc: {c.name}</option>)}
@@ -817,16 +723,15 @@ export default function AdminProducts() {
             </div>
             
             <div style={{ position: 'relative' }}>
-              <ArrowUpDown size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#475569', pointerEvents: 'none' }} />
+              <ArrowUpDown size={12} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: J.gray, pointerEvents: 'none' }} />
               <select 
                 value={sortType} 
                 onChange={e => setSortType(e.target.value)}
                 style={{
-                  appearance: 'none', padding: '7px 28px 7px 28px', borderRadius: '8px',
-                  background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-                  fontSize: '12px', fontWeight: 600, color: '#475569',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  appearance: 'none', padding: '6px 24px 6px 26px', borderRadius: '4px',
+                  background: J.white, border: `1px solid ${J.lightGray}`,
+                  fontSize: '11px', fontWeight: 500, color: J.gray,
+                  cursor: 'pointer',
                 }}
               >
                 <option value="newest">Sắp xếp: Mới nhất</option>
@@ -837,22 +742,22 @@ export default function AdminProducts() {
               </select>
             </div>
           </div>
-          <p style={{ fontSize: '12.5px', color: '#94A3B8', fontWeight: 500 }}>
+          <p style={{ fontSize: '12px', color: J.gray }}>
             {loading ? 'Đang tải...' : `${total} sản phẩm`}
           </p>
         </div>
 
-        <div style={{ overflowX: 'auto', maxHeight: 'calc(100vh - 140px)', minHeight: '650px', overflowY: 'auto' }}>
+        <div style={{ overflowX: 'auto', maxHeight: 'calc(100vh - 200px)', minHeight: '600px', overflowY: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
-              <tr style={{ background: '#FAFAFA', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+              <tr style={{ background: '#F5F5F5', borderBottom: `1px solid ${J.lightGray}` }}>
                 {['Sản phẩm', 'Giá', 'Tồn kho', 'Đã bán', 'Tags', 'Thao tác'].map(h => (
                   <th key={h} style={{
-                    textAlign: 'left', padding: '13px 20px',
-                    fontSize: '11px', fontWeight: 700, color: '#94A3B8',
-                    letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap',
-                    background: '#FAFAFA', // Đảm bảo background không bị trong suốt khi cuộn
-                    boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.05)'
+                    textAlign: 'left', padding: '12px 16px',
+                    fontSize: '11px', fontWeight: 600, color: J.gray,
+                    letterSpacing: '0.04em', whiteSpace: 'nowrap',
+                    background: '#F5F5F5',
+                    boxShadow: `inset 0 -1px 0 ${J.lightGray}`
                   }}>{h}</th>
                 ))}
               </tr>
@@ -861,112 +766,103 @@ export default function AdminProducts() {
               {loading ? (
                 <tr>
                   <td colSpan="6" style={{ padding: '80px 0', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                        style={{
-                          width: '40px', height: '40px',
-                          border: '4px solid rgba(124,58,237,0.1)',
-                          borderTopColor: '#7C3AED',
-                          borderRadius: '50%',
-                        }}
-                      />
-                      <p style={{ fontSize: '14px', color: '#94A3B8', fontWeight: 600 }}>Đang tải danh sách sản phẩm...</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        style={{ width: '24px', height: '24px', border: `2px solid ${J.lightGray}`, borderTopColor: J.red, borderRadius: '50%' }} />
+                      <p style={{ fontSize: '12px', color: J.gray }}>Đang tải danh sách sản phẩm...</p>
                     </div>
                   </td>
                 </tr>
               ) : products.map((p, idx) => {
-                const stockColor = p.stock > 10 ? '#10B981' : p.stock > 0 ? '#F59E0B' : '#EF4444';
-                const stockBg = p.stock > 10 ? 'rgba(16,185,129,0.1)' : p.stock > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
+                const stockColor = p.stock > 10 ? J.green : p.stock > 0 ? '#E67E22' : '#E74C3C';
+                const stockBg = p.stock > 10 ? '#E9F7EF' : p.stock > 0 ? '#FDF2E9' : '#FDEDEC';
                 const displayTags = [translate(p.masterCategory), translate(p.subCategory)].filter(Boolean).slice(0, 2);
 
                 return (
                   <motion.tr
                     key={p.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(idx * 0.04, 0.4) }}
-                    style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', transition: 'background 0.15s' }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.background = '#FDFDFF';
-                      e.currentTarget.querySelector('.row-actions').style.opacity = '1';
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.querySelector('.row-actions').style.opacity = '0';
-                    }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: Math.min(idx * 0.02, 0.2) }}
+                    style={{ borderBottom: `1px solid ${J.lightGray}`, transition: 'background 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#FAFAF8'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
-                    <td style={{ padding: '14px 20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '13px', minWidth: '260px' }}>
-                        <div style={{
-                          width: '48px', height: '48px', borderRadius: '12px',
-                          overflow: 'hidden', border: '1px solid rgba(0,0,0,0.07)',
-                          background: '#F8FAFC', flexShrink: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '240px' }}>
+                        <div 
+                          onClick={() => setPreviewImage(getImageUrl(p.imagePath))}
+                          style={{
+                            width: '40px', height: '40px', borderRadius: '4px',
+                            overflow: 'hidden', border: `1px solid ${J.lightGray}`,
+                            background: '#FAFAFA', flexShrink: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'zoom-in', transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
+                          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                        >
                           <img
                             src={getImageUrl(p.imagePath)} alt={p.productDisplayName}
-                            style={{ maxWidth: '42px', maxHeight: '42px', objectFit: 'contain' }}
-                            onError={e => { e.target.src = 'https://placehold.co/42x42/f8fafc/94a3b8?text=Img'; }}
+                            style={{ maxWidth: '36px', maxHeight: '36px', objectFit: 'contain' }}
+                            onError={e => { e.target.src = 'https://placehold.co/36x36/fafaf8/6b6b6b?text=Img'; }}
                           />
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <p style={{ fontSize: '13.5px', fontWeight: 700, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: J.black, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
                             {p.productDisplayName}
                           </p>
-                          <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>
+                          <p style={{ fontSize: '11px', color: J.gray, marginTop: '2px' }}>
                             {translate(p.subCategory) || translate(p.masterCategory)}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '14px 20px' }}>
-                      <p style={{ fontSize: '13.5px', fontWeight: 800, color: '#1E293B', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '12px 16px' }}>
+                      <p style={{ fontSize: '13px', fontWeight: 600, color: J.black, whiteSpace: 'nowrap' }}>
                         ₫{formatPrice(p.price)}
                       </p>
                     </td>
-                    <td style={{ padding: '14px 20px' }}>
+                    <td style={{ padding: '12px 16px' }}>
                       <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '5px',
-                        padding: '4px 10px', borderRadius: '8px',
-                        background: stockBg, fontSize: '12.5px', fontWeight: 700, color: stockColor,
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        padding: '3px 8px', borderRadius: '2px',
+                        background: stockBg, fontSize: '11px', fontWeight: 500, color: stockColor,
                       }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: stockColor }} />
                         {p.stock}
                       </span>
                     </td>
-                    <td style={{ padding: '14px 20px', fontSize: '13px', color: '#475569', fontWeight: 600 }}>
+                    <td style={{ padding: '12px 16px', fontSize: '12px', color: J.black, fontWeight: 500 }}>
                       {(p.sold ?? 0).toLocaleString()}
                     </td>
-                    <td style={{ padding: '14px 20px' }}>
-                      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                         {displayTags.map((t) => (
                           <span key={t} style={{
-                            fontSize: '10px', fontWeight: 700,
-                            background: 'rgba(124,58,237,0.08)', color: '#7C3AED',
-                            padding: '3px 8px', borderRadius: '6px',
-                            letterSpacing: '0.04em',
+                            fontSize: '9px', fontWeight: 500,
+                            background: '#FAFAFA', color: J.gray,
+                            padding: '2px 6px', borderRadius: '2px',
+                            border: `1px solid ${J.lightGray}`
                           }}>
                             #{t}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td style={{ padding: '14px 20px' }}>
-                      <div className="row-actions" style={{ display: 'flex', gap: '6px', opacity: 0, transition: 'opacity 0.2s' }}>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', gap: '6px' }}>
                         <button
                           onClick={() => handleEdit(p)}
                           style={{
-                            width: '32px', height: '32px', borderRadius: '8px',
-                            background: 'white', border: '1px solid rgba(0,0,0,0.1)',
+                            width: '28px', height: '28px', borderRadius: '4px',
+                            background: J.white, border: `1px solid ${J.lightGray}`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', color: '#475569', transition: 'all 0.2s',
+                            cursor: 'pointer', color: J.gray, transition: 'all 0.2s',
                           }}
-                          onMouseEnter={e => { e.currentTarget.style.background = '#F8F4FF'; e.currentTarget.style.color = '#7C3AED'; e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#475569'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = J.red; e.currentTarget.style.color = J.red; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = J.lightGray; e.currentTarget.style.color = J.gray; }}
                         >
-                          <Edit2 size={13} strokeWidth={2.5} />
+                          <Edit2 size={12} />
                         </button>
 
                         {deleteConfirm === p.id ? (
@@ -974,39 +870,39 @@ export default function AdminProducts() {
                             <button
                               onClick={() => handleDelete()}
                               style={{
-                                width: '32px', height: '32px', borderRadius: '8px',
-                                background: '#EF4444', border: 'none',
+                                width: '28px', height: '28px', borderRadius: '4px',
+                                background: '#DC2626', border: 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 cursor: 'pointer', color: 'white',
                               }}
                             >
-                              <Check size={13} strokeWidth={2.5} />
+                              <Check size={12} />
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(null)}
                               style={{
-                                width: '32px', height: '32px', borderRadius: '8px',
-                                background: 'white', border: '1px solid rgba(0,0,0,0.1)',
+                                width: '28px', height: '28px', borderRadius: '4px',
+                                background: J.white, border: `1px solid ${J.lightGray}`,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                cursor: 'pointer', color: '#64748B',
+                                cursor: 'pointer', color: J.gray,
                               }}
                             >
-                              <X size={13} strokeWidth={2.5} />
+                              <X size={12} />
                             </button>
                           </div>
                         ) : (
                           <button
                             onClick={() => setDeleteConfirm(p.id)}
                             style={{
-                              width: '32px', height: '32px', borderRadius: '8px',
-                              background: 'white', border: '1px solid rgba(0,0,0,0.1)',
+                              width: '28px', height: '28px', borderRadius: '4px',
+                              background: J.white, border: `1px solid ${J.lightGray}`,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              cursor: 'pointer', color: '#94A3B8', transition: 'all 0.2s',
+                              cursor: 'pointer', color: J.gray, transition: 'all 0.2s',
                             }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#FFF1F1'; e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.25)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#94A3B8'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = J.red; e.currentTarget.style.color = J.red; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = J.lightGray; e.currentTarget.style.color = J.gray; }}
                           >
-                            <Trash2 size={13} strokeWidth={2.5} />
+                            <Trash2 size={12} />
                           </button>
                         )}
                       </div>
@@ -1018,15 +914,15 @@ export default function AdminProducts() {
           </table>
           {!loading && products.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <p style={{ fontSize: '15px', color: '#94A3B8', fontWeight: 500 }}>Không tìm thấy sản phẩm nào.</p>
+              <p style={{ fontSize: '13px', color: J.gray, fontWeight: 500 }}>Không tìm thấy sản phẩm nào.</p>
             </div>
           )}
         </div>
 
         {totalPages > 1 && (
           <div style={{
-            padding: '14px 24px',
-            borderTop: '1px solid rgba(0,0,0,0.05)',
+            padding: '12px 16px',
+            borderTop: `1px solid ${J.lightGray}`,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             background: '#FAFAFA',
           }}>
@@ -1034,13 +930,13 @@ export default function AdminProducts() {
               onClick={() => fetchProducts(currentPage - 1, search)}
               disabled={currentPage === 0}
               style={{
-                display: 'flex', alignItems: 'center', gap: '5px',
-                padding: '7px 14px', borderRadius: '8px',
-                background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-                fontSize: '12.5px', fontWeight: 600, color: currentPage === 0 ? '#CBD5E1' : '#475569',
-                cursor: currentPage === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', gap: '4px',
+                padding: '6px 12px', borderRadius: '4px',
+                background: J.white, border: `1px solid ${J.lightGray}`,
+                fontSize: '12px', fontWeight: 500, color: currentPage === 0 ? '#CBD5E1' : J.gray,
+                cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
               }}>
-              <ChevronLeft size={16} /> Trước
+              <ChevronLeft size={14} /> Trước
             </button>
             <div style={{ display: 'flex', gap: '4px' }}>
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -1049,13 +945,12 @@ export default function AdminProducts() {
                   <button key={pg}
                     onClick={() => fetchProducts(pg, search)}
                     style={{
-                      width: '34px', height: '34px', borderRadius: '8px',
-                      background: pg === currentPage ? 'linear-gradient(135deg, #7C3AED, #4F46E5)' : 'white',
-                      border: pg === currentPage ? 'none' : '1px solid rgba(0,0,0,0.09)',
-                      fontSize: '13px', fontWeight: 700,
-                      color: pg === currentPage ? 'white' : '#475569',
-                      cursor: 'pointer', fontFamily: 'inherit',
-                      boxShadow: pg === currentPage ? '0 2px 8px rgba(124,58,237,0.3)' : 'none',
+                      width: '28px', height: '28px', borderRadius: '4px',
+                      background: pg === currentPage ? J.redLight : J.white,
+                      border: `1px solid ${pg === currentPage ? J.red : J.lightGray}`,
+                      fontSize: '12px', fontWeight: pg === currentPage ? 600 : 400,
+                      color: pg === currentPage ? J.red : J.gray,
+                      cursor: 'pointer',
                     }}>{pg + 1}</button>
                 );
               })}
@@ -1064,14 +959,14 @@ export default function AdminProducts() {
               onClick={() => fetchProducts(currentPage + 1, search)}
               disabled={currentPage >= totalPages - 1}
               style={{
-                display: 'flex', alignItems: 'center', gap: '5px',
-                padding: '7px 14px', borderRadius: '8px',
-                background: 'white', border: '1px solid rgba(0,0,0,0.09)',
-                fontSize: '12.5px', fontWeight: 600,
-                color: currentPage >= totalPages - 1 ? '#CBD5E1' : '#475569',
-                cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', gap: '4px',
+                padding: '6px 12px', borderRadius: '4px',
+                background: J.white, border: `1px solid ${J.lightGray}`,
+                fontSize: '12px', fontWeight: 500,
+                color: currentPage >= totalPages - 1 ? '#CBD5E1' : J.gray,
+                cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer',
               }}>
-              Sau <ChevronRight size={16} />
+              Sau <ChevronRight size={14} />
             </button>
           </div>
         )}
@@ -1083,6 +978,53 @@ export default function AdminProducts() {
         targetType="PRODUCT"
         title="Lịch sử Quản lý Sản phẩm"
       />
+
+      <AnimatePresence>
+        {previewImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPreviewImage(null)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'zoom-out', padding: '24px'
+            }}
+          >
+            <button
+              onClick={() => setPreviewImage(null)}
+              style={{
+                position: 'absolute', top: '24px', right: '24px',
+                border: 'none', background: 'rgba(255,255,255,0.1)', cursor: 'pointer',
+                color: '#FFFFFF', padding: '10px', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s', zIndex: 10000
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            >
+              <X size={20} />
+            </button>
+            <motion.img
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+              src={previewImage}
+              alt="Preview Zoomed"
+              onClick={e => e.stopPropagation()}
+              style={{
+                maxWidth: '90vw', maxHeight: '85vh',
+                objectFit: 'contain', borderRadius: '8px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                cursor: 'default'
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

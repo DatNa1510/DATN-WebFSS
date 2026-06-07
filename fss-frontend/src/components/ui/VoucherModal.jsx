@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Tag, Search, CheckCircle2 } from 'lucide-react';
 import { formatPrice } from '../../data/mockData';
+import { toast } from '../../store/toastStore';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -52,10 +53,10 @@ export default function VoucherModal({ isOpen, onClose, onSelect, currentSubtota
         onSelect(found);
         onClose();
       } else {
-        alert(`Đơn hàng chưa đạt tối thiểu ${formatPrice(found.minOrder)} để áp dụng mã này.`);
+        toast.error(`Đơn hàng chưa đạt tối thiểu ${formatPrice(found.minOrder)} để áp dụng mã này.`);
       }
     } else {
-      alert('Mã giảm giá không hợp lệ, đã hết hạn hoặc đã hết lượt sử dụng.');
+      toast.error('Mã giảm giá không hợp lệ, đã hết hạn hoặc đã hết lượt sử dụng.');
     }
   };
 

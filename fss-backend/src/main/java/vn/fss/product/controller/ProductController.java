@@ -41,6 +41,7 @@ public class ProductController {
         response.put("totalPages", productPage.getTotalPages());
         response.put("currentPage", productPage.getNumber());
         response.put("hasMore", !productPage.isLast());
+        response.put("totalStock", productService.getTotalStock());
 
         return ResponseEntity.ok(response);
     }

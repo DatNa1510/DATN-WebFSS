@@ -113,4 +113,8 @@ public class ProductService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm có ID: " + id));
         productRepository.delete(product);
     }
+
+    public Long getTotalStock() {
+        return productRepository.sumStock();
+    }
 }
