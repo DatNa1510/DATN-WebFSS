@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, ChevronDown, Share } from 'lucide-react';
 import { contactInfo } from '../../data/mockData';
 
+import emailjs from '@emailjs/browser';
+
 const containerClass = 'layout-page';
 
 const InstagramIcon = ({ size, className }) => (
@@ -26,12 +28,29 @@ export default function ContactPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
+    
+    // Gửi email thật qua EmailJS
+    emailjs.send(
+      import.meta.env.VITE_EMAILJS_SERVICE_ID,
+      import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+      {
+        from_name: formData.name,
+        reply_to: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+      },
+      import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+    )
+    .then((result) => {
       setIsSubmitting(false);
       setSubmitted(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
-    }, 1500);
+    })
+    .catch((error) => {
+      setIsSubmitting(false);
+      alert('Có lỗi xảy ra khi gửi tin nhắn. Vui lòng kiểm tra lại cấu hình EmailJS!');
+      console.error(error);
+    });
   };
 
   const handleChange = (e) => {

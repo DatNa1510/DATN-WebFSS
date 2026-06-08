@@ -8,6 +8,7 @@
     "install-all": "npm install --prefix fss-frontend"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "pg": "^8.21.0"
   }
 }
