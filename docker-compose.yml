@@ -25,6 +25,9 @@ services:
     environment:
       # Tự động ghi đè URL của AI Service để backend tìm thấy nó trong mạng Docker
       - AI_SERVICE_URL=http://fss-ai-service:8000
+    volumes:
+      # Mount thư mục ảnh sản phẩm vào container để Spring Boot serve được ảnh
+      - ./fashion-dataset/images:/app/fashion-dataset/images
     depends_on:
       - fss-ai-service
     restart: unless-stopped
@@ -34,6 +37,8 @@ services:
     build:
       context: ./fss-frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE=http://localhost:8080
     container_name: fss-frontend
     ports:
       - "5173:80" # Map port 80 của Nginx ra port 5173 trên máy local

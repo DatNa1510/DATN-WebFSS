@@ -10,6 +10,10 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
+# Set API Base URL from build argument
+ARG VITE_API_BASE
+ENV VITE_API_BASE=$VITE_API_BASE
+
 # Build the application
 RUN npm run build
 
@@ -19,8 +23,8 @@ FROM nginx:alpine
 # Copy the build output to replace the default nginx contents.
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy custom nginx configuration if needed (optional)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom nginx configuration to support React Router
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80
 EXPOSE 80

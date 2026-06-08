@@ -60,8 +60,8 @@ public class DataSeeder implements CommandLineRunner {
                 log.warn("DataSeeder: Không có sản phẩm nào, bỏ qua.");
                 return;
             }
-            List<Long> productIds = products.subList(0, Math.min(100, products.size()))
-                    .stream().map(Product::getId).toList();
+            List<Long> productIds = new ArrayList<>(products.subList(0, Math.min(100, products.size()))
+                    .stream().map(Product::getId).toList());
 
             Random rng = new Random(42);
             String encodedPassword = passwordEncoder.encode("password123");

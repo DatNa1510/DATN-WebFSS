@@ -151,8 +151,7 @@ public class DataMigrationConfig {
                 // Chỉ dịch những sản phẩm chưa có dấu Tiếng Việt hoặc từ "màu" (tránh dịch đè)
                 var products = jdbcTemplate.queryForList(
                     "SELECT id, product_display_name, gender, master_category, sub_category, article_type, base_colour " +
-                    "FROM products WHERE product_display_name !~ '[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]'",
-                    java.util.Map.class
+                    "FROM products WHERE product_display_name !~ '[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]'"
                 );
 
                 if (products.isEmpty()) {

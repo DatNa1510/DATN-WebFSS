@@ -6,5 +6,8 @@
     "build": "npm run build --prefix fss-frontend",
     "preview": "npm run preview --prefix fss-frontend",
     "install-all": "npm install --prefix fss-frontend"
+  },
+  "dependencies": {
+    "pg": "^8.21.0"
   }
 }
