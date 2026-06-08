@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # 1. AI Service (Python/FastAPI)
+  fss-ai-service:
+    build:
+      context: ./fss-ai-service
+      dockerfile: Dockerfile
+    container_name: fss-ai-service
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    # Nếu AI service cần gọi database hoặc load file dataset lớn, có thể map volume
+    volumes:
+      - ./fss-ai-service/chroma_db:/app/chroma_db
+
+  # 2. Backend Service (Spring Boot)
+  fss-backend:
+    build:
+      context: ./fss-backend
+      dockerfile: Dockerfile
+    container_name: fss-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Tự động ghi đè URL của AI Service để backend tìm thấy nó trong mạng Docker
+      - AI_SERVICE_URL=http://fss-ai-service:8000
+    depends_on:
+      - fss-ai-service
+    restart: unless-stopped
+
+  # 3. Frontend Service (Vite/React)
+  fss-frontend:
+    build:
+      context: ./fss-frontend
+      dockerfile: Dockerfile
+    container_name: fss-frontend
+    ports:
+      - "5173:80" # Map port 80 của Nginx ra port 5173 trên máy local
+    depends_on:
+      - fss-backend
+    restart: unless-stopped
