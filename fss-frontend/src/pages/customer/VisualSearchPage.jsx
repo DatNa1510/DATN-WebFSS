@@ -9,9 +9,10 @@ import {
 import { formatPrice } from '../../data/mockData';
 import useVisualSearchStore from '../../store/visualSearchStore';
 import useCartStore from '../../store/cartStore';
+import { API_BASE } from '../../config/api';
 
-const API_BASE = 'https://datn-webfss.onrender.com';
-const IMG_BASE = 'https://datn-webfss.onrender.com';
+const API_BASE_URL = API_BASE;
+const IMG_BASE = API_BASE;
 
 function getImg(product) {
   if (product.imagePath)
@@ -276,7 +277,7 @@ export default function VisualSearchPage() {
     try {
       const fd = new FormData();
       fd.append('file', file); fd.append('topK', '5');
-      const res = await fetch(`${API_BASE}/api/search/by-image`, { method: 'POST', body: fd });
+      const res = await fetch(`${API_BASE_URL}/api/search/by-image`, { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || `Lỗi (${res.status})`);
 

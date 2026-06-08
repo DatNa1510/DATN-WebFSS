@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { API_BASE } from '../../config/api';
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
@@ -22,7 +23,7 @@ export default function VerifyEmailPage() {
 
     const verifyToken = async () => {
       try {
-        const response = await fetch(`https://datn-webfss.onrender.com/api/auth/verify?token=${token}`);
+        const response = await fetch(`${API_BASE}/api/auth/verify?token=${token}`);
         const data = await response.json();
 
         if (response.ok) {

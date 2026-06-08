@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, SlidersHorizontal, X, ChevronDown, Camera, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE } from '../../config/api';
 import { getProducts, allCategories, reverseTranslateSearch } from '../../data/fashionData';
 import ProductCard from '../../components/ui/ProductCard';
 
@@ -75,7 +76,7 @@ export default function ProductListPage() {
 
     try {
       // 1. Thử gọi API thật từ Spring Boot Backend
-      const response = await axios.get('https://datn-webfss.onrender.com/api/products', {
+      const response = await axios.get(`${API_BASE}/api/products`, {
         params: {
           page: pg,
           limit: PAGE_SIZE,

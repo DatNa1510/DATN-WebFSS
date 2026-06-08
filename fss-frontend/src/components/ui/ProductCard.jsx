@@ -8,6 +8,7 @@ import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
 import useWishlistStore from '../../store/wishlistStore';
 import { toast } from '../../store/toastStore';
+import { API_BASE } from '../../config/api';
 
 // Dùng formatPrice từ fashionData (ưu tiên) hoặc mockData
 const formatPrice = formatPriceFashion || formatPriceMock;
@@ -29,8 +30,8 @@ export default function ProductCard({ product }) {
     ? (product.imagePath.startsWith('http')
         ? product.imagePath
         : product.imagePath.startsWith('/')
-          ? `https://datn-webfss.onrender.com${product.imagePath}`
-          : `https://datn-webfss.onrender.com/images/${product.imagePath}`)
+          ? `${API_BASE}${product.imagePath}`
+          : `${API_BASE}/images/${product.imagePath}`)
     : (product.images?.[imgIdx] || FALLBACK);
   const sizes = product.sizes || ['S', 'M', 'L', 'XL'];
   const colorNames = product.colorNames || [translate(product.baseColour) || 'Mặc định'];

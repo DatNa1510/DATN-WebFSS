@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, FileText, CheckCircle2, AlertCircle, Edit, Trash2, Lock, Unlock, Package, ShoppingCart } from 'lucide-react';
 import { toast } from '../../store/toastStore';
+import { API_BASE } from '../../config/api';
 
-const API = 'https://datn-webfss.onrender.com';
+const API = API_BASE;
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
 
 const ActionIcon = ({ action }) => {

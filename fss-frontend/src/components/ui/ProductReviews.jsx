@@ -6,7 +6,8 @@ import useAuthStore from '../../store/authStore';
 import { toast } from '../../store/toastStore';
 import ConfirmModal from './ConfirmModal';
 
-const API_BASE = 'https://datn-webfss.onrender.com';
+import { API_BASE } from '../../config/api';
+const API_BASE_URL = API_BASE;
 
 function formatDate(d) {
   if (!d) return '';

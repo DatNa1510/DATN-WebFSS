@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Tag, Search, CheckCircle2 } from 'lucide-react';
 import { formatPrice } from '../../data/mockData';
 import { toast } from '../../store/toastStore';
+import { API_BASE } from '../../config/api';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -18,7 +19,7 @@ export default function VoucherModal({ isOpen, onClose, onSelect, currentSubtota
   React.useEffect(() => {
     if (isOpen) {
       setLoading(true);
-      fetch('https://datn-webfss.onrender.com/api/vouchers/active')
+      fetch(`${API_BASE}/api/vouchers/active`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {

@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { API_BASE } from '../config/api';
 
-const API_URL = 'https://datn-webfss.onrender.com/api/auth';
+const API_URL = `${API_BASE}/api/auth`;
 
 // Ảnh đại diện mặc định theo vai trò
 export const DEFAULT_AVATARS = {

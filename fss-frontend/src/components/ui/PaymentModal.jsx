@@ -9,6 +9,7 @@ import {
 import { formatPrice } from '../../data/mockData';
 import { toast } from '../../store/toastStore';
 import useAuthStore from '../../store/authStore';
+import { API_BASE } from '../../config/api';
 
 const PAYMENT_TIMEOUT = 15 * 60; // 15 phút = 900 giây
 const POLL_INTERVAL   = 3000;    // poll mỗi 3 giây
@@ -52,7 +53,7 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
   const pollStatus = useCallback(async () => {
     if (!orderId || !token) return;
     try {
-      const res = await fetch(`https://datn-webfss.onrender.com/api/orders/${orderId}`, {
+      const res = await fetch(`${API_BASE}/api/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
@@ -90,7 +91,7 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
   // Khi QR hết hạn → tự động gọi API huỷ đơn & hoàn kho
   useEffect(() => {
     if (expired && payStatus === 'waiting' && orderId && token) {
-      fetch(`https://datn-webfss.onrender.com/api/orders/${orderId}/expire`, {
+      fetch(`${API_BASE}/api/orders/${orderId}/expire`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` }
       }).then(() => {
@@ -115,7 +116,7 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
     toast.warning('Thanh toán chưa hoàn tất. Đơn hàng của bạn đã bị hủy.');
     if (orderId && token) {
       try {
-        await fetch(`https://datn-webfss.onrender.com/api/orders/${orderId}/expire`, {
+        await fetch(`${API_BASE}/api/orders/${orderId}/expire`, {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${token}` }
         });

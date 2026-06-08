@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle, ChevronRight, Loader2 } from 'lucide-react';
 import { formatPrice } from '../../data/mockData';
+import { API_BASE } from '../../config/api';
 
 export default function PaymentResultPage() {
   const [searchParams] = useSearchParams();
@@ -45,7 +46,7 @@ export default function PaymentResultPage() {
             const authStorage = JSON.parse(localStorage.getItem('fss-auth'));
             const token = authStorage?.state?.token;
             if (token) {
-              const res = await fetch(`https://datn-webfss.onrender.com/api/orders/${targetOrderId}/expire`, {
+              const res = await fetch(`${API_BASE}/api/orders/${targetOrderId}/expire`, {
                 method: 'PATCH',
                 headers: {
                   'Authorization': `Bearer ${token}`

@@ -2,9 +2,10 @@ import { create } from 'zustand';
 import axios from 'axios';
 import useAuthStore from './authStore';
 import { toast } from './toastStore';
+import { API_BASE } from '../config/api';
 
-const API_URL = 'https://datn-webfss.onrender.com/api/cart';
-const BACKEND_BASE = 'https://datn-webfss.onrender.com';
+const API_URL = `${API_BASE}/api/cart`;
+const BACKEND_BASE = API_BASE;
 
 // Helper to get auth headers
 const getHeaders = () => {

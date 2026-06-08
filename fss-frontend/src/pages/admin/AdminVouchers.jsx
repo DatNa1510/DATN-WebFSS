@@ -7,7 +7,8 @@ import { formatPrice } from '../../data/mockData';
 import AdminLogsDrawer from '../../components/admin/AdminLogsDrawer';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 
-const API = 'https://datn-webfss.onrender.com';
+import { API_BASE } from '../../config/api';
+const API = API_BASE;
 const getToken = () => { try { return JSON.parse(localStorage.getItem('fss-auth'))?.state?.token || ''; } catch { return ''; } };
 
 const J = {

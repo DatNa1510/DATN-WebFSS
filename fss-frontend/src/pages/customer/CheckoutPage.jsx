@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, CreditCard, Banknote, Smartphone, MapPin, User, Phone, Mail, Package, AlertCircle, Loader2, Truck, ShieldCheck, ChevronRight, Lock, ArrowLeft, Zap, RotateCcw, Tag, TicketPercent, Clock } from 'lucide-react';
+import { API_BASE } from '../../config/api';
 import VoucherModal from '../../components/ui/VoucherModal';
 import PaymentModal from '../../components/ui/PaymentModal';
 import useCartStore from '../../store/cartStore';
@@ -97,7 +98,7 @@ export default function CheckoutPage() {
       
       if (pay === 'momo' || pay === 'vietqr') {
         try {
-          const res = await fetch(`https://datn-webfss.onrender.com/api/payment/create/${r.order.id}`, {
+          const res = await fetch(`${API_BASE}/api/payment/create/${r.order.id}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

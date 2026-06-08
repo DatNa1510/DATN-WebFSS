@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import useAuthStore from './authStore';
+import { API_BASE } from '../config/api';
 
-const API = 'https://datn-webfss.onrender.com/api/reviews';
+const API = `${API_BASE}/api/reviews`;
 
 const useReviewStore = create((set, get) => ({
   // State

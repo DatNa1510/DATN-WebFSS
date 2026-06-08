@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, ChevronRight, ShoppingBag, Package, MapPin, CreditCard, Clock, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE } from '../../config/api';
 import useAuthStore from '../../store/authStore';
 import { formatPrice } from '../../data/mockData';
 
@@ -15,7 +16,7 @@ export default function OrderSuccessPage() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await axios.get(`https://datn-webfss.onrender.com/api/orders/${id}`, {
+        const res = await axios.get(`${API_BASE}/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
         });
         setOrder(res.data);

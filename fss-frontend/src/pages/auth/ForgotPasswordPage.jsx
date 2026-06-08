@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import { API_BASE } from '../../config/api';
 
 export default function ForgotPasswordPage() {
   const { isAuthenticated } = useAuthStore();
@@ -18,7 +19,7 @@ export default function ForgotPasswordPage() {
     setSuccess(false);
 
     try {
-      const response = await fetch('https://datn-webfss.onrender.com/api/auth/forgot-password', {
+      const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

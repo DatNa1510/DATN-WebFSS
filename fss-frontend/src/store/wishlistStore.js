@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import useAuthStore from './authStore';
+import { API_BASE } from '../config/api';
 
-const API_URL = 'https://datn-webfss.onrender.com/api/wishlist';
+const API_URL = `${API_BASE}/api/wishlist`;
 
 const useWishlistStore = create((set, get) => ({
   wishlist: [],
@@ -20,7 +21,7 @@ const useWishlistStore = create((set, get) => ({
         // Normalize image URLs
         const mappedData = data.map(item => ({
           ...item,
-          imageUrl: item.imageUrl ? (item.imageUrl.startsWith('http') ? item.imageUrl : `https://datn-webfss.onrender.com${item.imageUrl}`) : null
+          imageUrl: item.imageUrl ? (item.imageUrl.startsWith('http') ? item.imageUrl : `${API_BASE}${item.imageUrl}`) : null
         }));
         set({ wishlist: mappedData });
       }

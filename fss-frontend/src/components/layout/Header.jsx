@@ -7,6 +7,7 @@ import {
 import useAuthStore from '../../store/authStore';
 import useCartStore from '../../store/cartStore';
 import useNotificationStore from '../../store/notificationStore';
+import { API_BASE } from '../../config/api';
 
 const navLinks = [
   { label: 'Trang chủ', path: '/' },
@@ -268,7 +269,7 @@ export default function Header() {
                         <div className="flex items-center gap-3 mb-2">
                           <div className="relative w-10 h-10 shrink-0">
                             <img
-                              src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `https://datn-webfss.onrender.com/images/${user.avatar}`) : '/default-customer.jpg'}
+                              src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE}/images/${user.avatar}`) : '/default-customer.jpg'}
                               alt={user?.name}
                               className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
                               onError={(e) => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, CheckCircle, Lock } from 'lucide-react';
+import { API_BASE } from '../../config/api';
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -38,7 +39,7 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const response = await fetch('https://datn-webfss.onrender.com/api/auth/reset-password', {
+      const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

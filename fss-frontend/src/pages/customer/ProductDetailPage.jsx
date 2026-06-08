@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, ShoppingBag, Heart, Shield, Truck, RefreshCw, Sparkles, Check, ArrowRight, Info, Cpu, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE } from '../../config/api';
 import { getProductById, getSimilarProducts, formatPrice, translate, translateName } from '../../data/fashionData';
 import { reviews as mockReviews } from '../../data/mockData';
 import ProductCard from '../../components/ui/ProductCard';
@@ -78,7 +79,7 @@ export default function ProductDetailPage() {
   // ─── Normalize product: hỗ trợ cả backend (imagePath) và mock (images[])
   const normalizeProduct = (raw) => {
     if (!raw) return null;
-    const BASE = 'https://datn-webfss.onrender.com';
+    const BASE = API_BASE;
     let images;
     if (raw.images && raw.images.length > 0) {
       images = raw.images;
@@ -111,7 +112,7 @@ export default function ProductDetailPage() {
     const loadData = async () => {
       try {
         // Thử gọi API Backend
-        const res = await axios.get(`https://datn-webfss.onrender.com/api/products/${id}`);
+        const res = await axios.get(`${API_BASE}/api/products/${id}`);
         setProduct(normalizeProduct(res.data));
         setSimilar(getSimilarProducts(res.data.masterCategory || res.data.category, res.data.id || id));
       } catch (err) {
@@ -138,9 +139,9 @@ export default function ProductDetailPage() {
       document.getElementById('ai-similar-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
     try {
-      const res = await axios.get(`https://datn-webfss.onrender.com/api/search/similar/${product.id}?topK=5`);
+      const res = await axios.get(`${API_BASE}/api/search/similar/${product.id}?topK=5`);
       if (res.data?.success && res.data.results?.length > 0) {
-        const BASE = 'https://datn-webfss.onrender.com';
+        const BASE = API_BASE;
         const normalized = res.data.results.map(p => ({
           ...p,
           images: p.imagePath

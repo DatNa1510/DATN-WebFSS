@@ -8,6 +8,7 @@ import {
 import useAuthStore from '../../store/authStore';
 import useNotificationStore from '../../store/notificationStore';
 import ToastContainer from '../ui/ToastContainer';
+import { API_BASE } from '../../config/api';
 
 // ── Design Tokens (Flat Japanese) ──────────────────────────────────────────
 const J = {
@@ -190,7 +191,7 @@ export default function AdminLayout() {
             border: `1px solid ${J.lightGray}`,
           }}>
             <img
-              src={user?.avatar ? (user.avatar.includes('ui-avatars.com') ? user.avatar.replace(/background=[a-zA-Z0-9]+/g, 'background=4a6cff') : (user.avatar.startsWith('http') ? user.avatar : `https://datn-webfss.onrender.com/images/${user.avatar}`)) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=4a6cff&color=fff&bold=true`}
+              src={user?.avatar ? (user.avatar.includes('ui-avatars.com') ? user.avatar.replace(/background=[a-zA-Z0-9]+/g, 'background=4a6cff') : (user.avatar.startsWith('http') ? user.avatar : `${API_BASE}/images/${user.avatar}`)) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=4a6cff&color=fff&bold=true`}
               alt={user?.name}
               style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '50%', border: `1px solid ${J.lightGray}`, flexShrink: 0 }}
               onError={e => {
