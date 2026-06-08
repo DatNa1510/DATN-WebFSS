@@ -33,10 +33,10 @@ function FloatingField({ label, value, editing = false, onChange, icon: Icon, ty
             ? 'rgba(255,255,255,0.95)'
             : 'rgba(255,255,255,0.7)',
           border: focused
-            ? '2px solid rgba(0,22,141,0.35)'
+            ? '2px solid rgba(0,22,141,0.8)'
             : '2px solid rgba(226,232,240,0.8)',
           boxShadow: focused
-            ? '0 0 0 4px rgba(0,22,141,0.06), 0 4px 16px rgba(0,22,141,0.08)'
+            ? '0 4px 16px rgba(0,22,141,0.08)'
             : '0 2px 8px rgba(0,0,0,0.04)',
           backdropFilter: 'blur(8px)',
         }}
