@@ -19,13 +19,26 @@ import java.util.UUID;
 @RequestMapping("/api/upload")
 public class UploadController {
 
-    private final String UPLOAD_DIR = "D:/DATN/Web_FSS/fashion-dataset/images/";
+    @org.springframework.beans.factory.annotation.Value("${app.images.path:#{null}}")
+    private String configuredPath;
 
+    private String getUploadDir() {
+        if (configuredPath != null && !configuredPath.isBlank()) {
+            return configuredPath.replace("file:///", "").replace("file:", "");
+        }
+        String os = System.getProperty("os.name", "").toLowerCase();
+        if (os.contains("win")) {
+            return "D:/DATN/Web_FSS/fashion-dataset/images/";
+        } else {
+            return "/app/fashion-dataset/images/";
+        }
+    }
     @PostMapping("/images")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> uploadImages(@RequestParam("files") MultipartFile[] files) {
         try {
-            File dir = new File(UPLOAD_DIR);
+            String uploadDir = getUploadDir();
+            File dir = new File(uploadDir);
             if (!dir.exists()) {
                 dir.mkdirs();
             }
@@ -36,7 +49,7 @@ public class UploadController {
                 String originalFilename = file.getOriginalFilename();
                 String extension = originalFilename != null && originalFilename.contains(".") ? originalFilename.substring(originalFilename.lastIndexOf(".")) : ".jpg";
                 String newFileName = UUID.randomUUID().toString() + extension;
-                Path path = Paths.get(UPLOAD_DIR + newFileName);
+                Path path = Paths.get(uploadDir + newFileName);
                 Files.write(path, file.getBytes());
                 fileNames.add(newFileName);
             }

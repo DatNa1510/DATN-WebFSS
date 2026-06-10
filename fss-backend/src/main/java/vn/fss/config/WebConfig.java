@@ -22,7 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
             // nếu chạy trên Linux (Docker/Render) dùng đường dẫn trong container
             String os = System.getProperty("os.name", "").toLowerCase();
             if (os.contains("win")) {
-                location = "file:D:/DATN/Web_FSS/fashion-dataset/images/";
+                location = "file:///D:/DATN/Web_FSS/fashion-dataset/images/";
             } else {
                 location = "file:/app/fashion-dataset/images/";
             }
