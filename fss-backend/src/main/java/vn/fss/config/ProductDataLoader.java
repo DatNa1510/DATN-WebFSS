@@ -105,7 +105,7 @@ public class ProductDataLoader {
                         product.setStock(50);
                         product.setInitialStock(50);
                         product.setSold(0);
-                        product.setRating(new BigDecimal("4.5"));
+                        product.setRating(new BigDecimal("0.0"));
                         product.setReviewCount(0);
                         product.setIsNew(false);
                         product.setIsBestSeller(false);

@@ -122,10 +122,10 @@ public class ReviewService {
         Long newCount = reviewRepository.countByProductId(productId);
         
         if (newCount == 0) {
-            product.setRating(new BigDecimal("4.5"));
+            product.setRating(new BigDecimal("0.0"));
             product.setReviewCount(0);
         } else {
-            product.setRating(BigDecimal.valueOf(newAvg != null ? newAvg : 4.5).setScale(1, RoundingMode.HALF_UP));
+            product.setRating(BigDecimal.valueOf(newAvg != null ? newAvg : 0.0).setScale(1, RoundingMode.HALF_UP));
             product.setReviewCount(newCount.intValue());
         }
         productRepository.save(product);

@@ -145,7 +145,7 @@ export default function ProductCard({ product }) {
           </div>
           <div className="flex items-center gap-1 bg-[#00168d]/5 px-2 py-1 rounded-sm border border-[#00168d]/10 shrink-0">
             <Star size={10} className="fill-[#00168d] text-[#00168d]" />
-            <span className="text-[10px] font-black text-[#00168d]">{product.rating != null ? Number(product.rating).toFixed(1) : '4.5'}</span>
+            <span className="text-[10px] font-black text-[#00168d]">{product.rating != null ? Number(product.rating).toFixed(1) : '0.0'}</span>
           </div>
         </div>
 

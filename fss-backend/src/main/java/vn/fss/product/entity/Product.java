@@ -62,7 +62,7 @@ public class Product {
     private Integer sold = 0;
 
     @Column(nullable = false, precision = 3, scale = 1)
-    private BigDecimal rating = new BigDecimal("4.5");
+    private BigDecimal rating = new BigDecimal("0.0");
 
     @Column(name = "review_count", nullable = false)
     private Integer reviewCount = 0;

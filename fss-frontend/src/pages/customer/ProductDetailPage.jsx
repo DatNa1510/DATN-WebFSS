@@ -286,11 +286,11 @@ export default function ProductDetailPage() {
                       <Star
                         key={s}
                         size={16}
-                        className={s <= Math.round(product.rating != null ? product.rating : 5) ? 'fill-amber-400 text-amber-400' : 'text-border'}
+                        className={s <= Math.round(product.rating != null ? product.rating : 0) ? 'fill-amber-400 text-amber-400' : 'text-border'}
                       />
                     ))}
                   </div>
-                  <span className="text-sm font-bold text-foreground">{product.rating != null ? Number(product.rating).toFixed(1) : '5.0'}/5</span>
+                  <span className="text-sm font-bold text-foreground">{product.rating != null ? Number(product.rating).toFixed(1) : '0.0'}/5</span>
                 </div>
                 <div className="h-4 w-px bg-border" />
                 <div className="text-sm font-semibold text-muted-foreground">

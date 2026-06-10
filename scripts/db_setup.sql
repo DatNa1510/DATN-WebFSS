@@ -25,7 +25,7 @@ CREATE TABLE products (
     original_price       BIGINT,                       -- NULL = no discount
     stock                INT               NOT NULL DEFAULT 50,
     sold                 INT               NOT NULL DEFAULT 0,
-    rating               NUMERIC(3, 1)     NOT NULL DEFAULT 4.5,
+    rating               NUMERIC(3, 1)     NOT NULL DEFAULT 0.0,
     review_count         INT               NOT NULL DEFAULT 0,
     is_new               BOOLEAN           NOT NULL DEFAULT FALSE,
     is_best_seller       BOOLEAN           NOT NULL DEFAULT FALSE,

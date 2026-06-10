@@ -71,7 +71,7 @@ public class ProductService {
         if (product.getStock() == null) product.setStock(50);
         if (product.getInitialStock() == null) product.setInitialStock(product.getStock());
         if (product.getSold() == null) product.setSold(0);
-        if (product.getRating() == null) product.setRating(new BigDecimal("4.5"));
+        if (product.getRating() == null) product.setRating(new BigDecimal("0.0"));
         if (product.getReviewCount() == null) product.setReviewCount(0);
         if (product.getIsNew() == null) product.setIsNew(true);
         if (product.getIsBestSeller() == null) product.setIsBestSeller(false);
