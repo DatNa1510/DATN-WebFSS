@@ -196,3 +196,13 @@ def delete_all() -> None:
         logger.info(f"Đã xóa collection '{COLLECTION_NAME}'")
     except Exception:
         pass
+
+
+def delete_product(product_id: str) -> None:
+    """Xóa vector của một sản phẩm khỏi ChromaDB."""
+    collection = get_collection()
+    try:
+        collection.delete(ids=[str(product_id)])
+        logger.info(f"Đã xóa vector của product_id={product_id} khỏi ChromaDB")
+    except Exception as e:
+        logger.warning(f"Lỗi khi xóa vector cho product_id={product_id}: {e}")

@@ -20,6 +20,9 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private AiSyncService aiSyncService;
+
     @PostConstruct
     public void fixProductPrices() {
         java.util.List<Product> products = productRepository.findAll();
@@ -76,7 +79,12 @@ public class ProductService {
             product.setImagePath(newId + ".jpg"); // Default image path
         }
 
-        return productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
+        
+        // Đồng bộ với AI service
+        aiSyncService.syncProductAsync(savedProduct);
+
+        return savedProduct;
     }
 
     public Product updateProduct(Long id, Product productDetails) {
@@ -105,13 +113,21 @@ public class ProductService {
         
         // Can add more fields if needed
 
-        return productRepository.save(product);
+        Product updatedProduct = productRepository.save(product);
+        
+        // Đồng bộ lại với AI service
+        aiSyncService.syncProductAsync(updatedProduct);
+
+        return updatedProduct;
     }
 
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm có ID: " + id));
         productRepository.delete(product);
+        
+        // Xóa vector tương ứng trên AI service
+        aiSyncService.deleteProductAsync(id);
     }
 
     public Long getTotalStock() {

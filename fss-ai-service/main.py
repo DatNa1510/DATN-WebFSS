@@ -21,9 +21,9 @@ from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Query, Upload
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from config import AI_SERVICE_HOST, AI_SERVICE_PORT, DEFAULT_TOP_K
-from database import get_collection_count, search_similar, get_vector_by_id
-from model import extract_features_from_bytes, get_model
+from config import AI_SERVICE_HOST, AI_SERVICE_PORT, DEFAULT_TOP_K, IMAGE_DIR
+from database import get_collection_count, search_similar, get_vector_by_id, upsert_product, delete_product
+from model import extract_features_from_path, get_model, extract_features_from_bytes
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -94,6 +94,15 @@ class StatusResponse(BaseModel):
     status:          str
     indexed_count:   int
     model_loaded:    bool
+
+
+class SyncProductRequest(BaseModel):
+    product_id:      int
+    image_filename:  str
+    gender:          Optional[str] = ""
+    master_category: Optional[str] = ""
+    sub_category:    Optional[str] = ""
+    article_type:    Optional[str] = ""
 
 
 # ── Endpoint: Health Check ───────────────────────────────────────────────────
@@ -290,6 +299,51 @@ async def index_data(
         success=True,
         message=f"Indexing đã bắt đầu trong background. {'(Reset mode)' if reset else ''}",
     )
+
+
+# ── Endpoint: Sync 1 Sản phẩm (Thêm/Sửa) ─────────────────────────────────────
+@app.post("/api/v1/sync-product", response_model=IndexResponse, tags=["Management"])
+async def sync_product(req: SyncProductRequest):
+    """
+    Cập nhật vector cho một sản phẩm (Dùng khi Admin thêm/sửa sản phẩm).
+    """
+    image_path = IMAGE_DIR / req.image_filename
+    if not image_path.exists():
+        raise HTTPException(status_code=400, detail=f"Không tìm thấy ảnh: {req.image_filename}")
+    
+    try:
+        features = extract_features_from_path(str(image_path))
+        if features is None:
+            raise HTTPException(status_code=500, detail="Không thể trích xuất đặc trưng từ ảnh.")
+        
+        image_url_path = f"/fashion-dataset/images/{req.image_filename}"
+        upsert_product(
+            product_id=str(req.product_id),
+            embedding=features.tolist(),
+            image_path=image_url_path,
+            gender=req.gender or "",
+            master_category=req.master_category or "",
+            sub_category=req.sub_category or "",
+            article_type=req.article_type or ""
+        )
+        return IndexResponse(success=True, message=f"Đã đồng bộ vector cho sản phẩm {req.product_id}")
+    except Exception as e:
+        logger.error(f"Lỗi sync_product: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Endpoint: Xóa 1 Sản phẩm ─────────────────────────────────────────────────
+@app.delete("/api/v1/sync-product/{product_id}", response_model=IndexResponse, tags=["Management"])
+async def remove_product_sync(product_id: int):
+    """
+    Xóa vector của sản phẩm khỏi ChromaDB (Dùng khi Admin xóa sản phẩm).
+    """
+    try:
+        delete_product(str(product_id))
+        return IndexResponse(success=True, message=f"Đã xóa vector cho sản phẩm {product_id}")
+    except Exception as e:
+        logger.error(f"Lỗi remove_product_sync: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Entry Point ──────────────────────────────────────────────────────────────
