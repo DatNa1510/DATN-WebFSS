@@ -127,45 +127,37 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
     onClose();
   };
 
-  const color  = timerColor(pct);
-  const radius = 40;
-  const circ   = 2 * Math.PI * radius;
-  const dash   = (pct / 100) * circ;
+  const color = timerColor(pct);
 
-  // ── PAYMENT WAITING / EXPIRED SCREEN ──────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/75 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div
-        initial={{ opacity: 0, scale: 0.93, y: 20 }}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.93, y: 20 }}
-        transition={{ type: 'spring', stiffness: 340, damping: 28 }}
-        className="bg-white w-full max-w-[650px] shadow-2xl flex flex-col overflow-hidden"
-        style={{ borderRadius: 4, maxHeight: '96vh', overflowY: 'auto' }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+        className="bg-white w-full max-w-[600px] shadow-2xl flex flex-col overflow-hidden rounded-sm border border-slate-100"
+        style={{ maxHeight: '92vh', overflowY: 'auto' }}
       >
         {/* ── HEADER ──────────────────────────────────────────────────── */}
-        <div className="flex items-stretch justify-between border-b-2 border-slate-100 bg-white">
-          <div className="flex items-stretch flex-1 min-w-0">
-            {/* Solid blue full-bleed left block */}
-            <div className="w-12 bg-[#00168D] flex items-center justify-center shrink-0 rounded-tl-[4px]">
-              <CreditCard size={20} className="text-white" />
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#00168D]/10 text-[#00168D] rounded-sm flex items-center justify-center shrink-0">
+              <CreditCard size={20} />
             </div>
-            {/* Header text */}
-            <div className="flex flex-col justify-center px-6 py-5">
-              <h3 className="text-[20px] font-bold text-[#00168D] uppercase leading-relaxed pt-3 mb-1">
+            <div>
+              <h3 className="text-[17px] font-bold text-slate-800 uppercase tracking-wide">
                 Chuyển khoản VietQR
               </h3>
-              <p className="text-[13px] text-slate-500 font-medium">Quét mã QR qua ứng dụng ngân hàng</p>
+              <p className="text-[12px] text-slate-400 font-medium">Quét mã QR qua ứng dụng ngân hàng</p>
             </div>
           </div>
-          <div className="flex items-center pr-6">
-            <button
-              onClick={handleUserClose}
-              className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors rounded-sm"
-            >
-              <X size={20} />
-            </button>
-          </div>
+          <button
+            onClick={handleUserClose}
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors rounded-full"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* ── EXPIRED BANNER ──────────────────────────────────────────── */}
@@ -174,7 +166,7 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
-              className="bg-red-50 border-b border-red-200 px-5 py-3 flex items-center gap-3"
+              className="bg-red-50 border-b border-red-100 px-6 py-3 flex items-center gap-3"
             >
               <AlertTriangle size={16} className="text-red-500 shrink-0" />
               <div>
@@ -188,29 +180,29 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
         <div className="p-6 space-y-6 bg-slate-50/50">
 
           {/* ── QR + TIMER SECTION ───────────────────────────────────── */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-6 bg-white border-2 border-slate-200 p-6 rounded-sm shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-6 rounded-sm border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
             {/* QR Code */}
-            <div className={`bg-white p-3 shadow-md border-2 shrink-0 self-center rounded-sm ${expired ? 'border-red-200 opacity-30 grayscale' : 'border-[#00168D]/20'}`}>
+            <div className={`bg-white p-3.5 shadow-sm border border-slate-100 shrink-0 self-center rounded-sm transition-all duration-300 ${expired ? 'opacity-30 grayscale' : 'hover:shadow-md'}`}>
               {qrCode ? (
-                <QRCodeSVG value={qrCode} size={220} level="H" />
+                <QRCodeSVG value={qrCode} size={190} level="H" />
               ) : (
-                <div className="w-[220px] h-[220px] flex items-center justify-center text-slate-300 text-xs font-bold border-2 border-dashed border-slate-200">No QR</div>
+                <div className="w-[190px] h-[190px] flex items-center justify-center text-slate-300 text-xs font-bold border-2 border-dashed border-slate-200 rounded-sm">No QR</div>
               )}
             </div>
 
             {/* Right: timer + status + link */}
-            <div className="flex-1 flex flex-col items-center justify-center gap-5 w-full">
-              <div className="text-center">
-                <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest mb-2">Thời gian thanh toán</p>
-                <div className="text-[40px] font-black tabular-nums tracking-tight leading-none drop-shadow-sm" style={{ color: expired ? '#ef4444' : color }}>
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 w-full">
+              <div className="text-center w-full">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Thời gian thanh toán</p>
+                <div className="text-[36px] font-black tabular-nums tracking-tight leading-none text-slate-800" style={{ color: expired ? '#ef4444' : color }}>
                   {mm}:{ss}
                 </div>
               </div>
 
               {/* Polling status */}
-              <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-700 rounded-sm border-2 border-blue-100 shadow-sm w-full justify-center">
-                <Loader2 size={18} className="animate-spin text-blue-600" />
-                <span className="text-[14px] font-bold">Đang chờ thanh toán...</span>
+              <div className="flex items-center gap-2 px-5 py-3 bg-blue-50/50 text-[#00168D] rounded-sm border border-blue-100/50 shadow-sm w-full justify-center">
+                <Loader2 size={16} className="animate-spin text-[#00168D]" />
+                <span className="text-[13px] font-bold">Đang chờ thanh toán...</span>
               </div>
 
               {/* PayOS link */}
@@ -219,7 +211,7 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
                   href={paymentData.paymentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-[13px] font-bold text-[#00168D] hover:text-blue-600 transition-colors bg-slate-50 px-4 py-2 rounded-sm border border-slate-200 hover:border-[#00168D]/30 w-full justify-center"
+                  className="flex items-center gap-2 text-[13px] font-bold text-white bg-[#00168D] hover:bg-blue-800 transition-all duration-300 px-4 py-3 rounded-sm shadow-sm hover:shadow-md w-full justify-center"
                 >
                   <ExternalLink size={14} />
                   Mở trang PayOS
@@ -229,7 +221,7 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
           </div>
 
           {/* ── BANK INFO TABLE ──────────────────────────────────────── */}
-          <div className="bg-white border-2 border-slate-200 rounded-sm overflow-hidden shadow-sm">
+          <div className="bg-white border border-slate-100 rounded-sm overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
             <InfoRow
               icon={<Building2 size={16} className="text-slate-400" />}
               label="Ngân hàng"
@@ -257,23 +249,23 @@ export default function PaymentModal({ paymentData, onClose, onPaymentConfirmed,
               value={formatPrice(amount)}
               copyable
               onCopy={() => copy(String(amount), 'số tiền')}
-              valueClass="text-blue-700 text-[18px] font-black tabular-nums"
+              valueClass="text-blue-700 text-[17px] font-bold tabular-nums"
             />
           </div>
 
           {/* ── AUTO-DETECT NOTICE ───────────────────────────────────── */}
-          <div className="flex items-start gap-3 p-4 bg-amber-50 border-2 border-amber-200 rounded-sm shadow-sm">
-            <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-[13px] text-amber-900 leading-relaxed font-medium">
+          <div className="flex items-start gap-3 p-4 bg-amber-50/50 border border-amber-100 rounded-sm shadow-sm">
+            <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-[12.5px] text-amber-900 leading-relaxed font-medium">
               Hệ thống <strong>tự động xác nhận</strong> sau khi nhận được chuyển khoản.
-              Vui lòng nhập <strong className="text-amber-900 font-black">đúng nội dung</strong> chuyển khoản để đơn hàng được duyệt tự động.
+              Vui lòng nhập <strong className="text-amber-900 font-bold">đúng nội dung</strong> chuyển khoản để đơn hàng được duyệt tự động.
             </p>
           </div>
 
           {/* ── CLOSE BUTTON ────────────────────────────────────────── */}
           <button
             onClick={handleUserClose}
-            className="w-full py-4 bg-white border-2 border-slate-300 text-slate-600 text-[14px] font-bold uppercase tracking-widest hover:bg-slate-100 hover:text-slate-900 transition-colors rounded-sm shadow-sm"
+            className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold uppercase tracking-wider transition-all duration-300 rounded-sm shadow-sm flex items-center justify-center gap-2"
           >
             Đóng & kiểm tra sau
           </button>
@@ -296,28 +288,28 @@ function InfoRow({ icon, label, value, badge, copyable, highlight, valueClass, o
 
   return (
     <div
-      className={`flex items-center justify-between px-5 py-4 gap-4 transition-colors border-b border-slate-200 last:border-0
-        ${highlight ? 'bg-blue-50/60' : 'bg-transparent'}
-        ${copyable ? 'cursor-pointer hover:bg-slate-100 group' : ''}`}
+      className={`flex items-center justify-between px-5 py-4 gap-4 transition-all duration-300 border-b border-slate-100 last:border-0
+        ${highlight ? 'bg-blue-50/30 border-l-4 border-l-[#00168D]' : 'border-l-4 border-l-transparent'}
+        ${copyable ? 'cursor-pointer hover:bg-slate-50 group' : ''}`}
       onClick={handleCopy}
     >
       <div className="flex items-center gap-3 shrink-0">
-        <span>{icon}</span>
-        <span className="text-[13px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
+        <span className="text-slate-400 group-hover:text-[#00168D] transition-colors">{icon}</span>
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{label}</span>
       </div>
       <div className="flex items-center gap-2 min-w-0">
         {badge && (
-          <span className="px-2 py-1 bg-[#00168D] text-white text-[11px] font-black rounded-[2px] tracking-wider shrink-0">
+          <span className="px-2 py-0.5 bg-blue-50 text-[#00168D] text-[11px] font-bold rounded-sm tracking-wider shrink-0 border border-blue-100">
             {badge}
           </span>
         )}
-        <span className={valueClass || `text-[15px] font-bold text-slate-800 truncate ${highlight ? 'text-[#00168D]' : ''}`}>
+        <span className={valueClass || `text-sm font-bold text-slate-700 truncate ${highlight ? 'text-[#00168D]' : ''}`}>
           {value}
         </span>
         {copyable && (
           copied
             ? <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-            : <Copy size={16} className="text-slate-300 group-hover:text-blue-600 shrink-0 transition-colors" />
+            : <Copy size={16} className="text-slate-300 group-hover:text-[#00168D] shrink-0 transition-colors" />
         )}
       </div>
     </div>
