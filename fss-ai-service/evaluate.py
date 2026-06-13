@@ -46,7 +46,6 @@ def evaluate_system(test_samples=100):
     
     top1_correct = 0
     top5_correct = 0
-    top10_correct = 0
     
     device = _get_device()
     model = get_model()
@@ -82,7 +81,7 @@ def evaluate_system(test_samples=100):
             # 4. Tìm kiếm trong ChromaDB xem có mò ra được ảnh gốc không
             results = collection.query(
                 query_embeddings=[query_vector],
-                n_results=10,
+                n_results=5,
                 include=["metadatas"]
             )
             
@@ -93,8 +92,6 @@ def evaluate_system(test_samples=100):
                 top1_correct += 1
             if target_pid in result_ids[:5]:
                 top5_correct += 1
-            if target_pid in result_ids[:10]:
-                top10_correct += 1
                 
             valid_tests += 1
             if valid_tests % 20 == 0:
@@ -109,7 +106,6 @@ def evaluate_system(test_samples=100):
         
     top1_acc = (top1_correct / valid_tests) * 100
     top5_acc = (top5_correct / valid_tests) * 100
-    top10_acc = (top10_correct / valid_tests) * 100
     
     print("\n" + "="*55)
     print("      BÁO CÁO KẾT QUẢ ĐÁNH GIÁ (EVALUATION REPORT)      ")
@@ -120,7 +116,6 @@ def evaluate_system(test_samples=100):
     print("-" * 55)
     print(f" 🎯 Độ chính xác Top-1  : {top1_acc:.2f} %")
     print(f" 🎯 Độ chính xác Top-5  : {top5_acc:.2f} %  <-- KPI CHÍNH")
-    print(f" 🎯 Độ chính xác Top-10 : {top10_acc:.2f} %")
     print("="*55)
     
     if top5_acc >= 80:
