@@ -63,6 +63,10 @@ public class Order {
     @Column(name = "voucher_code", length = 50)
     private String voucherCode;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "voucher_id")
+    private Voucher voucher;
+
     @Column(name = "cancel_reason", length = 500)
     private String cancelReason;
 
