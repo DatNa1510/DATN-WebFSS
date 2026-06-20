@@ -28,7 +28,6 @@ if (-not (Test-Path "venv")) {
 # Su dung duong dan tuyet doi den executable trong venv (an toan hon Activate.ps1)
 $VENV_PYTHON = ".\venv\Scripts\python.exe"
 $VENV_PIP = ".\venv\Scripts\pip.exe"
-$VENV_UVICORN = ".\venv\Scripts\uvicorn.exe"
 
 # Buoc 3: Cai dependencies
 Write-Host ""
