@@ -110,7 +110,7 @@ def evaluate_system(test_samples=100):
     print(f" Phương pháp test : Synthetic Test (Cắt ghép, tạo nhiễu)")
     print(f" Mô hình sử dụng  : ResNet50 (Pre-trained Vector Search)")
     print("-" * 55)
-    print(f" 🎯 Độ chính xác Top-5  : {top5_acc:.2f} %")
+    print(f" Độ chính xác Top-5  : {top5_acc:.2f} %")
     print("="*55)
     
     if top5_acc >= 80:
