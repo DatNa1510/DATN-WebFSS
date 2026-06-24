@@ -44,7 +44,6 @@ def evaluate_system(test_samples=100):
     # Lấy ngẫu nhiên test_samples sản phẩm làm test set
     test_indices = random.sample(range(total_indexed), min(test_samples, total_indexed))
     
-    top1_correct = 0
     top5_correct = 0
     
     device = _get_device()
@@ -87,9 +86,7 @@ def evaluate_system(test_samples=100):
             
             result_ids = results["ids"][0]
             
-            # 5. Cập nhật kết quả Top-K
-            if target_pid in result_ids[:1]:
-                top1_correct += 1
+            # 5. Cập nhật kết quả Top-5
             if target_pid in result_ids[:5]:
                 top5_correct += 1
                 
@@ -104,7 +101,6 @@ def evaluate_system(test_samples=100):
         logger.error("Không có ảnh hợp lệ để test.")
         return
         
-    top1_acc = (top1_correct / valid_tests) * 100
     top5_acc = (top5_correct / valid_tests) * 100
     
     print("\n" + "="*55)
@@ -114,8 +110,7 @@ def evaluate_system(test_samples=100):
     print(f" Phương pháp test : Synthetic Test (Cắt ghép, tạo nhiễu)")
     print(f" Mô hình sử dụng  : ResNet50 (Pre-trained Vector Search)")
     print("-" * 55)
-    print(f" 🎯 Độ chính xác Top-1  : {top1_acc:.2f} %")
-    print(f" 🎯 Độ chính xác Top-5  : {top5_acc:.2f} %  <-- KPI CHÍNH")
+    print(f" 🎯 Độ chính xác Top-5  : {top5_acc:.2f} %")
     print("="*55)
     
     if top5_acc >= 80:
