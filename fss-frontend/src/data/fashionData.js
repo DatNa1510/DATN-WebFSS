@@ -325,10 +325,6 @@ export const CATEGORY_MAP = {
   Apparel      : { label: 'Quần áo',            slug: 'Apparel',       color: '#7c3aed' },
   Footwear     : { label: 'Giày dép',           slug: 'Footwear',      color: '#0891b2' },
   Accessories  : { label: 'Phụ kiện',           slug: 'Accessories',   color: '#d97706' },
-  'Personal Care': { label: 'Chăm sóc cá nhân', slug: 'Personal Care', color: '#10b981' },
-  'Sporting Goods': { label: 'Đồ thể thao',     slug: 'Sporting Goods', color: '#ef4444' },
-  'Home'       : { label: 'Đồ gia dụng',        slug: 'Home',          color: '#8b5cf6' },
-  'Free Items' : { label: 'Quà tặng',           slug: 'Free Items',    color: '#64748b' },
 };
 
 export const GENDER_MAP = {
