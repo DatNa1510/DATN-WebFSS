@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
+@SuppressWarnings("null")
 public class DashboardService {
 
     private final OrderRepository orderRepository;

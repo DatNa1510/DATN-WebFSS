@@ -16,6 +16,7 @@ import java.util.function.Function;
 
 @Component
 @Slf4j
+@SuppressWarnings("null")
 public class JwtUtil {
 
     @Value("${jwt.secret}")

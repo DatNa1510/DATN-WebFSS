@@ -20,6 +20,7 @@ import java.util.Arrays;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
