@@ -6,8 +6,19 @@ $jdkUrl = "https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7
 $jdkZip = "jdk17.zip"
 $jdkDir = "jdk-17.0.2"
 
+# Verify if local JDK directory is complete, if not, delete it to force re-download/re-extraction
+If (Test-Path $jdkDir) {
+    $javaExe = "$jdkDir\bin\java.exe"
+    $javacExe = "$jdkDir\bin\javac.exe"
+    $libModules = "$jdkDir\lib\modules"
+    If (-Not (Test-Path $javaExe) -or -Not (Test-Path $javacExe) -or -Not (Test-Path $libModules)) {
+        Write-Host "[*] Local Java 17 installation is corrupted or incomplete. Cleaning up..." -ForegroundColor Yellow
+        Remove-Item -Recurse -Force $jdkDir -ErrorAction SilentlyContinue
+    }
+}
+
 If (-Not (Test-Path $jdkDir)) {
-    Write-Host "[1/3] Old Java version detected. Downloading Java 17 automatically..." -ForegroundColor Yellow
+    Write-Host "[1/3] Old/corrupted Java version detected. Downloading Java 17 automatically..." -ForegroundColor Yellow
     Invoke-WebRequest -Uri $jdkUrl -OutFile $jdkZip
     
     Write-Host "[2/3] Extracting Java 17... (Please wait a few seconds)" -ForegroundColor Yellow
@@ -20,5 +31,7 @@ If (-Not (Test-Path $jdkDir)) {
 
 Write-Host "[3/3] Setting up environment and starting Spring Boot Backend..." -ForegroundColor Yellow
 $env:JAVA_HOME = "$PWD\$jdkDir"
+$env:PATH = "$PWD\$jdkDir\bin;$env:PATH"
 
 .\apache-maven-3.9.6\bin\mvn.cmd clean spring-boot:run
+
