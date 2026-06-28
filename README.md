@@ -1,4 +1,4 @@
-# 🛍️ Fashion Style System (FSS)
+# 🛍️ Fashion Shopping System (FSS)
 
 > **Đồ án tốt nghiệp** — Xây dựng hệ thống bán hàng thời trang trên nền tảng web, hỗ trợ tìm kiếm sản phẩm tương đồng dựa trên thị giác máy tính.
 
