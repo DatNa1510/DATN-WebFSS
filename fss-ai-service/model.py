@@ -32,7 +32,8 @@ logger = logging.getLogger(__name__)
 
 # ── Tiền xử lý ảnh ──────────────────────────────────────────────────────────
 _preprocess = transforms.Compose([
-    transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+    transforms.Resize(256),
+    transforms.CenterCrop(IMAGE_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
 ])
