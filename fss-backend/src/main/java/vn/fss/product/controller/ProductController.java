@@ -100,6 +100,8 @@ public class ProductController {
                 "Xóa sản phẩm #" + id + ": " + productName
             );
             return ResponseEntity.ok(Map.of("message", "Xóa sản phẩm thành công"));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Không thể xóa sản phẩm vì đã có đơn hàng hoặc đánh giá liên quan."));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
