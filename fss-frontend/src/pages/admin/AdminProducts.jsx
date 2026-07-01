@@ -133,7 +133,7 @@ const articleTypesMap = {
   ]
 };
 
-const emptyForm = { name: '', price: '', originalPrice: '', category: 'Apparel', subCategory: '', articleType: '', gender: 'Unisex', description: '', stock: '', images: '' };
+const emptyForm = { name: '', price: '', originalPrice: '', category: 'Apparel', subCategory: '', articleType: '', gender: 'Unisex', description: '', stock: '', images: '', baseColour: '' };
 
 const inputStyle = {
   width: '100%', padding: '10px 12px',
@@ -170,6 +170,7 @@ export default function AdminProducts() {
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [isCustomSubCategory, setIsCustomSubCategory] = useState(false);
   const [isCustomArticleType, setIsCustomArticleType] = useState(false);
+  const [isCustomColour, setIsCustomColour] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
 
   const fetchProducts = useCallback(async (page = 0, q = '', cat = 'all', s = 'newest') => {
@@ -269,6 +270,7 @@ export default function AdminProducts() {
       masterCategory: form.category,
       subCategory: form.subCategory,
       articleType: form.articleType || '',
+      baseColour: form.baseColour || '',
       stock: form.stock ? Number(form.stock) : 50,
       imagePath: form.images || '',
       gender: form.gender || 'Unisex',
@@ -312,6 +314,9 @@ export default function AdminProducts() {
     const isPredefinedArt = articleTypesMap[currentCategory]?.some(at => at.id === artType);
     setIsCustomSubCategory(!isPredefinedSub && subCat !== '');
     setIsCustomArticleType(!isPredefinedArt && artType !== '');
+    const colour = p.baseColour || '';
+    const commonColours = ['Black','White','Blue','Red','Navy Blue','Grey','Green','Brown','Pink','Yellow','Orange','Purple','Maroon','Beige','Multi'];
+    setIsCustomColour(colour !== '' && !commonColours.includes(colour));
     setForm({
       name: p.productDisplayName,
       price: p.price,
@@ -320,6 +325,7 @@ export default function AdminProducts() {
       subCategory: subCat,
       articleType: artType,
       gender: p.gender || 'Unisex',
+      baseColour: colour,
       description: '',
       stock: p.stock,
       images: p.imagePath || ''
@@ -588,6 +594,50 @@ export default function AdminProducts() {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={labelStyle}>Màu sắc</label>
+                    <select
+                      value={isCustomColour ? 'custom' : (form.baseColour || '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setIsCustomColour(true);
+                          setForm(f => ({ ...f, baseColour: '' }));
+                        } else {
+                          setIsCustomColour(false);
+                          setForm(f => ({ ...f, baseColour: val }));
+                        }
+                      }}
+                      style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
+                    >
+                      <option value="">-- Chọn màu --</option>
+                      <option value="Black">Đen (Black)</option>
+                      <option value="White">Trắng (White)</option>
+                      <option value="Blue">Xanh dương (Blue)</option>
+                      <option value="Red">Đỏ (Red)</option>
+                      <option value="Navy Blue">Xanh navy (Navy Blue)</option>
+                      <option value="Grey">Xám (Grey)</option>
+                      <option value="Green">Xanh lá (Green)</option>
+                      <option value="Brown">Nâu (Brown)</option>
+                      <option value="Pink">Hồng (Pink)</option>
+                      <option value="Yellow">Vàng (Yellow)</option>
+                      <option value="Orange">Cam (Orange)</option>
+                      <option value="Purple">Tím (Purple)</option>
+                      <option value="Maroon">Đỏ sẫm (Maroon)</option>
+                      <option value="Beige">Be (Beige)</option>
+                      <option value="Multi">Nhiều màu (Multi)</option>
+                      <option value="custom">Khác (Nhập thủ công)...</option>
+                    </select>
+                    {isCustomColour && (
+                      <input
+                        name="baseColour"
+                        value={form.baseColour || ''}
+                        onChange={handleChange}
+                        placeholder="Nhập màu sắc..."
+                        style={{ ...inputStyle, marginTop: '8px' }}
+                      />
+                    )}
+                  </div>
                   <div>
                     <label style={labelStyle}>Tồn kho</label>
                     <input
