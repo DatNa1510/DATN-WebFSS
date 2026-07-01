@@ -15,8 +15,12 @@ const API_BASE_URL = API_BASE;
 const IMG_BASE = API_BASE;
 
 function getImg(product) {
-  if (product.imagePath)
-    return product.imagePath.startsWith('http') ? product.imagePath : `${IMG_BASE}${product.imagePath}`;
+  if (product.imagePath) {
+    const p = product.imagePath.split(',')[0].trim(); // lấy ảnh đầu tiên nếu có nhiều ảnh
+    if (p.startsWith('http')) return p;
+    if (p.startsWith('/')) return `${IMG_BASE}${p}`;
+    return `${IMG_BASE}/fashion-dataset/images/${p}`;
+  }
   return product.imageUrl || '';
 }
 
