@@ -18,6 +18,14 @@ const parseDate = (dVal) => {
   return isNaN(d.getTime()) ? null : d;
 };
 
+const getImageUrl = (path) => {
+  if (!path) return null;
+  const firstImage = path.split(',')[0].trim();
+  if (firstImage.startsWith('http')) return firstImage;
+  if (firstImage.startsWith('/')) return `${API}${firstImage}`;
+  return `${API}/images/${firstImage}`;
+};
+
 const J = {
   black: '#1A1A1A',
   gray: '#6B6B6B',
@@ -491,9 +499,19 @@ export default function AdminOrders() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {(detailOrder.items || []).map((item, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', border: `1px solid ${J.lightGray}`, borderRadius: '4px', background: '#FAFAFA' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '13px', fontWeight: 500, color: J.black, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.productName}</p>
-                      <p style={{ fontSize: '11px', color: J.gray, marginTop: '2px' }}>Kích thước {item.size} &times; {item.quantity}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '4px', overflow: 'hidden', border: `1px solid ${J.lightGray}`, background: J.white, flexShrink: 0 }}>
+                        <img 
+                          src={getImageUrl(item.productImage)} 
+                          alt={item.productName} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={e => { e.target.src = 'https://placehold.co/48x48/fafaf8/6b6b6b?text=Img'; }}
+                        />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '13px', fontWeight: 500, color: J.black, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.productName}</p>
+                        <p style={{ fontSize: '11px', color: J.gray, marginTop: '2px' }}>Kích thước {item.size} &times; {item.quantity}</p>
+                      </div>
                     </div>
                     <p style={{ fontSize: '13px', fontWeight: 600, color: J.black, whiteSpace: 'nowrap' }}>₫{fmt(item.subtotal)}</p>
                   </div>

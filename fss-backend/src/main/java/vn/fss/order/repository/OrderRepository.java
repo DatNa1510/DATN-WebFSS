@@ -19,6 +19,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByIdAndUser(Long id, User user);
 
     // Admin: lấy tất cả đơn hàng sắp xếp mới nhất trước
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "items", "items.product"})
     List<Order> findAllByOrderByCreatedAtDesc();
 
     // Lấy tổng doanh thu của các đơn hàng đã giao (DELIVERED)
