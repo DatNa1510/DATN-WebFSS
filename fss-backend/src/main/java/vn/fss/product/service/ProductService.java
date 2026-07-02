@@ -6,9 +6,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import jakarta.transaction.Transactional;
 
 import vn.fss.product.entity.Product;
 import vn.fss.product.repository.ProductRepository;
+import vn.fss.order.repository.OrderRepository;
+import vn.fss.order.repository.OrderItemRepository;
+import vn.fss.cart.repository.CartItemRepository;
+import vn.fss.review.repository.ReviewRepository;
 
 import java.util.Optional;
 import jakarta.annotation.PostConstruct;
@@ -22,6 +27,18 @@ public class ProductService {
 
     @Autowired
     private AiSyncService aiSyncService;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
+    @Autowired
+    private CartItemRepository cartItemRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     @PostConstruct
     public void fixProductPrices() {
@@ -121,11 +138,31 @@ public class ProductService {
         return updatedProduct;
     }
 
+    @Transactional
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm có ID: " + id));
+
+        // Kiểm tra: có đơn hàng nào đang PENDING / CONFIRMED / SHIPPING chứa sản phẩm này không?
+        long activeOrders = orderRepository.countActiveOrdersByProductId(id);
+        if (activeOrders > 0) {
+            throw new IllegalStateException(
+                    String.format("Không thể xóa sản phẩm '%s' vì còn %d đơn hàng đang xử lý (Chờ xác nhận / Đã xác nhận / Đang giao).",
+                            product.getProductDisplayName(), activeOrders));
+        }
+
+        // Xóa tất cả review của sản phẩm
+        reviewRepository.deleteByProductId(id);
+
+        // Xóa sản phẩm khỏi giỏ hàng của mọi người dùng
+        cartItemRepository.deleteByProductId(id);
+
+        // Gỡ liên kết product_id trong order_items (set NULL) — giữ nguyên lịch sử đơn hàng
+        orderItemRepository.nullifyProductReference(id);
+
+        // Xóa sản phẩm
         productRepository.delete(product);
-        
+
         // Xóa vector tương ứng trên AI service
         aiSyncService.deleteProductAsync(id);
     }
@@ -134,3 +171,4 @@ public class ProductService {
         return productRepository.sumStock();
     }
 }
+

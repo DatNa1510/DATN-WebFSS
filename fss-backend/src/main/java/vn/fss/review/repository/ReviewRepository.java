@@ -33,4 +33,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     /** Đếm số review theo từng mức sao (dùng cho RatingSummary) */
     @Query("SELECT r.rating, COUNT(r) FROM Review r WHERE r.product.id = :productId GROUP BY r.rating")
     java.util.List<Object[]> countByRatingForProduct(@Param("productId") Long productId);
+
+    /** Xóa tất cả review của sản phẩm (dùng khi xóa sản phẩm) */
+    void deleteByProductId(Long productId);
 }

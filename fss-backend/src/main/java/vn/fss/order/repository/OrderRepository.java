@@ -83,4 +83,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                    "GROUP BY p.master_category " +
                    "ORDER BY revenue DESC", nativeQuery = true)
     List<Object[]> revenueByCategory();
+
+    /**
+     * Đếm số đơn hàng đang hoạt động (PENDING, CONFIRMED, SHIPPING) có chứa sản phẩm này.
+     * Nếu kết quả > 0 thì KHÔNG cho phép xóa sản phẩm.
+     */
+    @Query("SELECT COUNT(oi) FROM OrderItem oi " +
+           "WHERE oi.product.id = :productId " +
+           "AND oi.order.status NOT IN (vn.fss.order.entity.OrderStatus.DELIVERED, vn.fss.order.entity.OrderStatus.CANCELLED)")
+    long countActiveOrdersByProductId(@Param("productId") Long productId);
 }
