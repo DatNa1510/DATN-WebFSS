@@ -54,7 +54,7 @@ Người dùng có thể tải lên một bức ảnh thời trang bất kỳ, h
 
 | Thành phần | Công nghệ | Phiên bản |
 |---|---|---|
-| **Frontend** | React, Vite, Zustand | Vite 5.x |
+| **Frontend** | React, Vite, Zustand, Tailwind CSS, React Router, Framer Motion | React 19, Vite 6.x, Tailwind v4 |
 | **Backend** | Spring Boot, Spring Security, JPA/Hibernate | Spring Boot 3.2.5, Java 17 |
 | **AI Service** | FastAPI, PyTorch, ResNet50, ChromaDB | Python 3.11+, PyTorch 2.3 |
 | **Database** | PostgreSQL (Supabase Cloud) | PostgreSQL 15 |
@@ -62,6 +62,28 @@ Người dùng có thể tải lên một bức ảnh thời trang bất kỳ, h
 | **Payment** | MoMo, PayOS | — |
 | **Email** | Gmail SMTP, EmailJS | — |
 | **Deployment** | Docker, Vercel (FE), Render (BE) | Docker Compose 3.8 |
+
+### 💻 Chi tiết các thư viện Frontend (`fss-frontend`)
+
+Giao diện người dùng được xây dựng hiện đại, tối ưu hiệu năng và trải nghiệm người dùng với các thư viện chính sau:
+
+- **Thư viện & Công cụ chính:**
+  - **React 19 & React DOM:** Thư viện core phát triển giao diện người dùng theo hướng Component-based, tối ưu hóa render.
+  - **Vite 6.x:** Công cụ build cực nhanh thay thế cho Webpack truyền thống, hỗ trợ Hot Module Replacement (HMR) tức thì.
+- **Quản lý trạng thái & Định tuyến:**
+  - **Zustand 5:** Thư viện quản lý global state tối giản, hiệu năng cao thay thế cho Redux. Sử dụng cho Auth, Cart, Wishlist, Toast/Notification, Visual Search và Address.
+  - **React Router v7 (`react-router-dom` v7.4.0):** Quản lý định tuyến mạnh mẽ cho cả phân hệ Khách hàng (Customer) và Admin (trang quản trị).
+- **Thiết kế & Giao diện (UI/UX):**
+  - **Tailwind CSS v4:** Framework CSS tiện ích thế hệ mới, tích hợp plugin `@tailwindcss/vite` biên dịch trực tiếp cực nhanh, tối ưu hóa CSS bundle.
+  - **Framer Motion 12:** Thư viện tạo các hiệu ứng chuyển động (animations) và tương tác vi mô (micro-interactions) mượt mà cho nút bấm, modal, danh sách sản phẩm.
+  - **Lucide React:** Bộ sưu tập icon SVG hiện đại, nhất quán và nhẹ nhàng.
+  - **Recharts 3:** Thư viện hiển thị biểu đồ thống kê doanh thu, đơn hàng, người dùng trực quan trên trang Dashboard Admin.
+- **Xử lý logic, API & Dịch vụ tích hợp:**
+  - **Axios v1.8.4:** Client HTTP để gọi APIs tới Spring Boot Backend với cơ chế interceptor xử lý token tự động.
+  - **@react-oauth/google v0.13.5:** Tích hợp đăng nhập nhanh bằng tài khoản Google (OAuth2).
+  - **@emailjs/browser v4.4.1:** Gửi email liên hệ/phản hồi trực tiếp từ giao diện client mà không cần thông qua server riêng.
+  - **qrcode.react v4.2.0:** Tạo mã QR thanh toán động cho các giao dịch chuyển khoản VietQR/PayOS và MoMo.
+- **Typography & Font chữ:** Tích hợp Google Fonts với các phông chữ **Montserrat** (thiết kế thương mại điện tử hiện đại), **Playfair Display** (tạo điểm nhấn thời trang sang trọng), và **Be Vietnam Pro** (phông sans-serif hiển thị tiếng Việt hoàn hảo).
 
 ---
 
