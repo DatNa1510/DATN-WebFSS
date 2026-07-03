@@ -1,8 +1,34 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import useAuthStore from './authStore';
-import { toast } from './toastStore';
 import { API_BASE } from '../config/api';
+
+const getHeaders = () => {
+  const token = useAuthStore.getState().token;
+  if (!token) throw new Error('Chưa đăng nhập');
+  return { headers: { Authorization: `Bearer ${token}` } };
+};
+
+// ── Auto-refresh token wrapper ──
+const requestWithRetry = async (requestFn) => {
+  try {
+    return await requestFn();
+  } catch (error) {
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      // Thử refresh token
+      const refreshed = await useAuthStore.getState().refreshAuthToken();
+      if (refreshed) {
+        // Retry với token mới
+        return await requestFn();
+      } else {
+        useAuthStore.getState().logout();
+        throw new Error('Phiên đăng nhập đã hết hạn');
+      }
+    }
+    throw error;
+  }
+};
 
 const useNotificationStore = create((set, get) => ({
   notifications: [],
@@ -12,16 +38,10 @@ const useNotificationStore = create((set, get) => ({
   fetchNotifications: async () => {
     if (!useAuthStore.getState().token) return;
     try {
-      const res = await axios.get(`${API_BASE}/api/notifications`, {
-        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
-      });
+      const res = await requestWithRetry(() => axios.get(`${API_BASE}/api/notifications`, getHeaders()));
       
       const data = res.data || {};
       const newNotifications = Array.isArray(data) ? data : (data.items || []);
-      const oldNotifications = Array.isArray(get().notifications) ? get().notifications : [];
-
-      // Chỉ cập nhật danh sách thông báo mới vào state (không tự động nhảy popup toast nữa)
-      // Thông báo mới sẽ chỉ được báo qua số lượng unreadCount trên quả chuông.
 
       set({ notifications: newNotifications });
       get().fetchUnreadCount();
@@ -33,9 +53,7 @@ const useNotificationStore = create((set, get) => ({
   fetchUnreadCount: async () => {
     if (!useAuthStore.getState().token) return;
     try {
-      const res = await axios.get(`${API_BASE}/api/notifications/unread-count`, {
-        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
-      });
+      const res = await requestWithRetry(() => axios.get(`${API_BASE}/api/notifications/unread-count`, getHeaders()));
       set({ unreadCount: res.data.count });
     } catch (error) {
       console.error('Fetch unread count failed', error);
@@ -44,9 +62,7 @@ const useNotificationStore = create((set, get) => ({
 
   markAsRead: async (id) => {
     try {
-      await axios.put(`${API_BASE}/api/notifications/${id}/read`, {}, {
-        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
-      });
+      await requestWithRetry(() => axios.put(`${API_BASE}/api/notifications/${id}/read`, {}, getHeaders()));
       set(s => ({
         notifications: s.notifications.map(n => n.id === id ? { ...n, read: true } : n),
         unreadCount: Math.max(0, s.unreadCount - 1)
@@ -58,9 +74,7 @@ const useNotificationStore = create((set, get) => ({
 
   markAllAsRead: async () => {
     try {
-      await axios.put(`${API_BASE}/api/notifications/read-all`, {}, {
-        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
-      });
+      await requestWithRetry(() => axios.put(`${API_BASE}/api/notifications/read-all`, {}, getHeaders()));
       set(s => ({
         notifications: s.notifications.map(n => ({ ...n, read: true })),
         unreadCount: 0
@@ -72,9 +86,7 @@ const useNotificationStore = create((set, get) => ({
 
   markAsUnread: async (id) => {
     try {
-      await axios.put(`${API_BASE}/api/notifications/${id}/unread`, {}, {
-        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
-      });
+      await requestWithRetry(() => axios.put(`${API_BASE}/api/notifications/${id}/unread`, {}, getHeaders()));
       set(s => ({
         notifications: s.notifications.map(n => n.id === id ? { ...n, read: false } : n),
         unreadCount: s.unreadCount + 1
@@ -86,9 +98,7 @@ const useNotificationStore = create((set, get) => ({
 
   deleteNotification: async (id) => {
     try {
-      await axios.delete(`${API_BASE}/api/notifications/${id}`, {
-        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
-      });
+      await requestWithRetry(() => axios.delete(`${API_BASE}/api/notifications/${id}`, getHeaders()));
       set(s => {
         const notif = s.notifications.find(n => n.id === id);
         return {
@@ -103,9 +113,7 @@ const useNotificationStore = create((set, get) => ({
 
   deleteAllNotifications: async () => {
     try {
-      await axios.delete(`${API_BASE}/api/notifications`, {
-        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
-      });
+      await requestWithRetry(() => axios.delete(`${API_BASE}/api/notifications`, getHeaders()));
       set({ notifications: [], unreadCount: 0 });
     } catch (error) {
       console.error('Delete all notifications failed', error);
@@ -124,9 +132,7 @@ const useNotificationStore = create((set, get) => ({
         read: read === 'ALL' ? '' : read
       });
 
-      const res = await axios.get(`${API_BASE}/api/notifications?${params}`, {
-        headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
-      });
+      const res = await requestWithRetry(() => axios.get(`${API_BASE}/api/notifications?${params}`, getHeaders()));
 
       return {
         items: res.data.items || [],

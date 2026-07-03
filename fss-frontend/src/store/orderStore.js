@@ -18,6 +18,28 @@ const normalizeImage = (img) => {
   return img.startsWith('http') ? img : `${BACKEND_BASE}${img}`;
 };
 
+// ── Auto-refresh token khi bị 401/403 rồi retry request ──
+const requestWithRetry = async (requestFn) => {
+  try {
+    return await requestFn();
+  } catch (err) {
+    const status = err?.response?.status;
+    if (status === 401 || status === 403) {
+      // Thử refresh token
+      const refreshed = await useAuthStore.getState().refreshAuthToken();
+      if (refreshed) {
+        // Retry với token mới
+        return await requestFn();
+      } else {
+        // Refresh thất bại → logout
+        useAuthStore.getState().logout();
+        throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+      }
+    }
+    throw err;
+  }
+};
+
 const useOrderStore = create((set, get) => ({
   orders: [],
   isLoading: false,
@@ -29,7 +51,7 @@ const useOrderStore = create((set, get) => ({
       const token = useAuthStore.getState().token;
       if (!token) { set({ orders: [] }); return; }
       set({ isLoading: true, error: null });
-      const res = await axios.get(API_URL, getHeaders());
+      const res = await requestWithRetry(() => axios.get(API_URL, getHeaders()));
       // Normalize image URLs
       const orders = res.data.map(order => ({
         ...order,
@@ -40,7 +62,7 @@ const useOrderStore = create((set, get) => ({
       }));
       set({ orders, isLoading: false });
     } catch (err) {
-      set({ isLoading: false, error: err.response?.data?.error || 'Lỗi tải đơn hàng' });
+      set({ isLoading: false, error: err.response?.data?.error || err.message || 'Lỗi tải đơn hàng' });
     }
   },
 
@@ -48,7 +70,7 @@ const useOrderStore = create((set, get) => ({
   placeOrder: async (payload) => {
     try {
       set({ isLoading: true, error: null });
-      const res = await axios.post(API_URL, payload, getHeaders());
+      const res = await requestWithRetry(() => axios.post(API_URL, payload, getHeaders()));
       const newOrder = {
         ...res.data.order,
         items: (res.data.order.items || []).map(item => ({
@@ -68,7 +90,7 @@ const useOrderStore = create((set, get) => ({
       }));
       return { success: true, order: newOrder };
     } catch (err) {
-      const msg = err.response?.data?.error || 'Lỗi đặt hàng';
+      const msg = err.response?.data?.error || err.message || 'Lỗi đặt hàng';
       set({ isLoading: false, error: msg });
       return { success: false, error: msg };
     }
@@ -78,7 +100,7 @@ const useOrderStore = create((set, get) => ({
   cancelOrder: async (orderId, reason) => {
     try {
       set({ isLoading: true });
-      const res = await axios.patch(`${API_URL}/${orderId}/cancel`, { reason }, getHeaders());
+      const res = await requestWithRetry(() => axios.patch(`${API_URL}/${orderId}/cancel`, { reason }, getHeaders()));
       const updated = res.data.order;
       set(state => ({
         orders: state.orders.map(o => o.id === updated.id ? { ...o, ...updated } : o),
@@ -86,7 +108,7 @@ const useOrderStore = create((set, get) => ({
       }));
       return { success: true };
     } catch (err) {
-      const msg = err.response?.data?.error || 'Lỗi huỷ đơn hàng';
+      const msg = err.response?.data?.error || err.message || 'Lỗi huỷ đơn hàng';
       set({ isLoading: false });
       return { success: false, error: msg };
     }

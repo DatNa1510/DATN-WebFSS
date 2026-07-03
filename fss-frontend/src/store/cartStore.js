@@ -18,28 +18,39 @@ const getHeaders = () => {
 
 let isAuthRedirecting = false;
 
-// Bắt lỗi phiên hết hạn / user không tồn tại → logout + redirect
-const handleAuthError = (error) => {
-  const status = error?.response?.status;
-  const msg    = error?.response?.data?.error || error?.message || '';
-  const isAuthErr = status === 401 || status === 403
-    || msg.includes('Người dùng không tồn tại')
-    || msg.includes('Phiên đăng nhập')
-    || msg.includes('Unauthorized');
+// ── Auto-refresh token wrapper ──
+const requestWithRetry = async (requestFn) => {
+  try {
+    return await requestFn();
+  } catch (error) {
+    const status = error?.response?.status;
+    const msg    = error?.response?.data?.error || error?.message || '';
+    const isAuthErr = status === 401 || status === 403
+      || msg.includes('Người dùng không tồn tại')
+      || msg.includes('Phiên đăng nhập')
+      || msg.includes('Unauthorized');
 
-  if (isAuthErr) {
-    if (!isAuthRedirecting) {
-      isAuthRedirecting = true;
-      useAuthStore.getState().logout();
-      toast.warning('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!');
-      setTimeout(() => {
-        isAuthRedirecting = false;
-        window.location.href = '/login';
-      }, 1500);
+    if (isAuthErr) {
+      // Thử refresh token
+      const refreshed = await useAuthStore.getState().refreshAuthToken();
+      if (refreshed) {
+        // Retry với token mới
+        return await requestFn();
+      } else {
+        if (!isAuthRedirecting) {
+          isAuthRedirecting = true;
+          useAuthStore.getState().logout();
+          toast.warning('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!');
+          setTimeout(() => {
+            isAuthRedirecting = false;
+            window.location.href = '/login';
+          }, 1500);
+        }
+        throw new Error('Phiên đăng nhập đã hết hạn');
+      }
     }
-    return true;
+    throw error;
   }
-  return false;
 };
 
 const useCartStore = create((set, get) => ({
@@ -55,7 +66,7 @@ const useCartStore = create((set, get) => ({
         return;
       }
       set({ isLoading: true });
-      const res = await axios.get(API_URL, getHeaders());
+      const res = await requestWithRetry(() => axios.get(API_URL, getHeaders()));
       // Map API response to our store format
       const mappedItems = res.data.map(item => {
         // Normalize image URL: thêm backend base nếu là đường dẫn tương đối
@@ -90,9 +101,7 @@ const useCartStore = create((set, get) => ({
         selectedKeys: state.selectedKeys.filter(k => currentKeys.includes(k))
       }));
     } catch (error) {
-      if (!handleAuthError(error)) {
-        console.error('Failed to fetch cart', error);
-      }
+      console.error('Failed to fetch cart', error);
       set({ items: [], selectedKeys: [], isLoading: false });
     }
   },
@@ -117,20 +126,18 @@ const useCartStore = create((set, get) => ({
         return false;
       }
       set({ isLoading: true });
-      await axios.post(`${API_URL}/add`, {
+      await requestWithRetry(() => axios.post(`${API_URL}/add`, {
         productId: product.id,
         quantity: qty,
         size: size
-      }, getHeaders());
+      }, getHeaders()));
       // Refresh cart
       await get().fetchCart();
       return true;
     } catch (error) {
       set({ isLoading: false });
-      if (!handleAuthError(error)) {
-        const msg = error.response?.data?.error || 'Lỗi thêm vào giỏ hàng';
-        toast.error(msg);
-      }
+      const msg = error.response?.data?.error || 'Lỗi thêm vào giỏ hàng';
+      toast.error(msg);
       return false;
     }
   },
@@ -138,13 +145,11 @@ const useCartStore = create((set, get) => ({
   removeItem: async (key) => {
     try {
       set({ isLoading: true });
-      await axios.delete(`${API_URL}/remove/${key}`, getHeaders());
+      await requestWithRetry(() => axios.delete(`${API_URL}/remove/${key}`, getHeaders()));
       await get().fetchCart();
     } catch (error) {
       set({ isLoading: false });
-      if (!handleAuthError(error)) {
-        console.error('Lỗi xóa mục giỏ hàng', error);
-      }
+      console.error('Lỗi xóa mục giỏ hàng', error);
     }
   },
 
@@ -155,27 +160,23 @@ const useCartStore = create((set, get) => ({
         return;
       }
       set({ isLoading: true });
-      await axios.put(`${API_URL}/update/${key}`, { quantity: qty }, getHeaders());
+      await requestWithRetry(() => axios.put(`${API_URL}/update/${key}`, { quantity: qty }, getHeaders()));
       await get().fetchCart();
     } catch (error) {
       set({ isLoading: false });
-      if (!handleAuthError(error)) {
-        const msg = error.response?.data?.error || 'Lỗi cập nhật số lượng';
-        toast.error(msg);
-      }
+      const msg = error.response?.data?.error || 'Lỗi cập nhật số lượng';
+      toast.error(msg);
     } // refresh from backend if error (to reset optimistic UI if we had one)
   },
 
   clearCart: async () => {
     try {
       set({ isLoading: true });
-      await axios.delete(`${API_URL}/clear`, getHeaders());
+      await requestWithRetry(() => axios.delete(`${API_URL}/clear`, getHeaders()));
       set({ items: [], isLoading: false });
     } catch (error) {
       set({ isLoading: false });
-      if (!handleAuthError(error)) {
-        console.error('Lỗi xóa giỏ hàng', error);
-      }
+      console.error('Lỗi xóa giỏ hàng', error);
     }
   },
 
