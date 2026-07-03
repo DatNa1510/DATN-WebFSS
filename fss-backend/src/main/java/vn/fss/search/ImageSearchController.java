@@ -45,9 +45,9 @@ public class ImageSearchController {
     @PostMapping(value = "/by-image", consumes = "multipart/form-data")
     public ResponseEntity<?> searchByImage(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(defaultValue = "10") int topK,
-            @RequestParam(required = false) String gender,
-            @RequestParam(required = false) String category
+            @RequestParam(value = "topK", defaultValue = "10") int topK,
+            @RequestParam(value = "gender", required = false) String gender,
+            @RequestParam(value = "category", required = false) String category
     ) {
         // ── Validate input ────────────────────────────────────────────────────
         if (file == null || file.isEmpty()) {
@@ -108,10 +108,10 @@ public class ImageSearchController {
      */
     @GetMapping("/similar/{productId}")
     public ResponseEntity<?> searchSimilarById(
-            @PathVariable Long productId,
-            @RequestParam(defaultValue = "10") int topK,
-            @RequestParam(required = false) String gender,
-            @RequestParam(required = false) String category
+            @PathVariable("productId") Long productId,
+            @RequestParam(value = "topK", defaultValue = "10") int topK,
+            @RequestParam(value = "gender", required = false) String gender,
+            @RequestParam(value = "category", required = false) String category
     ) {
         topK = Math.max(1, Math.min(topK, 50));
         log.info("GET /api/search/similar/{} | topK={} | gender={} | category={}",
