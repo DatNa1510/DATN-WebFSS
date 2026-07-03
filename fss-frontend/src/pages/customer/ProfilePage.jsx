@@ -5,7 +5,7 @@ import {
   LogOut, ChevronRight, ChevronDown, MapPin, Heart, User,
   Camera, Lock, Eye, EyeOff, ArrowUpRight,
   Shield, Clock, Plus, Check, X, Trash2,
-  ShoppingBag, Box
+  ShoppingBag, Box, AlertCircle
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useOrderStore from '../../store/orderStore';
