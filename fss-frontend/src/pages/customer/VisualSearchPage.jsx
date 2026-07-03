@@ -427,7 +427,7 @@ export default function VisualSearchPage() {
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Kết quả tìm kiếm</p>
                   <h2 className="text-[17px] font-black text-slate-800 mt-0.5">
-                    {searching ? 'Đang tìm kiếm...' : results ? `Top ${results.length} gợi ý phù hợp` : 'Đang phân tích...'}
+                    {searching ? 'Đang tìm kiếm...' : results ? `Top ${Math.min(results.length, 5)} gợi ý phù hợp` : 'Đang phân tích...'}
                   </h2>
                 </div>
                 <div className="flex items-center gap-3">
@@ -455,16 +455,19 @@ export default function VisualSearchPage() {
               )}
 
               {/* Results: BENTO GRID — hero left (row-span-2) + 2×2 right */}
-              {results && !searching && results.length > 0 && (
-                <div className="grid grid-cols-3 grid-rows-2 gap-3" style={{ minHeight: 380 }}>
-                  {/* Card 0 — HERO */}
-                  <HeroCard product={results[0]} score={results[0].similarityScore ?? 0} />
-                  {/* Cards 1–4 — SMALL */}
-                  {results.slice(1).map((p, i) => (
-                    <SmallCard key={p.id} product={p} score={p.similarityScore ?? 0} index={i + 1} trending={i === 1} />
-                  ))}
-                </div>
-              )}
+              {results && !searching && results.length > 0 && (() => {
+                const displayResults = results.slice(0, 5);
+                return (
+                  <div className="grid grid-cols-3 grid-rows-2 gap-3" style={{ minHeight: 380 }}>
+                    {/* Card 0 — HERO */}
+                    <HeroCard product={displayResults[0]} score={displayResults[0].similarityScore ?? 0} />
+                    {/* Cards 1–4 — SMALL */}
+                    {displayResults.slice(1).map((p, i) => (
+                      <SmallCard key={p.id} product={p} score={p.similarityScore ?? 0} index={i + 1} trending={i === 1} />
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* Empty */}
               {results && !searching && results.length === 0 && (
