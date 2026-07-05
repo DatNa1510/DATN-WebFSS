@@ -226,26 +226,8 @@ function AnalysisPanel({ preview, searching, onReset, onRetry, error }) {
               </div>
               <p className="text-[11px] font-black text-slate-700">Phân tích hoàn tất</p>
             </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed mb-3">
-              AI phát hiện đường nét và tông màu phù hợp với ảnh của bạn.
-            </p>
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {['Tối giản', 'Trung tính', 'Thanh lịch'].map(t => (
-                <span key={t} className="px-2 py-0.5 text-[9px] font-bold bg-slate-100 text-slate-600 rounded-full border border-slate-200">{t}</span>
-              ))}
-            </div>
-            <div>
-              <div className="flex justify-between mb-1.5">
-                <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">Độ khớp mẫu</p>
-                <span className="text-[12px] font-black text-blue-600">94%</span>
-              </div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: '94%' }}
-                  transition={{ duration: 1, delay: 0.3 }}
-                  className="h-full rounded-full"
-                  style={{ background: 'linear-gradient(90deg, #3b82f6, #10b981)' }} />
-              </div>
-            </div>
+
+
           </div>
         )}
       </div>
