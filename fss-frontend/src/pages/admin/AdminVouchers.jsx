@@ -80,14 +80,16 @@ export default function AdminVouchers() {
     if (voucher) {
       setEditingVoucher(voucher);
       setFormData({
-        code: voucher.code, type: voucher.type, value: voucher.value,
+        code: voucher.code, type: voucher.type,
+        // Backend lưu PERCENT dạng thập phân (0.1 = 10%) → hiển thị dạng % nguyên (10)
+        value: voucher.type === 'PERCENT' ? Math.round(voucher.value * 100) : voucher.value,
         minOrder: voucher.minOrder, maxDiscount: voucher.maxDiscount || 0,
         expiryDate: voucher.expiryDate, usageLimit: voucher.usageLimit, isActive: voucher.isActive
       });
     } else {
       setEditingVoucher(null);
       setFormData({
-        code: '', type: 'PERCENT', value: 0, minOrder: 0, maxDiscount: 0, 
+        code: '', type: 'PERCENT', value: 10, minOrder: 0, maxDiscount: 0, 
         expiryDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0], 
         usageLimit: 100, isActive: true
       });
@@ -102,6 +104,12 @@ export default function AdminVouchers() {
       return;
     }
 
+    // Backend expect PERCENT value dạng thập phân (vd: 10% → 0.1)
+    const payload = {
+      ...formData,
+      value: formData.type === 'PERCENT' ? formData.value / 100 : formData.value,
+    };
+
     try {
       const url = editingVoucher ? `${API}/api/vouchers/admin/${editingVoucher.id}` : `${API}/api/vouchers/admin`;
       const method = editingVoucher ? 'PUT' : 'POST';
@@ -111,7 +119,7 @@ export default function AdminVouchers() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${getToken()}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
       
       const json = await res.json();
@@ -387,9 +395,20 @@ export default function AdminVouchers() {
                   </div>
                   <div>
                     <label style={labelStyle}>GIÁ TRỊ GIẢM *</label>
-                    <input type="number" step={formData.type === 'PERCENT' ? "0.01" : "1000"} value={formData.value} onChange={e => setFormData({...formData, value: parseFloat(e.target.value)})}
-                      placeholder="Giá trị giảm" required
+                    <input type="number" 
+                      step={formData.type === 'PERCENT' ? "1" : "1000"}
+                      min={formData.type === 'PERCENT' ? "1" : "0"}
+                      max={formData.type === 'PERCENT' ? "100" : undefined}
+                      value={formData.value}
+                      onChange={e => setFormData({...formData, value: parseFloat(e.target.value)})}
+                      placeholder={formData.type === 'PERCENT' ? 'Nhập số % (vd: 10 = giảm 10%)' : 'Nhập số tiền (VNĐ)'}
+                      required
                       style={inputStyle} />
+                    {formData.type === 'PERCENT' && (
+                      <p style={{ fontSize: '10px', color: J.gray, marginTop: '4px' }}>
+                        Nhập số nguyên: 10 = giảm 10%, 50 = giảm 50%
+                      </p>
+                    )}
                   </div>
                 </div>
 

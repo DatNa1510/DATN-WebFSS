@@ -51,6 +51,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/products/**").permitAll()
                 // Public reviews (GET) — POST yêu cầu auth qua anyRequest().authenticated()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/**").permitAll()
+                // Public voucher endpoints — khách hàng xem & validate voucher không cần JWT
+                .requestMatchers("/api/vouchers/active").permitAll()
+                .requestMatchers("/api/vouchers/validate").permitAll()
                 // Visual Search (AI) — không cần auth
                 .requestMatchers("/api/search/**").permitAll()
                 .requestMatchers("/api/payment/momo-callback").permitAll()
